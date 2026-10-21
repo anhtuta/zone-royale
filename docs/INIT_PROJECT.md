@@ -54,7 +54,7 @@ zone-royale/
 │   └── utils/              Generic helpers
 ├── tests/                  Vitest unit tests (+ helpers.ts to build small worlds)
 ├── scripts/e2e.mjs         Serves dist/ and plays it in headless Chromium
-└── docs/                   Documentation (this file, index, screenshot)
+└── docs/                   Documentation (this file, index; e2e screenshot is local-only)
 ```
 
 ### Module reference

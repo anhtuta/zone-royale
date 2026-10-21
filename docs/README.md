@@ -5,7 +5,8 @@ Index of the Zone Royale project docs. Add new documents to this folder and list
 | Document                           | Description                                                                                                                            |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | [INIT_PROJECT.md](INIT_PROJECT.md) | How the project was set up from the single-file prototype: tech stack, folder structure, architecture, game loop, scripts, conventions |
-| [screenshot.png](screenshot.png)   | Gameplay screenshot captured by the end-to-end test (`npm run e2e`)                                                                    |
+
+`npm run e2e` writes `docs/screenshot.png` locally for manual inspection; that file is gitignored and not stored in the repo.
 
 ## Conventions for new docs
 

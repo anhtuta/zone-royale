@@ -8,8 +8,6 @@ A match lasts about 3–4 minutes.
 Built with **TypeScript** (strict), **Vite** and the **Canvas 2D** API. There are no runtime
 dependencies; sound effects are synthesised with the Web Audio API.
 
-![Gameplay screenshot](docs/screenshot.png)
-
 ## Controls
 
 | Input                    | Action                                          |
