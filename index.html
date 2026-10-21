@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="Zone Royale: a top-down 2D browser battle royale." />
+    <title>Zone Royale</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+
+    <div id="startScreen" class="overlay">
+      <div class="panel">
+        <h1>ZONE ROYALE</h1>
+        <p class="sub">20 players drop in. The zone closes in. Only one walks out.</p>
+        <table class="controls">
+          <tr>
+            <td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></td>
+            <td>Move</td>
+          </tr>
+          <tr>
+            <td>Mouse</td>
+            <td>Aim</td>
+          </tr>
+          <tr>
+            <td>Left click</td>
+            <td>Shoot (hold for automatic weapons)</td>
+          </tr>
+          <tr>
+            <td><kbd>R</kbd></td>
+            <td>Reload</td>
+          </tr>
+          <tr>
+            <td><kbd>E</kbd></td>
+            <td>Pick up loot (ammo is picked up automatically)</td>
+          </tr>
+          <tr>
+            <td><kbd>1</kbd> <kbd>2</kbd> / <kbd>Q</kbd> / wheel</td>
+            <td>Switch weapon</td>
+          </tr>
+        </table>
+        <button id="startBtn">PLAY</button>
+      </div>
+    </div>
+
+    <div id="endScreen" class="overlay hidden">
+      <div class="panel">
+        <h1 id="endTitle">ELIMINATED</h1>
+        <p class="sub" id="endSub"></p>
+        <div class="stats">
+          <div class="stat"><b id="stPlace">#-</b><span>Placement</span></div>
+          <div class="stat"><b id="stKills">0</b><span>Kills</span></div>
+          <div class="stat"><b id="stDmg">0</b><span>Damage</span></div>
+          <div class="stat"><b id="stTime">0:00</b><span>Survived</span></div>
+        </div>
+        <button id="restartBtn">PLAY AGAIN</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
