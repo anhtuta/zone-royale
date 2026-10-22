@@ -1,0 +1,19 @@
+---
+description: Zone Royale layer boundaries — no DOM in game logic
+alwaysApply: true
+---
+
+# Layer boundaries
+
+| Layer | Browser APIs | Role |
+|-------|--------------|------|
+| `config/`, `entities/`, `world/`, `utils/` | No | Data, types, pure helpers |
+| `systems/` | No | Rules (movement, combat, AI, loot, zone, …) |
+| `core/simulation.ts`, `core/world.ts` | No | Orchestration and match state shape |
+| `core/game.ts`, `input`, `canvas`, `audio`, `loop` | Yes | Frame loop, input → controls, sound sink |
+| `render/*` | Canvas only | Draw from `World` |
+| `ui/*` | DOM | HUD, screens |
+
+- Never use `document`, `window`, `canvas`, `fetch`, or gameplay timers in `systems`, `entities`, `world`, `config`, or `utils`.
+- `render/*` and `ui/*` are **read-mostly**: read `World` / `Camera`; do not apply damage, move entities, or change match rules. Derived values → pure helper in `systems/` or `utils/`, used by sim and UI.
+- Keep `core/game.ts` thin: coordinate phases, input, audio, render; push behaviour into `systems/*` and call from `stepWorld()` or `Game`.

@@ -1,0 +1,28 @@
+---
+description: Where to add features and pre-merge gameplay checklist
+alwaysApply: true
+---
+
+# Where to put new work
+
+| Adding… | Start | Also |
+|---------|-------|------|
+| Tuning | `config/*` | system that reads it |
+| Weapon/ammo | `config/weapons.ts` | `systems/weapons.ts`, `render/entityRenderer.ts`, HUD |
+| Loot/pickup | `entities/loot.ts` | `systems/inventory.ts`, `render/lootRenderer.ts` |
+| Map/obstacle | `world/types.ts`, `world/mapgen.ts` | `systems/collision.ts` |
+| Bot behaviour | `systems/ai.ts` | `entities/entity.ts` (`BotBrain` if needed) |
+| Visual-only effect | `entities/effects.ts` | `systems/effects.ts`, `render/*` |
+| Screen/HUD | `ui/*` | `render/*` if canvas |
+| Match rule/mode | `systems/match.ts` | `core/game.ts` phases, `ui/screens.ts` |
+
+New patterns → short note in `docs/01_INIT_PROJECT.md` or `docs/NN_TOPIC.md` + link from `docs/README.md`.
+
+# Before merging gameplay changes
+
+1. Logic in `systems/` (or `config/` / `entities/`), not `render/` or `game.ts`.
+2. `stepWorld()` order changed only intentionally; tests pass.
+3. Knobs in `config/`, not magic numbers in systems.
+4. Vitest for changed rules; seeded RNG via `tests/helpers.ts`.
+5. TSDoc on new exports; `pnpm typecheck && pnpm lint && pnpm test && pnpm build`.
+6. Doc update if you introduced a new pattern.

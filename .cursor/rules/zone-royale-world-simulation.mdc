@@ -1,0 +1,19 @@
+---
+description: World state, stepWorld order, determinism
+globs: src/systems/**/*.ts,src/world/**/*.ts,src/entities/**/*.ts,src/core/simulation.ts,src/core/world.ts
+alwaysApply: false
+---
+
+# State and simulation
+
+- All match state on `World` from `createMatch()` — no parallel globals or module-level mutable game state.
+- Systems mutate via functions like `updateBullets(world, dt)`; entities are plain data, not methods.
+- New state: extend `entities/` or `world/`, add `World` fields, init in `createMatch()`, update in **one** primary system; document **`stepWorld()` order** (order changes gameplay).
+- Player and bots share `Entity`; branch on `isPlayer` / `ai` in `player.ts` / `ai.ts`, do not duplicate rules.
+
+# Determinism and side effects
+
+- `stepWorld()` order is part of game design; change only with tests updated (`match.test.ts` / headless sims).
+- Gameplay RNG: `utils/random.ts` only — no `Math.random()` in `systems/` (`core/audio.ts` is the documented exception).
+- Sound via `SoundSink` on `World`; toasts/kill feed/floaters as **data** from `systems/feedback.ts`, not DOM from combat.
+- Systems consume `PlayerControls` from input glue — never raw keys/mouse.

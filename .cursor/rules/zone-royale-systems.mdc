@@ -1,0 +1,13 @@
+---
+description: Systems design — ownership, purity, networking boundary
+globs: src/systems/**/*.ts
+alwaysApply: false
+---
+
+# Systems habits
+
+- Pure helpers for geometry, damage, queries (`utils/`, `collision.ts`, `combat.ts`); keep `update*(world, dt)` thin.
+- **One primary owner per rule** (e.g. `bullets.ts` hits/spawn, `combat.ts` damage/eliminations, `weapons.ts` fire/reload).
+- Do not reach into another system’s private arrays/fields; export a small function instead.
+- Cap unbounded growth (kill feed, sound budget per step, etc.).
+- Future multiplayer: transport **outside** `systems/` — feed `PlayerControls`, snapshot `World`; no sockets in combat/AI.

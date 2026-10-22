@@ -1,0 +1,14 @@
+---
+description: Zone Royale import / dependency direction
+globs: src/**/*.ts
+alwaysApply: false
+---
+
+# Dependency direction
+
+- `main.ts` → `core/game.ts` only for startup.
+- `systems/*` may import `entities`, `world`, `config`, `utils`, and other `systems` (prefer one owner per feature).
+- `systems/*` must **not** import `render/*`, `ui/*`, `core/game.ts`, `core/input.ts`, or `core/canvas.ts`.
+- `entities/*` and `world/*`: types, factories, map data — not gameplay orchestration.
+- `config/*`: constants/tables only; no functions that mutate `World`.
+- Avoid circular imports between `systems/`; extract shared pure logic to `utils/` or a narrow third `systems/` module.
