@@ -1,7 +1,7 @@
 # Initial project setup
 
 This document explains what was done when Zone Royale was turned from a single-file
-prototype (one ~900-line `index.html` with inline JavaScript) into a structured TypeScript
+prototype (one ~900-line [`index.html`](./init_code.html) with inline JavaScript) into a structured TypeScript
 project. It covers the goals, the tech stack, the folder layout and the role of every module,
 how the game loop and systems fit together, how to run/build/test, and the conventions to
 follow when contributing.
