@@ -6,6 +6,7 @@
 
 import './styles/main.css';
 import { Game, type GameDebugHandle } from './core/game';
+import { loadCombatantSprites } from './render/spriteAssets';
 
 declare global {
   /** Globals added by the game. */
@@ -17,6 +18,7 @@ declare global {
 
 const canvas = document.getElementById('c');
 if (!(canvas instanceof HTMLCanvasElement)) throw new Error('Missing #c canvas');
+void loadCombatantSprites();
 const game = new Game(canvas);
 game.run();
 window.__game = game.debugHandle();

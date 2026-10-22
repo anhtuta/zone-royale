@@ -196,7 +196,7 @@ export function drawWorld(
   ctx.lineCap = 'butt';
   for (const e of world.entities) {
     if (!e.alive || (e.isPlayer && !showPlayer)) continue;
-    if (cam.inView(e.x, e.y, 60)) drawEntity(ctx, e);
+    if (cam.inView(e.x, e.y, 60)) drawEntity(ctx, e, world.gameTime);
   }
   for (const o of world.obstacles) {
     if (o.t !== 'wall' || !cam.inView(o.x + o.w / 2, o.y + o.h / 2, Math.max(o.w, o.h))) continue;
