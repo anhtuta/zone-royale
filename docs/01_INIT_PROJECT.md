@@ -142,11 +142,114 @@ flowchart LR
   entities --> config
 ```
 
-Rules: `systems`, `entities`, `world`, `config` and `utils` never touch the DOM.
-Only `core/game.ts`, `core/input.ts`, `core/canvas.ts`, `core/audio.ts`, `core/loop.ts`,
-`render/*` and `ui/*` use browser APIs.
+## 4. Architecture rules
 
-## 4. How the game loop and systems fit together
+These rules keep the codebase testable and predictable as features grow. Section 6 covers
+style, TSDoc and git workflow; this section is about **where code lives** and **how pieces
+may depend on each other**.
+
+### Layer boundaries (no DOM in game logic)
+
+| Layer | May use browser APIs? | Role |
+| ----- | --------------------- | ---- |
+| `config/`, `entities/`, `world/`, `utils/` | No | Data, types, pure helpers |
+| `systems/` | No | Rules: movement, combat, AI, loot, zone, … |
+| `core/simulation.ts`, `core/world.ts` | No | Orchestration and match state shape |
+| `core/game.ts`, `input`, `canvas`, `audio`, `loop` | Yes | Glue: frame loop, input → controls, sound sink |
+| `render/*` | Yes (Canvas) | Draw the world from `World` |
+| `ui/*` | Yes (DOM) | HUD, minimap, HTML screens |
+
+- **`systems`, `entities`, `world`, `config` and `utils` never touch the DOM** (no `document`,
+  `window`, `canvas`, `fetch`, timers for gameplay, etc.).
+- **Only** `core/game.ts`, `core/input.ts`, `core/canvas.ts`, `core/audio.ts`, `core/loop.ts`,
+  `render/*` and `ui/*` use browser APIs.
+- **`render/*` and `ui/*` are read-mostly:** they read `World` (and `Camera`) to draw. They do not
+  apply damage, move entities, or change match rules. If the HUD needs a derived value, compute it
+  in a small pure helper in `systems/` or `utils/` and call it from both simulation and UI.
+- **`core/game.ts` coordinates** phases, input, audio and rendering; avoid growing it with feature
+  logic—push new behaviour into `systems/*` and call it from `stepWorld()` or `Game`.
+
+### Dependency direction (imports)
+
+Follow the arrows in the diagram above. In short:
+
+- **`main.ts` → `core/game.ts` only** for app startup.
+- **`systems/*` may import** `entities`, `world`, `config`, `utils`, and other `systems` modules
+  when necessary—but prefer **one obvious owner** per feature (see below).
+- **`systems/*` must not import** `render/*`, `ui/*`, `core/game.ts`, `core/input.ts`, or
+  `core/canvas.ts`.
+- **`entities/*` and `world/*`** stay thin: types, factories, map data—not gameplay orchestration.
+- **`config/*`** is constants and tables only; no functions that mutate `World`.
+
+Avoid circular imports between `systems` files. If two systems need each other, extract shared
+pure logic into `utils/` or a third `systems/` module with a narrow API.
+
+### State: one `World`, explicit updates
+
+- **All match state lives on `World`** (created by `createMatch()`). Do not stash parallel globals
+  or module-level mutable game state.
+- **Systems mutate `World` through functions** such as `updateBullets(world, dt)`—not methods on
+  entities. Entities are plain data (`Entity`, `Bullet`, loot structs).
+- **Adding new state** (e.g. a new world object type): extend types in `entities/` or `world/`,
+  add fields to `World`, initialise them in `createMatch()`, update them in one primary system,
+  and document the **`stepWorld()` order** (see §4). Wrong order can change gameplay (e.g. damage
+  before vs after movement).
+- **Player and bots share `Entity`.** New combat or movement rules should work for both; branch on
+  `isPlayer` / `ai` inside the relevant system (`player.ts`, `ai.ts`), do not fork duplicate logic.
+
+### Simulation contract (determinism & side effects)
+
+- **Fixed step order** in `stepWorld()` is part of the game design. Changing it requires updating
+  tests (especially `match.test.ts` / headless sims) and noting the change in this doc.
+- **Use `utils/random.ts`** for gameplay randomness so tests can seed RNG. Do not call
+  `Math.random()` in `systems/` (audio synthesis in `core/audio.ts` is the documented exception).
+- **Browser-only side effects go through abstractions:** sound via `SoundSink` on `World`; toasts,
+  kill feed and floaters are **data** written by `systems/feedback.ts` (and similar), not DOM
+  updates from combat code.
+- **Input is already translated** in `core/input.ts` → `PlayerControls`. Systems never read raw
+  keys or mouse events.
+
+### Where to put new features
+
+Use this as a default map before inventing a new folder:
+
+| You are adding… | Start here | Also touch | Tests |
+| --------------- | ---------- | ---------- | ----- |
+| Tuning (damage, speed, zone phases) | `config/*` | system that reads it | extend existing `*.test.ts` |
+| New weapon or ammo type | `config/weapons.ts` | `systems/weapons.ts`, `render/entityRenderer.ts`, HUD labels | `weapons.test.ts`, `combat.test.ts` |
+| New loot / pickup | `entities/loot.ts` | `systems/inventory.ts`, `render/lootRenderer.ts` | `inventory.test.ts`, `loot.test.ts` |
+| New obstacle or map rule | `world/types.ts`, `world/mapgen.ts` | `systems/collision.ts` | `collision.test.ts`, `loot.test.ts` |
+| New bot behaviour | `systems/ai.ts` | `entities/entity.ts` (`BotBrain` fields if needed) | `ai.test.ts` |
+| New visual-only effect | `entities/effects.ts` | `systems/effects.ts`, `render/*` | optional; no rule change → light test |
+| New screen or HUD widget | `ui/*` | `render/*` if canvas | `core.test.ts` if mapping logic |
+| New match rule (modes, respawn) | `systems/match.ts` | `core/game.ts` phase wiring, `ui/screens.ts` | `match.test.ts` |
+
+If a feature does not fit the table, **add a short subsection here or a new `docs/NN_TOPIC.md`**
+and link it from [docs/README.md](README.md) so the next contributor knows the pattern.
+
+### Systems design habits
+
+- **Prefer pure functions** for geometry, damage splits, and queries (`utils/`, `collision.ts`,
+  `combat.ts` helpers). Keep `update*(world, dt)` thin: read state, call pure helpers, write state.
+- **One primary owner per rule.** Example: only `bullets.ts` spawns/removes bullets and runs hit
+  tests; `combat.ts` applies damage and eliminations; `weapons.ts` fires and reloads.
+- **Do not reach into another system’s internals** (private arrays, undocumented fields). Add a
+  small exported function if another system needs a shared operation.
+- **Cap unbounded growth** where the prototype did (kill feed length, sound budget per step, etc.)
+  so long matches stay stable.
+- **Future multiplayer / networking** (if added) should sit **outside** `systems/` as a transport
+  layer that feeds `PlayerControls` and snapshots `World`—do not embed sockets inside combat or AI.
+
+### Checklist before merging a gameplay change
+
+1. Logic in `systems/` (or `config/` / `entities/`), not in `render/` or `game.ts`.
+2. `stepWorld()` order updated only if intentional; tests still pass.
+3. New knobs in `config/`, not magic numbers in systems.
+4. Vitest coverage for changed rules; use `tests/helpers.ts` and seeded RNG.
+5. TSDoc on new exports; `pnpm typecheck && pnpm lint && pnpm test && pnpm build`.
+6. Doc update if you introduced a new pattern (this file or `docs/README.md`).
+
+## 5. How the game loop and systems fit together
 
 ### State machine
 
@@ -208,7 +311,7 @@ The order is the same as in the prototype, so the game behaves identically.
   to make map generation, AI and whole matches deterministic.
 - `window.__game` exposes a read-only view of the match plus `update(dt)` for automated browser tests.
 
-## 5. Running, building and testing
+## 6. Running, building and testing
 
 ```bash
 pnpm install         # once (npm/yarn/bun install are rejected by preinstall)
@@ -241,7 +344,7 @@ match to the end screen, restarts, and fails on any console error or failed requ
 | `match.test.ts`     | win/defeat conditions, end summary, spawning, full headless match simulations          |
 | `core.test.ts`      | camera, input mapping, frame delta clamp, player controls, sound falloff, HUD text     |
 
-## 6. Contributor conventions
+## 7. Contributor conventions
 
 - **Branching & commits.** `main` is always releasable. Use short-lived feature branches and
   [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `refactor:`,
@@ -262,7 +365,7 @@ match to the end screen, restarts, and fails on any console error or failed requ
   `UPPER_SNAKE_CASE` for constants; one module per concept, file names in `camelCase.ts`.
 - **New docs** go in `docs/` and must be listed in [docs/README.md](README.md).
 
-## 7. Differences from the prototype
+## 8. Differences from the prototype
 
 The refactor is intended to be behaviour-preserving. Small, deliberate changes:
 
