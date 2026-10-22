@@ -2,7 +2,7 @@
 // headless Chromium with simulated keyboard + mouse input, fails on any console
 // error, and saves a gameplay screenshot to docs/screenshot.png.
 //
-// Usage: npm run build && npm run e2e
+// Usage: pnpm build && pnpm e2e
 // Env:   CHROME_PATH=/path/to/chrome (default: /usr/bin/google-chrome, then Playwright's bundled browser)
 //        SCREENSHOT=path.png         (default: docs/screenshot.png)
 import { createServer } from 'node:http';
@@ -23,7 +23,7 @@ const TYPES = {
 };
 
 if (!existsSync(join(root, 'index.html'))) {
-  console.error('dist/index.html not found - run `npm run build` first');
+  console.error('dist/index.html not found - run `pnpm build` first');
   process.exit(1);
 }
 

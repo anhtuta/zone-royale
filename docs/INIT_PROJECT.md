@@ -31,7 +31,8 @@ this setup were:
 | ESLint 10 + typescript-eslint | Linting; `eslint-plugin-jsdoc` requires docs, `eslint-plugin-tsdoc` checks syntax |
 | Prettier 3                    | Code formatting (single quotes, 100 columns)                                      |
 | Canvas 2D + Web Audio         | Rendering and procedurally synthesised sound effects (no assets)                  |
-| playwright-core (dev only)    | Headless-browser smoke test of the production build (`npm run e2e`)               |
+| pnpm                          | Package manager; lockfile is `pnpm-lock.yaml`                                       |
+| playwright-core (dev only)    | Headless-browser smoke test of the production build (`pnpm e2e`)                  |
 
 The game has **zero runtime dependencies**; the production bundle is about 40 kB (15 kB gzipped).
 
@@ -210,17 +211,17 @@ The order is the same as in the prototype, so the game behaves identically.
 ## 5. Running, building and testing
 
 ```bash
-npm install          # once
-npm run dev          # dev server with hot reload
-npm run typecheck    # strict TypeScript check
-npm run lint         # ESLint + TSDoc rules (0 warnings allowed)
-npm test             # unit tests (Vitest)
-npm run build        # type-check + production build into dist/
-npm run preview      # serve dist/ locally
-npm run e2e          # play dist/ in headless Chromium, write docs/screenshot.png
+pnpm install         # once (npm/yarn/bun install are rejected by preinstall)
+pnpm dev             # dev server with hot reload
+pnpm typecheck       # strict TypeScript check
+pnpm lint            # ESLint + TSDoc rules (0 warnings allowed)
+pnpm test            # unit tests (Vitest)
+pnpm build           # type-check + production build into dist/
+pnpm preview         # serve dist/ locally
+pnpm e2e             # play dist/ in headless Chromium, write docs/screenshot.png
 ```
 
-`npm run e2e` needs a Chromium/Chrome binary. It uses `CHROME_PATH` if set, otherwise
+`pnpm e2e` needs a Chromium/Chrome binary. It uses `CHROME_PATH` if set, otherwise
 `/usr/bin/google-chrome`. It serves `dist/` under a sub-path (like GitHub Pages), starts a match,
 simulates WASD movement, shooting, reloading, picking up and switching weapons, fast-forwards a full
 match to the end screen, restarts, and fails on any console error or failed request.
@@ -245,7 +246,7 @@ match to the end screen, restarts, and fails on any console error or failed requ
 - **Branching & commits.** `main` is always releasable. Use short-lived feature branches and
   [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `refactor:`,
   `test:`, `docs:`, `chore:`). Keep commits small and focused.
-- **Before pushing** run `npm run typecheck && npm run lint && npm test && npm run build`.
+- **Before pushing** run `pnpm typecheck && pnpm lint && pnpm test && pnpm build`.
 - **Keep logic out of the DOM.** New rules go in `src/systems` (or `src/entities` for data shapes)
   and take the `World` or plain values as parameters. Drawing goes in `src/render` / `src/ui`.
 - **Tuning lives in `src/config`.** No magic numbers in systems when the value is a design knob.
@@ -256,7 +257,7 @@ match to the end screen, restarts, and fails on any console error or failed requ
   ESLint fails the build otherwise.
 - **Tests.** Add or update a Vitest test for every change to game rules. Use `tests/helpers.ts`
   (`makeWorld()`, `bot()`) to set up small scenarios and a seeded RNG for determinism.
-- **Formatting** is Prettier's job: run `npm run format`; don't hand-format.
+- **Formatting** is Prettier's job: run `pnpm format`; don't hand-format.
 - **Naming.** `camelCase` for functions/variables, `PascalCase` for types/classes,
   `UPPER_SNAKE_CASE` for constants; one module per concept, file names in `camelCase.ts`.
 - **New docs** go in `docs/` and must be listed in [docs/README.md](README.md).

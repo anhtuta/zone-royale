@@ -34,29 +34,30 @@ Armor absorbs 60% of weapon damage until it runs out (zone damage ignores armor)
 
 ## Getting started
 
-Requires **Node.js ≥ 20.19**.
+Requires **Node.js ≥ 20.19** and [pnpm](https://pnpm.io/) (see `packageManager` in `package.json`).
+`npm install` / `yarn` / `bun install` are blocked by the `preinstall` script — use pnpm only.
 
 ```bash
-npm install
-npm run dev        # start the dev server with hot reload (http://localhost:5173)
+pnpm install
+pnpm dev           # start the dev server with hot reload (http://localhost:5173)
 ```
 
-## npm scripts
+## Scripts
 
 | Script              | What it does                                                         |
 | ------------------- | -------------------------------------------------------------------- |
-| `npm run dev`       | Vite dev server with hot module reload                               |
-| `npm run build`     | Type-check, then build a static site into `dist/`                    |
-| `npm run preview`   | Serve the production build locally                                   |
-| `npm run typecheck` | `tsc --noEmit` in strict mode                                        |
-| `npm run lint`      | ESLint (TypeScript + TSDoc rules), zero warnings allowed             |
-| `npm run format`    | Format everything with Prettier (`format:check` to only check)       |
-| `npm test`          | Run the Vitest unit tests once (`test:watch` for watch mode)         |
-| `npm run e2e`       | Serve `dist/` and play it in headless Chromium (needs a build first) |
+| `pnpm dev`          | Vite dev server with hot module reload                               |
+| `pnpm build`        | Type-check, then build a static site into `dist/`                    |
+| `pnpm preview`      | Serve the production build locally                                   |
+| `pnpm typecheck`    | `tsc --noEmit` in strict mode                                        |
+| `pnpm lint`         | ESLint (TypeScript + TSDoc rules), zero warnings allowed             |
+| `pnpm format`       | Format everything with Prettier (`format:check` to only check)       |
+| `pnpm test`         | Run the Vitest unit tests once (`test:watch` for watch mode)         |
+| `pnpm e2e`          | Serve `dist/` and play it in headless Chromium (needs a build first) |
 
 ## Deploying
 
-`npm run build` produces a fully static `dist/` folder with **relative** asset paths
+`pnpm build` produces a fully static `dist/` folder with **relative** asset paths
 (`base: './'`), so it can be hosted from any URL or sub-path: GitHub Pages, Netlify, itch.io,
 an S3 bucket or any static file server. Just upload the contents of `dist/`.
 
