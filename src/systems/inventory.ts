@@ -155,23 +155,32 @@ export function pickupRefusal(e: Entity, it: LootItem): string | null {
 }
 
 /**
- * Handles the player pressing E: picks up the nearest item within
- * {@link PICK_RANGE} unless it would be wasted.
+ * Handles the player pressing E: picks up the nearest eligible item within
+ * {@link PICK_RANGE}. If the closest item would be wasted (full HP/armor), skips
+ * to the next nearest pickable item; only then shows the refusal for the closest
+ * item.
  *
  * @param world - The game world.
  * @returns `true` if something was picked up.
  */
 export function playerPickup(world: World): boolean {
   const p = world.player;
-  const it = nearestLoot(world.loot, p.x, p.y, PICK_RANGE);
-  if (!it) return false;
-  const refusal = pickupRefusal(p, it);
-  if (refusal) {
-    showMessage(world, refusal);
-    return false;
+  const pickable = nearestLoot(
+    world.loot,
+    p.x,
+    p.y,
+    PICK_RANGE,
+    (it) => pickupRefusal(p, it) === null,
+  );
+  if (pickable) {
+    applyLoot(world, p, pickable);
+    return true;
   }
-  applyLoot(world, p, it);
-  return true;
+  const nearest = nearestLoot(world.loot, p.x, p.y, PICK_RANGE);
+  if (!nearest) return false;
+  const refusal = pickupRefusal(p, nearest);
+  if (refusal) showMessage(world, refusal);
+  return false;
 }
 
 /**
