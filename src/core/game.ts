@@ -68,7 +68,7 @@ export class Game {
     this.viewport = new Viewport(canvas);
     this.camera = new Camera(this.viewport.width, this.viewport.height);
     this.viewport.onResize((w, h) => this.camera.resize(w, h));
-    this.screens = new Screens(() => this.startMatch());
+    this.screens = new Screens(() => this.startMatch(), () => this.exitSpectate());
     this.world = createMatch(this.camera, null);
     this.world.phase = 'start';
     this.minimapBase = buildMinimapBase(this.world);
@@ -110,7 +110,12 @@ export class Game {
    * @param now - Frame timestamp in ms.
    */
   private frame(dt: number, now: number): void {
-    if (this.world.phase === 'playing') this.update(dt);
+    if (this.world.phase === 'playing') {
+      this.update(dt);
+      this.syncSpectateUi();
+    } else {
+      this.screens.hideSpectateBar();
+    }
     if (this.world.phase === 'start') renderAttract(this.viewport, this.world, now);
     else renderGame(this.viewport, this.world, this.minimapBase, this.input.mouse);
     this.input.endFrame();
@@ -122,19 +127,38 @@ export class Game {
    * @param outcome - How the match ended.
    */
   private endMatch(outcome: MatchOutcome): void {
+    this.screens.hideSpectateBar();
     this.screens.showEnd(buildEndSummary(this.world, outcome), outcome === 'won');
   }
 
+  /** Stops spectating and shows the defeat summary while bots may still be fighting. */
+  private exitSpectate(): void {
+    const w = this.world;
+    if (w.phase !== 'playing' || w.player.alive || !w.spectating) return;
+    w.spectating = false;
+    w.phase = 'dead';
+    this.endMatch('dead');
+  }
+
+  /** Shows the exit control while the player is eliminated but still spectating. */
+  private syncSpectateUi(): void {
+    const w = this.world;
+    if (!w.player.alive && w.spectating) this.screens.showSpectateBar();
+    else this.screens.hideSpectateBar();
+  }
+
   /**
-   * Handles discrete key presses: R reload, E pick up, 1/2/Q switch weapon,
-   * Enter/Space start a match from the start or end screen.
+   * Handles discrete key presses: R reload, E pick up (or exit spectate), 1/2/Q
+   * switch weapon, Enter/Space start a match from the start or end screen.
    *
    * @param k - Lower-cased key.
    */
   private handleKey(k: string): void {
     const w = this.world;
     const p = w.player;
-    if (w.phase === 'playing' && p.alive) {
+    if (w.phase === 'playing' && !p.alive && w.spectating && k === 'e') {
+      this.exitSpectate();
+    } else if (w.phase === 'playing' && p.alive) {
       if (k === 'r') startReload(p);
       else if (k === 'e') playerPickup(w);
       else if (k === '1') switchSlot(p, 0);

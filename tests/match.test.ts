@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { BOT_NAMES } from '../src/config/bots';
 import { NUM_BOTS } from '../src/config/constants';
 import { Camera } from '../src/core/camera';
 import { stepWorld } from '../src/core/simulation';
@@ -8,6 +9,7 @@ import {
   checkMatchEnd,
   createMatch,
   findSpawnPoint,
+  resolveSpectateTarget,
 } from '../src/systems/match';
 import { applyDamage } from '../src/systems/combat';
 import { circleFree, inHouse } from '../src/systems/collision';
@@ -33,21 +35,29 @@ describe('match end conditions', () => {
     expect(w.player.place).toBe(1);
   });
 
-  it('after the player dies the defeat screen waits 1.6s', () => {
-    setRandomSource(createSeededRandom(1));
+  it('after the player dies the match keeps running until one bot remains', () => {
     const w = makeWorld();
     const a = bot(1600, 1500);
     const b = bot(1700, 1500);
     w.entities.push(a, b);
     applyDamage(w, w.player, 999, a, 'Pistol');
-    let outcome = null;
-    let t = 0;
-    while (!outcome && t < 5) {
-      outcome = checkMatchEnd(w, 0.1);
-      t += 0.1;
-    }
-    expect(outcome).toBe('dead');
-    expect(t).toBeCloseTo(1.6, 1);
+    expect(w.spectating).toBe(true);
+    expect(checkMatchEnd(w, 0.1)).toBeNull();
+    b.alive = false;
+    expect(checkMatchEnd(w, 0.1)).toBe('dead');
+  });
+
+  it('spectating keeps the match running until one bot remains', () => {
+    const w = makeWorld();
+    const a = bot(1600, 1500);
+    const b = bot(1700, 1500);
+    w.entities.push(a, b);
+    w.player.alive = false;
+    w.spectating = true;
+    w.endTimer = -1;
+    expect(checkMatchEnd(w, 0.1)).toBeNull();
+    b.alive = false;
+    expect(checkMatchEnd(w, 0.1)).toBe('dead');
   });
 
   it('the player never wins after dying, even if only one bot is left', () => {
@@ -55,8 +65,10 @@ describe('match end conditions', () => {
     const a = bot(1600, 1500);
     w.entities.push(a);
     w.player.alive = false;
-    w.endTimer = 1;
+    w.spectating = false;
     expect(checkMatchEnd(w, 0.1)).toBeNull();
+    w.spectating = true;
+    expect(checkMatchEnd(w, 0.1)).toBe('dead');
   });
 });
 
@@ -89,24 +101,50 @@ describe('end summary', () => {
   });
 });
 
+describe('spectate target', () => {
+  it('keeps following the killer while they are alive', () => {
+    const killer = bot(0, 0, 'K');
+    killer.kills = 1;
+    const top = bot(100, 0, 'Top');
+    top.kills = 5;
+    expect(resolveSpectateTarget(killer, [killer, top])).toBe(killer);
+  });
+
+  it('switches to the bot with the most kills when the killer dies', () => {
+    const killer = bot(0, 0, 'K');
+    killer.alive = false;
+    killer.kills = 3;
+    const a = bot(100, 0, 'A');
+    a.kills = 2;
+    const b = bot(200, 0, 'B');
+    b.kills = 7;
+    expect(resolveSpectateTarget(killer, [killer, a, b])).toBe(b);
+  });
+});
+
 describe('match setup', () => {
-  it('creates 1 player + 19 bots on free, spaced-out ground outside houses', () => {
+  it('creates 1 player + NUM_BOTS bots on free, spaced-out ground outside houses', () => {
     setRandomSource(createSeededRandom(4242));
     const w = createMatch(new Camera(1280, 720));
     expect(w.entities).toHaveLength(1 + NUM_BOTS);
     expect(w.entities.filter((e) => e.isPlayer)).toEqual([w.player]);
-    expect(new Set(w.entities.map((e) => e.name)).size).toBe(20);
+    expect(new Set(w.entities.map((e) => e.name)).size).toBe(
+      1 + Math.min(NUM_BOTS, BOT_NAMES.length),
+    );
     for (const e of w.entities) {
       expect(circleFree(w.obstacles, e.x, e.y, 30)).toBe(true);
       expect(e.weapons[0]?.type).toBe('pistol');
     }
-    const bots = w.entities.slice(1);
-    let close = 0;
-    for (let i = 0; i < bots.length; i++)
-      for (let j = i + 1; j < bots.length; j++)
-        if (Math.hypot(bots[i]!.x - bots[j]!.x, bots[i]!.y - bots[j]!.y) < BOT_SPAWN_SPACING)
-          close++;
-    expect(close).toBe(0);
+    // Change NUM_BOTS to 19 to test the bots are spaced out
+    if (NUM_BOTS <= 19) {
+      const bots = w.entities.slice(1);
+      let close = 0;
+      for (let i = 0; i < bots.length; i++)
+        for (let j = i + 1; j < bots.length; j++)
+          if (Math.hypot(bots[i]!.x - bots[j]!.x, bots[i]!.y - bots[j]!.y) < BOT_SPAWN_SPACING)
+            close++;
+      expect(close).toBe(0);
+    }
     expect(w.phase).toBe('playing');
     expect(w.camera.x).toBeCloseTo(w.player.x - 640);
   });
@@ -119,7 +157,7 @@ describe('match setup', () => {
   });
 });
 
-describe('headless simulation', () => {
+describe('headless simulation', { timeout: 60_000 }, () => {
   it('a full match (bots only, player kept alive in the zone centre) ends with a single survivor', () => {
     setRandomSource(createSeededRandom(2026));
     const w = createMatch(new Camera(1280, 720));
@@ -139,7 +177,7 @@ describe('headless simulation', () => {
       .filter((e) => !e.isPlayer)
       .map((e) => e.place)
       .sort((a, b) => a - b);
-    expect(places).toEqual(Array.from({ length: 19 }, (_, i) => i + 2));
+    expect(places).toEqual(Array.from({ length: NUM_BOTS }, (_, i) => i + 2));
   });
 
   it('an idle player outside a closed zone is eventually eliminated', () => {

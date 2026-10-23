@@ -172,7 +172,6 @@ describe('firing', () => {
     const sound = new RecordingSound();
     const w = makeWorld({ sound });
     tryShoot(w, w.player);
-    expect(sound.played[0]?.kind).toBe('shot');
-    expect(sound.played[0]?.extra).toBe(2200);
+    expect(sound.played[0]?.kind).toBe('shot_pistol');
   });
 });

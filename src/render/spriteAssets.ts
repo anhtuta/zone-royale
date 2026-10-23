@@ -61,8 +61,9 @@ export function drawCombatantSprite(
   const jacketHi = isPlayer ? '#42a5f5' : shade(tint, 25);
   const jacketLo = isPlayer ? '#1565c0' : shade(tint, -35);
 
-  drawLeg(ctx, -5, -4, -5 + spread, 11 + swing, -5 + spread * 0.4, 6 + swing * 0.35);
-  drawLeg(ctx, -5, 4, -5 - spread, 11 - swing, -5 - spread * 0.4, 6 - swing * 0.35);
+  // Idle feet/knees sit under each hip; walk offsets stack on top (stride 0 → no overlap).
+  drawLeg(ctx, -5, -4, -5 + spread, 9 + swing, -5 + spread * 0.4, 2 + swing * 0.35);
+  drawLeg(ctx, -5, 4, -5 - spread, 13 - swing, -5 - spread * 0.4, 8 - swing * 0.35);
 
   const offHandX = -2 + armSwing * 0.35;
   const offHandY = -13 - armSwing;

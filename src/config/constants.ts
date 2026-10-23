@@ -10,7 +10,7 @@ export const MAP_SIZE = 3000;
 /** A full turn in radians (2π). */
 export const TAU = Math.PI * 2;
 
-/** Number of AI opponents spawned in every match (plus the human player = 20). */
+/** Number of AI opponents spawned in every match (plus one human player). */
 export const NUM_BOTS = 19;
 
 /** Player movement speed in pixels per second. */
@@ -63,9 +63,6 @@ export const SFX_PER_STEP = 6;
 
 /** Sounds further than this from the player are not played. */
 export const SFX_MAX_DISTANCE = 1200;
-
-/** Seconds between the player's death and the end screen appearing. */
-export const DEATH_SCREEN_DELAY = 1.6;
 
 /** Longest simulation step allowed per frame, in seconds (avoids tunnelling after tab switches). */
 export const MAX_FRAME_DT = 0.05;

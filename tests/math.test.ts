@@ -36,6 +36,7 @@ describe('math helpers', () => {
     expect(angleDelta(Math.PI / 2, 0)).toBeCloseTo(-Math.PI / 2);
     // wrapping across ±π
     expect(angleDelta(Math.PI - 0.1, -Math.PI + 0.1)).toBeCloseTo(0.2);
+    expect(angleDelta(4 * Math.PI, 0)).toBeCloseTo(0);
   });
 
   it('formatTime renders m:ss and rounds up', () => {

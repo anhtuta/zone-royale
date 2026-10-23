@@ -25,21 +25,36 @@ export class Screens {
   private readonly start = byId('startScreen');
   /** End screen overlay. */
   private readonly end = byId('endScreen');
+  /** Button shown while spectating after elimination. */
+  private readonly spectateBar = byId('spectateBar');
 
   /**
    * Wires the PLAY and PLAY AGAIN buttons.
    *
-   * @param onPlay - Called when either button is clicked.
+   * @param onPlay - Called when either play-again button is clicked.
+   * @param onExitSpectate - Leaves spectate mode and opens the defeat summary.
    */
-  constructor(onPlay: () => void) {
+  constructor(onPlay: () => void, onExitSpectate: () => void) {
     byId('startBtn').addEventListener('click', onPlay);
     byId('restartBtn').addEventListener('click', onPlay);
+    byId('exitSpectateBtn').addEventListener('click', onExitSpectate);
   }
 
   /** Hides both overlays (a match is starting). */
   hideAll(): void {
     this.start.classList.add('hidden');
     this.end.classList.add('hidden');
+    this.hideSpectateBar();
+  }
+
+  /** Shows the exit control while the player spectates after elimination. */
+  showSpectateBar(): void {
+    this.spectateBar.classList.remove('hidden');
+  }
+
+  /** Hides the spectate controls. */
+  hideSpectateBar(): void {
+    this.spectateBar.classList.add('hidden');
   }
 
   /**

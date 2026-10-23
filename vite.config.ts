@@ -17,5 +17,12 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary', 'html'],
+      reportsDirectory: 'coverage',
+      include: ['src/**/*.ts'],
+      exclude: ['src/main.ts'],
+    },
   },
 });

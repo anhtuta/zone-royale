@@ -14,13 +14,17 @@ import type { Floater, KillFeedEntry, Particle, Toast } from '../entities/effect
 import type { Entity } from '../entities/entity';
 import type { LootItem } from '../entities/loot';
 import type { Zone } from '../systems/zone';
+import type { WeaponType } from '../config/weapons';
 import type { Decor, House, Obstacle } from '../world/types';
 
 /** High-level state of the game. */
 export type GamePhase = 'start' | 'playing' | 'dead' | 'won';
 
+/** Per-weapon gunshot SFX id (matches {@link WeaponType}). */
+export type WeaponShotKind = `shot_${WeaponType}`;
+
 /** Kinds of sound effect the game can request. */
-export type SoundKind = 'shot' | 'hit' | 'pickup' | 'death';
+export type SoundKind = WeaponShotKind | 'hit' | 'pickup' | 'death';
 
 /** Abstract audio output so logic does not depend on the Web Audio API. */
 export interface SoundSink {
@@ -29,7 +33,7 @@ export interface SoundSink {
    *
    * @param kind - Which effect.
    * @param volume - Linear gain (already attenuated by distance).
-   * @param extra - Effect-specific parameter (low-pass cutoff in Hz for shots).
+   * @param extra - Reserved for effect-specific parameters (unused for weapon shots).
    */
   play(kind: SoundKind, volume: number, extra?: number): void;
 }
@@ -64,9 +68,11 @@ export interface World {
   camera: Camera;
   /** Who the camera follows after the player dies. */
   camTarget: Entity | null;
+  /** When true, the match keeps simulating after the player dies until one bot remains. */
+  spectating: boolean;
   /** Seconds since the match started. */
   gameTime: number;
-  /** Countdown from the player's death to the end screen (-1 = not running). */
+  /** Unused legacy field (always `-1`). */
   endTimer: number;
   /** Screen-shake intensity in pixels. */
   shake: number;

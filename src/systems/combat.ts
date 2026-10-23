@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import { ARMOR_ABSORB, DEATH_SCREEN_DELAY, MEDKIT_AMOUNT, TAU } from '../config/constants';
+import { ARMOR_ABSORB, MEDKIT_AMOUNT, TAU } from '../config/constants';
 import { AMMO_TYPES } from '../config/weapons';
 import type { World } from '../core/world';
 import type { Entity } from '../entities/entity';
@@ -187,6 +187,7 @@ export function eliminate(
     showMessage(world, 'Eliminated ' + e.name + '!  (' + alive + ' left)');
   if (e.isPlayer) {
     world.camTarget = src && src.alive ? src : null;
-    world.endTimer = DEATH_SCREEN_DELAY;
+    world.spectating = true;
+    world.endTimer = -1;
   }
 }

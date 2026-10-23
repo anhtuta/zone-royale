@@ -138,6 +138,16 @@ describe('player pickup rules', () => {
     expect(w.loot).toHaveLength(1);
     expect(w.message.text).toBe('Health is already full');
   });
+
+  it('playerPickup skips a wasted med kit and takes the next nearest loot', () => {
+    const w = makeWorld();
+    w.loot.push({ kind: 'health', amount: 40, x: w.player.x, y: w.player.y });
+    w.loot.push({ kind: 'weapon', type: 'smg', mag: 30, x: w.player.x + 25, y: w.player.y });
+    expect(playerPickup(w)).toBe(true);
+    expect(w.player.weapons[1]?.type).toBe('smg');
+    expect(w.loot).toHaveLength(1);
+    expect(w.loot[0]?.kind).toBe('health');
+  });
 });
 
 describe('botWants', () => {

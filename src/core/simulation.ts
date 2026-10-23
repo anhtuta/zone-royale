@@ -14,7 +14,7 @@ import { resolveCollision, separateBodies } from '../systems/collision';
 import { applyDamage } from '../systems/combat';
 import { updateEffects } from '../systems/effects';
 import { pushSystemFeed } from '../systems/feedback';
-import { checkMatchEnd, type MatchOutcome } from '../systems/match';
+import { checkMatchEnd, resolveSpectateTarget, type MatchOutcome } from '../systems/match';
 import { updatePlayer, type PlayerControls } from '../systems/player';
 import { tickWeaponTimers } from '../systems/weapons';
 import { isOutsideZone, updateZone, zoneDps, zoneTickDamage } from '../systems/zone';
@@ -28,10 +28,9 @@ import type { World } from './world';
  * @returns The entity to follow, or `null`.
  */
 function updateCameraTarget(world: World): World['camTarget'] {
-  if (!world.player.alive && (!world.camTarget || !world.camTarget.alive)) {
-    world.camTarget = world.entities.find((e) => e.alive) ?? null;
-  }
-  return world.player.alive ? world.player : world.camTarget;
+  if (world.player.alive) return world.player;
+  world.camTarget = resolveSpectateTarget(world.camTarget, world.entities);
+  return world.camTarget;
 }
 
 /**

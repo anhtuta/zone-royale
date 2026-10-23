@@ -10,7 +10,7 @@ import type { Bullet } from '../entities/bullet';
 import type { Entity, SlotIndex } from '../entities/entity';
 import { rand, random } from '../utils/random';
 import { showMessage } from './feedback';
-import { emitSound } from './sound';
+import { emitWeaponShot } from './sound';
 
 /** Delay after switching weapons before the new one can fire. */
 export const SWITCH_DELAY = 0.25;
@@ -162,6 +162,6 @@ export function tryShoot(world: World, e: Entity): boolean {
     flash: true,
   });
   if (e.isPlayer) world.shake = Math.max(world.shake, WS.pellets > 1 ? 6 : WS.tier >= 4 ? 7 : 2.5);
-  emitSound(world, 'shot', e.x, e.y, WS.pellets > 1 ? 900 : WS.tier >= 4 ? 700 : 2200);
+  emitWeaponShot(world, w.type, e.x, e.y);
   return true;
 }
