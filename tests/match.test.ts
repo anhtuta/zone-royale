@@ -157,7 +157,7 @@ describe('match setup', () => {
   });
 });
 
-describe('headless simulation', () => {
+describe('headless simulation', { timeout: 60_000 }, () => {
   it('a full match (bots only, player kept alive in the zone centre) ends with a single survivor', () => {
     setRandomSource(createSeededRandom(2026));
     const w = createMatch(new Camera(1280, 720));

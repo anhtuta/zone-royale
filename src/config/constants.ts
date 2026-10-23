@@ -10,7 +10,7 @@ export const MAP_SIZE = 3000;
 /** A full turn in radians (2π). */
 export const TAU = Math.PI * 2;
 
-/** Number of AI opponents spawned in every match (plus the human player = 20). */
+/** Number of AI opponents spawned in every match (plus one human player). */
 export const NUM_BOTS = 19;
 
 /** Player movement speed in pixels per second. */
