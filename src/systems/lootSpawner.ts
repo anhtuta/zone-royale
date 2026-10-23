@@ -14,6 +14,9 @@ import { circleFree } from './collision';
 /** Number of loot spots scattered in the open (outside houses). */
 export const OPEN_LOOT_SPOTS = 130;
 
+/** Collision radius used when validating loot spot positions. */
+const LOOT_CLEARANCE = 22;
+
 /** Ammo families weighted for random ammo drops (light and medium are twice as common). */
 const AMMO_WEIGHTS: readonly AmmoType[] = ['light', 'light', 'shells', 'medium', 'medium', 'heavy'];
 
@@ -56,22 +59,26 @@ export function categoryForRoll(roll: number): LootCategory {
  *
  * @param x - Spot X.
  * @param y - Spot Y.
+ * @param obstacles - Map obstacles (paired ammo must not spawn inside geometry).
  * @returns One or two new items.
  */
-export function rollLoot(x: number, y: number): LootItem[] {
+export function rollLoot(x: number, y: number, obstacles: readonly Obstacle[]): LootItem[] {
   const category = categoryForRoll(random());
   if (category === 'weapon') {
     const type = weaponForRoll(random());
     const ammo = WEAPONS[type].ammo;
     const a = rand(0, TAU);
+    const ox = x + Math.cos(a) * 30;
+    const oy = y + Math.sin(a) * 30;
+    const ammoFree = circleFree(obstacles, ox, oy, LOOT_CLEARANCE);
     return [
       { kind: 'weapon', type, mag: WEAPONS[type].mag, x, y },
       {
         kind: 'ammo',
         type: ammo,
         amount: AMMO_AMOUNT[ammo],
-        x: x + Math.cos(a) * 30,
-        y: y + Math.sin(a) * 30,
+        x: ammoFree ? ox : x,
+        y: ammoFree ? oy : y,
       },
     ];
   }
@@ -103,7 +110,7 @@ export function spawnInitialLoot(
         const x = rand(h.x + 40, h.x + h.w - 40);
         const y = rand(h.y + 40, h.y + h.h - 40);
         if (circleFree(obstacles, x, y, 22)) {
-          loot.push(...rollLoot(x, y));
+          loot.push(...rollLoot(x, y, obstacles));
           break;
         }
       }
@@ -114,7 +121,7 @@ export function spawnInitialLoot(
       const x = rand(80, MAP_SIZE - 80);
       const y = rand(80, MAP_SIZE - 80);
       if (circleFree(obstacles, x, y, 26)) {
-        loot.push(...rollLoot(x, y));
+        loot.push(...rollLoot(x, y, obstacles));
         break;
       }
     }
