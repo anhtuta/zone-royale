@@ -134,7 +134,8 @@ export function resolveSpectateTarget(
 /**
  * Checks the end conditions after a simulation step:
  * - the player wins as soon as they are the last one alive (placement #1);
- * - while spectating after death, the match ends when only one bot remains.
+ * - while spectating after death, the match ends when at most one combatant
+ *   remains (including none, e.g. zone damage killing everyone in one step).
  *
  * @param world - The game world.
  * @param _dt - Step in seconds (unused; kept for a stable call site).
@@ -147,7 +148,7 @@ export function checkMatchEnd(world: World, _dt: number): MatchOutcome | null {
     p.place = 1;
     return 'won';
   }
-  if (!p.alive && world.spectating && alive === 1) return 'dead';
+  if (!p.alive && world.spectating && alive <= 1) return 'dead';
   return null;
 }
 
