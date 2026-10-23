@@ -38,7 +38,7 @@ describe('positional sound', () => {
   });
 
   it('falls off with distance from the listener', () => {
-    expect(soundVolume(0)).toBeCloseTo(0.5);
+    expect(soundVolume(0)).toBeCloseTo(1);
     expect(soundVolume(SFX_MAX_DISTANCE)).toBe(0);
   });
 });

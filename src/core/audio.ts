@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 
+import { SFX_BLIP_GAIN, SFX_WEAPON_GAIN } from '../config/constants';
 import type { WeaponType } from '../config/weapons';
 import type { SoundKind, SoundSink } from './world';
 
@@ -81,7 +82,7 @@ export class AudioEngine implements SoundSink {
     o.frequency.setValueAtTime(kind === 'hit' ? 520 : kind === 'pickup' ? 660 : 180, t);
     o.frequency.exponentialRampToValueAtTime(kind === 'pickup' ? 990 : 90, t + 0.12);
     o.connect(g);
-    g.gain.setValueAtTime(volume * 0.85, t);
+    g.gain.setValueAtTime(volume * SFX_BLIP_GAIN, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
     o.start(t);
     o.stop(t + 0.15);
@@ -91,6 +92,7 @@ export class AudioEngine implements SoundSink {
    * High-contrast procedural gunshots — each weapon has a distinct timbre and length.
    */
   private playWeaponShot(ctx: AudioContext, weapon: WeaponType, volume: number): void {
+    const amp = volume * SFX_WEAPON_GAIN;
     const t = ctx.currentTime;
     const noise = this.noise!;
     const out = ctx.createGain();
@@ -111,7 +113,7 @@ export class AudioEngine implements SoundSink {
       s.connect(f);
       f.connect(g);
       g.connect(out);
-      g.gain.setValueAtTime(volume * gain, t);
+      g.gain.setValueAtTime(amp * gain, t);
       g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
       s.start(t);
       s.stop(t + duration + 0.02);
@@ -125,7 +127,7 @@ export class AudioEngine implements SoundSink {
       const g = ctx.createGain();
       o.connect(g);
       g.connect(out);
-      g.gain.setValueAtTime(volume * gain, t);
+      g.gain.setValueAtTime(amp * gain, t);
       g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
       o.start(t);
       o.stop(t + duration + 0.02);
