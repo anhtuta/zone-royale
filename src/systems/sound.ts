@@ -9,6 +9,18 @@ import type { SoundKind, World } from '../core/world';
 import { dist } from '../utils/math';
 
 /**
+ * World position used for positional SFX (earshot checks and volume falloff).
+ *
+ * @param world - The game world.
+ * @returns Listener X/Y — the player while alive, otherwise the spectate target.
+ */
+export function soundListenerPosition(world: World): { x: number; y: number } {
+  const ear =
+    !world.player.alive && world.spectating && world.camTarget ? world.camTarget : world.player;
+  return { x: ear.x, y: ear.y };
+}
+
+/**
  * Volume for a sound at a given distance from the listener.
  *
  * @param distance - Distance from the player in pixels.
@@ -37,7 +49,8 @@ export function emitSound(
   extra?: number,
 ): void {
   if (!world.sound || world.sfxBudget <= 0) return;
-  const d = dist(x, y, world.player.x, world.player.y);
+  const ear = soundListenerPosition(world);
+  const d = dist(x, y, ear.x, ear.y);
   if (d > SFX_MAX_DISTANCE) return;
   world.sfxBudget--;
   world.sound.play(kind, soundVolume(d), extra);
