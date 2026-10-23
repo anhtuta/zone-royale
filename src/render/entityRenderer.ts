@@ -9,6 +9,7 @@ import { WEAPONS } from '../config/weapons';
 import type { Entity } from '../entities/entity';
 import { shade } from '../utils/color';
 import { healthColor } from './draw';
+import { combatantSpritesReady, drawCombatantSprite } from './spriteAssets';
 
 /**
  * Draws a combatant: shadow, gun, hands, body, armor ring, hit flash and —
@@ -16,10 +17,12 @@ import { healthColor } from './draw';
  *
  * @param ctx - Drawing context (world transform applied).
  * @param e - The entity.
+ * @param gameTime - Match time in seconds (walk animation).
  */
-export function drawEntity(ctx: CanvasRenderingContext2D, e: Entity): void {
+export function drawEntity(ctx: CanvasRenderingContext2D, e: Entity, gameTime: number): void {
   const held = e.weapons[e.slot];
   const WS = held ? WEAPONS[held.type] : null;
+  const useSprite = combatantSpritesReady();
   ctx.save();
   ctx.translate(e.x, e.y);
   ctx.fillStyle = 'rgba(0,0,0,.25)';
@@ -28,35 +31,41 @@ export function drawEntity(ctx: CanvasRenderingContext2D, e: Entity): void {
   ctx.fill();
   ctx.save();
   ctx.rotate(e.angle);
-  if (WS) {
-    ctx.fillStyle = '#263238';
-    ctx.fillRect(e.r - 6, -WS.w / 2, WS.len + 6, WS.w);
-    ctx.fillStyle = WS.color;
-    ctx.fillRect(e.r - 2, -WS.w / 2 + 1.5, WS.len * 0.55, WS.w - 3);
+  if (useSprite) {
+    drawCombatantSprite(ctx, e.isPlayer, e.color, e.vx, e.vy, gameTime, e.x * 0.02 + e.y * 0.013, WS);
+  } else {
+    if (WS) {
+      ctx.fillStyle = '#263238';
+      ctx.fillRect(e.r - 6, -WS.w / 2, WS.len + 6, WS.w);
+      ctx.fillStyle = WS.color;
+      ctx.fillRect(e.r - 2, -WS.w / 2 + 1.5, WS.len * 0.55, WS.w - 3);
+    }
+    ctx.fillStyle = shade(e.color, -30);
+    ctx.strokeStyle = 'rgba(0,0,0,.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(e.r - 2, 5, 5.5, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(e.r - 4, -6, 5.5, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
   }
-  ctx.fillStyle = shade(e.color, -30);
-  ctx.strokeStyle = 'rgba(0,0,0,.5)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(e.r - 2, 5, 5.5, 0, TAU);
-  ctx.fill();
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(e.r - 4, -6, 5.5, 0, TAU);
-  ctx.fill();
-  ctx.stroke();
   ctx.restore();
-  ctx.fillStyle = e.color;
-  ctx.strokeStyle = e.isPlayer ? '#fff' : shade(e.color, -70);
-  ctx.lineWidth = e.isPlayer ? 3 : 2.5;
-  ctx.beginPath();
-  ctx.arc(0, 0, e.r, 0, TAU);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,.25)';
-  ctx.beginPath();
-  ctx.arc(-5, -6, e.r * 0.45, 0, TAU);
-  ctx.fill();
+  if (!useSprite) {
+    ctx.fillStyle = e.color;
+    ctx.strokeStyle = e.isPlayer ? '#fff' : shade(e.color, -70);
+    ctx.lineWidth = e.isPlayer ? 3 : 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, e.r, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.25)';
+    ctx.beginPath();
+    ctx.arc(-5, -6, e.r * 0.45, 0, TAU);
+    ctx.fill();
+  }
   if (e.armor > 0) {
     ctx.strokeStyle = 'rgba(66,165,245,.9)';
     ctx.lineWidth = 3;
