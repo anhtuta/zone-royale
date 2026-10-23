@@ -148,15 +148,17 @@ export class Game {
   }
 
   /**
-   * Handles discrete key presses: R reload, E pick up, 1/2/Q switch weapon,
-   * Enter/Space start a match from the start or end screen.
+   * Handles discrete key presses: R reload, E pick up (or exit spectate), 1/2/Q
+   * switch weapon, Enter/Space start a match from the start or end screen.
    *
    * @param k - Lower-cased key.
    */
   private handleKey(k: string): void {
     const w = this.world;
     const p = w.player;
-    if (w.phase === 'playing' && p.alive) {
+    if (w.phase === 'playing' && !p.alive && w.spectating && k === 'e') {
+      this.exitSpectate();
+    } else if (w.phase === 'playing' && p.alive) {
       if (k === 'r') startReload(p);
       else if (k === 'e') playerPickup(w);
       else if (k === '1') switchSlot(p, 0);
