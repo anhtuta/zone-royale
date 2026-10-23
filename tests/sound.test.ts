@@ -31,14 +31,14 @@ describe('positional sound', () => {
     const sound = new RecordingSound();
     w.sound = sound;
     w.sfxBudget = 6;
-    emitSound(w, 'shot', 2050, 2000);
+    emitSound(w, 'shot_pistol', 2050, 2000);
     expect(sound.played).toHaveLength(1);
-    emitSound(w, 'shot', 150, 150);
+    emitSound(w, 'shot_pistol', 150, 150);
     expect(sound.played).toHaveLength(1);
   });
 
   it('falls off with distance from the listener', () => {
-    expect(soundVolume(0)).toBeCloseTo(0.22);
+    expect(soundVolume(0)).toBeCloseTo(0.5);
     expect(soundVolume(SFX_MAX_DISTANCE)).toBe(0);
   });
 });

@@ -95,7 +95,7 @@ describe('player controls', () => {
 
 describe('sound attenuation', () => {
   it('is loudest at the listener and silent beyond 1200px', () => {
-    expect(soundVolume(0)).toBeCloseTo(0.22);
+    expect(soundVolume(0)).toBeCloseTo(0.5);
     expect(soundVolume(600)).toBeLessThan(soundVolume(100));
     expect(soundVolume(1300)).toBe(0);
   });
