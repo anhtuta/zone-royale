@@ -25,6 +25,13 @@ export const BOT_SIGHT = 520;
 /** Radius within which the player can pick up loot with the E key. */
 export const PICK_RANGE = 60;
 
+/**
+ * Clearance radius when validating loot positions. Paired weapon ammo is placed
+ * 30px from the weapon only if this circle is free at the offset; otherwise it
+ * shares the weapon spot.
+ */
+export const LOOT_CLEARANCE = 22;
+
 /** Radius within which the player auto-collects ammo boxes. */
 export const AMMO_AUTO_PICK_RANGE = 34;
 
