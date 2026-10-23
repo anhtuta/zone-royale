@@ -37,6 +37,7 @@ export function makeWorld(overrides: Partial<World> = {}): World {
     zone: createZone(),
     camera: new Camera(1280, 720),
     camTarget: player,
+    spectating: false,
     gameTime: 0,
     endTimer: -1,
     shake: 0,

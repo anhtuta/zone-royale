@@ -130,3 +130,22 @@ button:active {
   background-clip: text;
   color: transparent;
 }
+.spectate-bar {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 14px;
+  z-index: 6;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(12, 18, 28, 0.88);
+  border: 1px solid #34507a;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+.spectate-bar button {
+  font-size: 15px;
+  padding: 10px 32px;
+  letter-spacing: 1px;
+}

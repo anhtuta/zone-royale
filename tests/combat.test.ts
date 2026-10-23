@@ -102,14 +102,15 @@ describe('eliminations', () => {
     expect(w.killfeed.at(-1)).toMatchObject({ killer: null, victim: 'Zed' });
   });
 
-  it("the player's death starts the end-screen countdown and spectates the killer", () => {
+  it("the player's death starts spectating the killer", () => {
     const w = makeWorld();
     const a = bot(1600, 1500);
     w.entities.push(a);
     applyDamage(w, w.player, 500, a, 'SMG');
     expect(w.player.alive).toBe(false);
     expect(w.player.place).toBe(2);
-    expect(w.endTimer).toBeCloseTo(1.6);
+    expect(w.spectating).toBe(true);
+    expect(w.endTimer).toBe(-1);
     expect(w.camTarget).toBe(a);
     expect(a.kills).toBe(1);
   });

@@ -64,9 +64,11 @@ export interface World {
   camera: Camera;
   /** Who the camera follows after the player dies. */
   camTarget: Entity | null;
+  /** When true, the match keeps simulating after the player dies until one bot remains. */
+  spectating: boolean;
   /** Seconds since the match started. */
   gameTime: number;
-  /** Countdown from the player's death to the end screen (-1 = not running). */
+  /** Unused legacy field (always `-1`). */
   endTimer: number;
   /** Screen-shake intensity in pixels. */
   shake: number;

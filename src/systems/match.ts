@@ -100,6 +100,7 @@ export function createMatch(camera: Camera, sound: SoundSink | null = null): Wor
     zone,
     camera,
     camTarget: player,
+    spectating: false,
     gameTime: 0,
     endTimer: -1,
     shake: 0,
@@ -110,25 +111,43 @@ export function createMatch(camera: Camera, sound: SoundSink | null = null): Wor
 }
 
 /**
+ * Picks a bot to spectate: keep the current target while it is alive, otherwise
+ * the surviving bot with the most kills.
+ *
+ * @param camTarget - Current follow target (usually the player's killer).
+ * @param entities - All combatants.
+ * @returns A living bot to follow, or `null` if none remain.
+ */
+export function resolveSpectateTarget(
+  camTarget: Entity | null,
+  entities: readonly Entity[],
+): Entity | null {
+  if (camTarget?.alive && !camTarget.isPlayer) return camTarget;
+  let best: Entity | null = null;
+  for (const e of entities) {
+    if (!e.alive || e.isPlayer) continue;
+    if (!best || e.kills > best.kills) best = e;
+  }
+  return best;
+}
+
+/**
  * Checks the end conditions after a simulation step:
  * - the player wins as soon as they are the last one alive (placement #1);
- * - after the player dies a short countdown runs before the defeat screen.
+ * - while spectating after death, the match ends when only one bot remains.
  *
- * @param world - The game world (its `endTimer` is advanced).
- * @param dt - Step in seconds.
+ * @param world - The game world.
+ * @param _dt - Step in seconds (unused; kept for a stable call site).
  * @returns The outcome once the match is over, otherwise `null`.
  */
-export function checkMatchEnd(world: World, dt: number): MatchOutcome | null {
+export function checkMatchEnd(world: World, _dt: number): MatchOutcome | null {
   const alive = countAlive(world.entities);
   const p = world.player;
   if (p.alive && alive === 1) {
     p.place = 1;
     return 'won';
   }
-  if (!p.alive && world.endTimer > 0) {
-    world.endTimer -= dt;
-    if (world.endTimer <= 0) return 'dead';
-  }
+  if (!p.alive && world.spectating && alive === 1) return 'dead';
   return null;
 }
 

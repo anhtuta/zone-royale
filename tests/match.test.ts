@@ -8,6 +8,7 @@ import {
   checkMatchEnd,
   createMatch,
   findSpawnPoint,
+  resolveSpectateTarget,
 } from '../src/systems/match';
 import { applyDamage } from '../src/systems/combat';
 import { circleFree, inHouse } from '../src/systems/collision';
@@ -33,21 +34,29 @@ describe('match end conditions', () => {
     expect(w.player.place).toBe(1);
   });
 
-  it('after the player dies the defeat screen waits 1.6s', () => {
-    setRandomSource(createSeededRandom(1));
+  it('after the player dies the match keeps running until one bot remains', () => {
     const w = makeWorld();
     const a = bot(1600, 1500);
     const b = bot(1700, 1500);
     w.entities.push(a, b);
     applyDamage(w, w.player, 999, a, 'Pistol');
-    let outcome = null;
-    let t = 0;
-    while (!outcome && t < 5) {
-      outcome = checkMatchEnd(w, 0.1);
-      t += 0.1;
-    }
-    expect(outcome).toBe('dead');
-    expect(t).toBeCloseTo(1.6, 1);
+    expect(w.spectating).toBe(true);
+    expect(checkMatchEnd(w, 0.1)).toBeNull();
+    b.alive = false;
+    expect(checkMatchEnd(w, 0.1)).toBe('dead');
+  });
+
+  it('spectating keeps the match running until one bot remains', () => {
+    const w = makeWorld();
+    const a = bot(1600, 1500);
+    const b = bot(1700, 1500);
+    w.entities.push(a, b);
+    w.player.alive = false;
+    w.spectating = true;
+    w.endTimer = -1;
+    expect(checkMatchEnd(w, 0.1)).toBeNull();
+    b.alive = false;
+    expect(checkMatchEnd(w, 0.1)).toBe('dead');
   });
 
   it('the player never wins after dying, even if only one bot is left', () => {
@@ -55,8 +64,10 @@ describe('match end conditions', () => {
     const a = bot(1600, 1500);
     w.entities.push(a);
     w.player.alive = false;
-    w.endTimer = 1;
+    w.spectating = false;
     expect(checkMatchEnd(w, 0.1)).toBeNull();
+    w.spectating = true;
+    expect(checkMatchEnd(w, 0.1)).toBe('dead');
   });
 });
 
@@ -86,6 +97,27 @@ describe('end summary', () => {
     expect(s.title).toBe('ELIMINATED');
     expect(s.subtitle).toBe('You placed #4 of 20. Drop back in and claim the crown.');
     expect(s.time).toBe('1:35');
+  });
+});
+
+describe('spectate target', () => {
+  it('keeps following the killer while they are alive', () => {
+    const killer = bot(0, 0, 'K');
+    killer.kills = 1;
+    const top = bot(100, 0, 'Top');
+    top.kills = 5;
+    expect(resolveSpectateTarget(killer, [killer, top])).toBe(killer);
+  });
+
+  it('switches to the bot with the most kills when the killer dies', () => {
+    const killer = bot(0, 0, 'K');
+    killer.alive = false;
+    killer.kills = 3;
+    const a = bot(100, 0, 'A');
+    a.kills = 2;
+    const b = bot(200, 0, 'B');
+    b.kills = 7;
+    expect(resolveSpectateTarget(killer, [killer, a, b])).toBe(b);
   });
 });
 

@@ -64,9 +64,6 @@ export const SFX_PER_STEP = 6;
 /** Sounds further than this from the player are not played. */
 export const SFX_MAX_DISTANCE = 1200;
 
-/** Seconds between the player's death and the end screen appearing. */
-export const DEATH_SCREEN_DELAY = 1.6;
-
 /** Longest simulation step allowed per frame, in seconds (avoids tunnelling after tab switches). */
 export const MAX_FRAME_DT = 0.05;
 
