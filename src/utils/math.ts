@@ -66,7 +66,11 @@ export function dist(ax: number, ay: number, bx: number, by: number): number {
  * @returns The signed delta to add to `from`.
  */
 export function angleDelta(from: number, to: number): number {
-  return ((to - from + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  const tau = Math.PI * 2;
+  let d = (to - from) % tau;
+  if (d < 0) d += tau;
+  if (d > Math.PI) d -= tau;
+  return d;
 }
 
 /**
