@@ -64,6 +64,15 @@ export const SFX_PER_STEP = 6;
 /** Sounds further than this from the player are not played. */
 export const SFX_MAX_DISTANCE = 1200;
 
+/** Linear gain at the listener before distance falloff (0 = silent, 1 = full). */
+export const SFX_LISTENER_GAIN = 1;
+
+/** Extra gain on weapon shot synthesis (after distance attenuation). */
+export const SFX_WEAPON_GAIN = 1.4;
+
+/** Extra gain on hit / pickup / death blips (after distance attenuation). */
+export const SFX_BLIP_GAIN = 1.2;
+
 /** Longest simulation step allowed per frame, in seconds (avoids tunnelling after tab switches). */
 export const MAX_FRAME_DT = 0.05;
 
