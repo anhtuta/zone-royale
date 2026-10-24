@@ -1,9 +1,10 @@
 /**
- * Tree drawing: reference PNG sprite with a procedural three-clump fallback.
+ * Tree drawing: optional PNG sprite or procedural Canvas art (see {@link USE_OBSTACLE_IMAGES}).
  *
  * @packageDocumentation
  */
 
+import { USE_OBSTACLE_IMAGES } from '../config/env';
 import { TAU } from '../config/constants';
 import { shade } from '../utils/color';
 import type { TreeObstacle } from '../world/types';
@@ -14,11 +15,12 @@ let treeImage: HTMLImageElement | null = null;
 let treeLoadPromise: Promise<void> | null = null;
 
 /**
- * Loads the tree PNG once (safe to call multiple times).
+ * Loads the tree PNG when {@link USE_OBSTACLE_IMAGES} is enabled.
  *
- * @returns Resolves when the sprite is ready for {@link drawTree}.
+ * @returns Resolves immediately when images are disabled or already loaded.
  */
 export function loadTreeSprite(): Promise<void> {
+  if (!USE_OBSTACLE_IMAGES) return Promise.resolve();
   if (treeImage) return Promise.resolve();
   if (treeLoadPromise) return treeLoadPromise;
   treeLoadPromise = new Promise((resolve, reject) => {
@@ -53,62 +55,95 @@ export function drawTree(
     ctx.fill();
     return;
   }
-  if (treeImage) {
+  if (USE_OBSTACLE_IMAGES && treeImage) {
     const h = vr * 2.7;
     const w = h * (treeImage.naturalWidth / treeImage.naturalHeight);
-    const left = x - w / 2;
-    const top = y - h * 0.9;
-    ctx.drawImage(treeImage, left, top, w, h);
+    ctx.drawImage(treeImage, x - w / 2, y - h * 0.9, w, h);
     return;
   }
-  drawTreeProcedural(ctx, tree);
+  drawTreeCanvas(ctx, tree);
 }
 
 /**
- * Painterly three-clump tree when the PNG is not loaded yet.
+ * Painterly three-clump tree drawn with Canvas (no image).
  *
  * @param ctx - Drawing context.
  * @param tree - Tree obstacle.
  */
-function drawTreeProcedural(ctx: CanvasRenderingContext2D, tree: TreeObstacle): void {
+function drawTreeCanvas(ctx: CanvasRenderingContext2D, tree: TreeObstacle): void {
   const { x, y, r, vr, shade: sh } = tree;
-  const hi = shade('#c5e86c', sh);
-  const mid = shade('#5cb338', sh);
-  const lo = shade('#2d6b27', sh);
-  const trunk = shade('#6d4c2e', sh * 0.5);
-  const trunkLo = shade('#3e2723', sh * 0.5);
+  const hi = shade('#d4f171', sh);
+  const mid = shade('#6bc443', sh);
+  const lo = shade('#2a6b24', sh);
+  const deep = shade('#1e4d1a', sh);
+  const trunkHi = shade('#8d6e4a', sh * 0.4);
+  const trunk = shade('#5d4037', sh * 0.4);
+  const trunkLo = shade('#3e2723', sh * 0.4);
 
-  ctx.fillStyle = trunkLo;
-  ctx.beginPath();
-  ctx.moveTo(x - r * 0.35, y + r * 0.2);
-  ctx.lineTo(x - r * 0.28, y - r * 0.15);
-  ctx.lineTo(x + r * 0.28, y - r * 0.15);
-  ctx.lineTo(x + r * 0.35, y + r * 0.2);
-  ctx.lineTo(x + r * 0.15, y + r * 0.45);
-  ctx.lineTo(x - r * 0.12, y + r * 0.42);
-  ctx.closePath();
-  ctx.fill();
+  drawTrunk(ctx, x, y, r, trunkHi, trunk, trunkLo);
 
-  ctx.fillStyle = trunk;
-  ctx.fillRect(x - r * 0.22, y - r * 0.35, r * 0.44, r * 0.55);
-
-  foliageClump(ctx, x, y - vr * 0.55, vr * 0.72, hi, mid, lo);
-  foliageClump(ctx, x - vr * 0.62, y - vr * 0.08, vr * 0.58, hi, mid, lo);
-  foliageClump(ctx, x + vr * 0.62, y - vr * 0.08, vr * 0.58, hi, mid, lo);
+  fuzzyClump(ctx, x, y - vr * 0.62, vr * 0.78, hi, mid, lo, deep, 0.2);
+  fuzzyClump(ctx, x - vr * 0.64, y - vr * 0.05, vr * 0.62, hi, mid, lo, deep, 1.7);
+  fuzzyClump(ctx, x + vr * 0.64, y - vr * 0.05, vr * 0.62, hi, mid, lo, deep, 3.1);
 }
 
 /**
- * One soft leaf mass with a top-left highlight.
+ * Short trunk with a flared, jagged base.
  *
- * @param ctx - Drawing context.
+ * @param ctx - Canvas context.
+ * @param x - Base X.
+ * @param y - Base Y.
+ * @param r - Trunk scale from collision radius.
+ * @param trunkHi - Lit bark.
+ * @param trunk - Mid bark.
+ * @param trunkLo - Shadow bark.
+ */
+function drawTrunk(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  r: number,
+  trunkHi: string,
+  trunk: string,
+  trunkLo: string,
+): void {
+  const tw = r * 0.48;
+  const th = r * 0.72;
+  const top = y - th * 0.15;
+  const grad = ctx.createLinearGradient(x - tw, top, x + tw, y + r * 0.35);
+  grad.addColorStop(0, trunkHi);
+  grad.addColorStop(0.55, trunk);
+  grad.addColorStop(1, trunkLo);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(x - tw * 0.55, top);
+  ctx.lineTo(x + tw * 0.55, top);
+  ctx.lineTo(x + tw * 0.42, y + r * 0.08);
+  ctx.lineTo(x + tw * 0.55, y + r * 0.38);
+  ctx.lineTo(x, y + r * 0.48);
+  ctx.lineTo(x - tw * 0.55, y + r * 0.38);
+  ctx.lineTo(x - tw * 0.42, y + r * 0.08);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.35)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+/**
+ * One leafy mass: bumpy outline, radial light from top-left, speckle highlights.
+ *
+ * @param ctx - Canvas context.
  * @param cx - Centre X.
  * @param cy - Centre Y.
- * @param rad - Radius.
- * @param hi - Highlight colour.
- * @param mid - Mid-tone.
- * @param lo - Shadow colour.
+ * @param rad - Base radius.
+ * @param hi - Highlight green.
+ * @param mid - Mid green.
+ * @param lo - Shadow green.
+ * @param deep - Deep crevice green.
+ * @param bumpSeed - Phase for edge wobble (varies per clump).
  */
-function foliageClump(
+function fuzzyClump(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
@@ -116,16 +151,49 @@ function foliageClump(
   hi: string,
   mid: string,
   lo: string,
+  deep: string,
+  bumpSeed: number,
 ): void {
-  const g = ctx.createRadialGradient(cx - rad * 0.35, cy - rad * 0.4, rad * 0.08, cx, cy, rad);
+  const g = ctx.createRadialGradient(
+    cx - rad * 0.42,
+    cy - rad * 0.45,
+    rad * 0.05,
+    cx + rad * 0.08,
+    cy + rad * 0.05,
+    rad * 1.05,
+  );
   g.addColorStop(0, hi);
-  g.addColorStop(0.45, mid);
-  g.addColorStop(1, lo);
+  g.addColorStop(0.38, mid);
+  g.addColorStop(0.78, lo);
+  g.addColorStop(1, deep);
+
   ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.arc(cx, cy, rad, 0, TAU);
+  const steps = 18;
+  for (let i = 0; i <= steps; i++) {
+    const a = (i / steps) * TAU;
+    const wobble =
+      1 + Math.sin(a * 6 + bumpSeed) * 0.09 + Math.cos(a * 4 + bumpSeed * 1.3) * 0.06;
+    const px = cx + Math.cos(a) * rad * wobble;
+    const py = cy + Math.sin(a) * rad * wobble * 0.9;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = 'rgba(20,50,18,.35)';
-  ctx.lineWidth = 1.2;
+
+  ctx.strokeStyle = 'rgba(18,48,16,.28)';
+  ctx.lineWidth = 1.1;
   ctx.stroke();
+
+  for (let s = 0; s < 8; s++) {
+    const a = bumpSeed + s * 0.85;
+    const dist = rad * (0.25 + (s % 3) * 0.12);
+    ctx.fillStyle = s % 2 === 0 ? hi : mid;
+    ctx.globalAlpha = 0.45;
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(a) * dist, cy + Math.sin(a) * dist * 0.85, rad * 0.07, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
