@@ -69,7 +69,7 @@ export function angleDelta(from: number, to: number): number {
   const tau = Math.PI * 2;
   let d = (to - from) % tau;
   if (d < 0) d += tau;
-  if (d > Math.PI) d -= tau;
+  if (d >= Math.PI) d -= tau;
   return d;
 }
 

@@ -25,6 +25,13 @@ export const BOT_SIGHT = 520;
 /** Radius within which the player can pick up loot with the E key. */
 export const PICK_RANGE = 60;
 
+/**
+ * Clearance radius when validating loot positions. Paired weapon ammo is placed
+ * 30px from the weapon only if this circle is free at the offset; otherwise it
+ * shares the weapon spot.
+ */
+export const LOOT_CLEARANCE = 22;
+
 /** Radius within which the player auto-collects ammo boxes. */
 export const AMMO_AUTO_PICK_RANGE = 34;
 
@@ -63,6 +70,15 @@ export const SFX_PER_STEP = 6;
 
 /** Sounds further than this from the player are not played. */
 export const SFX_MAX_DISTANCE = 1200;
+
+/** Linear gain at the listener before distance falloff (0 = silent, 1 = full). */
+export const SFX_LISTENER_GAIN = 1;
+
+/** Extra gain on weapon shot synthesis (after distance attenuation). */
+export const SFX_WEAPON_GAIN = 1.4;
+
+/** Extra gain on hit / pickup / death blips (after distance attenuation). */
+export const SFX_BLIP_GAIN = 1.2;
 
 /** Longest simulation step allowed per frame, in seconds (avoids tunnelling after tab switches). */
 export const MAX_FRAME_DT = 0.05;

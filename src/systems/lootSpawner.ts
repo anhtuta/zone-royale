@@ -4,7 +4,13 @@
  * @packageDocumentation
  */
 
-import { ARMOR_AMOUNT, MAP_SIZE, MEDKIT_AMOUNT, TAU } from '../config/constants';
+import {
+  ARMOR_AMOUNT,
+  LOOT_CLEARANCE,
+  MAP_SIZE,
+  MEDKIT_AMOUNT,
+  TAU,
+} from '../config/constants';
 import { AMMO_AMOUNT, WEAPONS, type AmmoType, type WeaponType } from '../config/weapons';
 import type { LootItem } from '../entities/loot';
 import { pick, rand, randInt, random } from '../utils/random';
@@ -13,9 +19,6 @@ import { circleFree } from './collision';
 
 /** Number of loot spots scattered in the open (outside houses). */
 export const OPEN_LOOT_SPOTS = 130;
-
-/** Collision radius used when validating loot spot positions. */
-const LOOT_CLEARANCE = 22;
 
 /** Ammo families weighted for random ammo drops (light and medium are twice as common). */
 const AMMO_WEIGHTS: readonly AmmoType[] = ['light', 'light', 'shells', 'medium', 'medium', 'heavy'];
@@ -109,7 +112,7 @@ export function spawnInitialLoot(
       for (let tries = 0; tries < 20; tries++) {
         const x = rand(h.x + 40, h.x + h.w - 40);
         const y = rand(h.y + 40, h.y + h.h - 40);
-        if (circleFree(obstacles, x, y, 22)) {
+        if (circleFree(obstacles, x, y, LOOT_CLEARANCE)) {
           loot.push(...rollLoot(x, y, obstacles));
           break;
         }

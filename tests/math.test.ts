@@ -37,6 +37,9 @@ describe('math helpers', () => {
     // wrapping across ±π
     expect(angleDelta(Math.PI - 0.1, -Math.PI + 0.1)).toBeCloseTo(0.2);
     expect(angleDelta(4 * Math.PI, 0)).toBeCloseTo(0);
+    // half-open [-π, π): opposite headings map to -π, not +π
+    expect(angleDelta(0, Math.PI)).toBe(-Math.PI);
+    expect(angleDelta(Math.PI, 0)).toBe(-Math.PI);
   });
 
   it('formatTime renders m:ss and rounds up', () => {

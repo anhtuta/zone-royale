@@ -60,6 +60,16 @@ describe('match end conditions', () => {
     expect(checkMatchEnd(w, 0.1)).toBe('dead');
   });
 
+  it('ends in defeat when everyone is eliminated while spectating', () => {
+    const w = makeWorld();
+    const a = bot(1600, 1500);
+    w.entities.push(a);
+    w.player.alive = false;
+    w.spectating = true;
+    a.alive = false;
+    expect(checkMatchEnd(w, 0.1)).toBe('dead');
+  });
+
   it('the player never wins after dying, even if only one bot is left', () => {
     const w = makeWorld();
     const a = bot(1600, 1500);
