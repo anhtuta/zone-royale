@@ -16,7 +16,7 @@ alwaysApply: true
 | Screen/HUD | `ui/*` | `render/*` if canvas |
 | Match rule/mode | `systems/match.ts` | `core/game.ts` phases, `ui/screens.ts` |
 
-New patterns → short note in `docs/01_INIT_PROJECT.md` or `docs/NN_TOPIC.md` + link from `docs/README.md`.
+New patterns → short note in `docs/01_INIT_PROJECT.md` or `docs/NN_TOPIC.md`; cross-link from related docs.
 
 # Before merging gameplay changes
 
