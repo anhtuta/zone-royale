@@ -21,6 +21,13 @@ There is no single “origin” module — this is wired in [`readControls()`](.
 (`e.y += e.vy * dt`). Map corner **(0, 0)** is the **top-left** of the world; $y$ grows toward the
 bottom ([`MAP_SIZE`](../src/config/constants.ts) is the width and height).
 
+Vocab (thuật ngữ trong game math - verify this!!!):
+
+- Normalize: chuẩn hóa vector về độ dài 1. Việc chuẩn hoá giúp tránh trường hợp đi chéo bị nhanh hơn đi thẳng.
+- Magnitude: độ dài của vector.
+- Integration: tích phân vị trí theo thời gian???.
+- LERP: linear interpolation: nội suy tuyến tính giữa 2 giá trị???.
+
 ---
 
 ## 1. Time: move per second, scale by `dt`
@@ -41,19 +48,39 @@ See [`frameDelta()`](../src/core/loop.ts).
 `angle += angleDelta(current, target) * min(1, dt * k)` — used for bot facing in
 [`systems/ai.ts`](../src/systems/ai.ts).
 
-**Example (movement):** [`PLAYER_SPEED`](../src/config/constants.ts) is **245** px/s.
+**Example 1 (movement):** [`PLAYER_SPEED`](../src/config/constants.ts) is **245** px/s. Holding **W** sets
+`moveY = -1` → after [`playerVelocity()`](../src/systems/player.ts), velocity is **(0, −245)** px/s
+(negative $v_y$ because **up = smaller** $y$).
 
-- Holding **W**
-sets `moveY = -1` → after [`playerVelocity()`](../src/systems/player.ts),
-`vx = 0`, `vy = -245` (negative because **up = smaller** $y$).
-- At **60 FPS**, `dt ≈ 1/60 ≈ 0.0167` s, $\Delta y = -245 \times 0.0167 \approx -4.1$ px per frame
-- → you move **up** on screen while $y$ counts down (speed along the path is still **245** px/s).
+One frame at **60 FPS** — values **before** [`stepWorld()`](../src/core/simulation.ts) integrates position:
 
-**Example (`MAX_FRAME_DT`):** If the tab was frozen for 2 s, raw `dt` would be 2.0; the game caps it
+| Variable | Value | Meaning |
+| -------- | ----- | ------- |
+| $x$ | **1500** | World X (px) |
+| $y$ | **2000** | World Y (px); smaller $y$ is higher on screen |
+| $v_x$ | **0** | Not pressing A/D |
+| $v_y$ | **−245** | Full speed upward on screen |
+| $dt$ | **≈ 0.0167** | $1/60$ s |
+
+Integration ($x \leftarrow x + v_x \cdot dt$, same for $y$):
+
+- $\Delta x = 0 \times 0.0167 = 0$
+- $\Delta y = -245 \times 0.0167 \approx -4.08$ px
+
+**After** this frame:
+
+| Variable | Value |
+| -------- | ----- |
+| $x$ | **1500** (unchanged) |
+| $y$ | **2000 − 4.08 ≈ 1995.9** (moved up on screen) |
+
+Speed along the path is still $\|v\| = 245$ px/s; only the sign of $v_y$ reflects screen-up vs math-up.
+
+**Example 2 (`MAX_FRAME_DT`):** If the tab was frozen for 2 s, raw `dt` would be 2.0; the game caps it
 at **0.05** s ([`MAX_FRAME_DT`](../src/config/constants.ts)), so one step moves at most
 $245 \times 0.05 = 12.25$ px instead of 490 px.
 
-**Example (smooth turn):** Bot faces **0 rad** (east), wants **π/2** (south). `angleDelta(0, π/2) ≈ 1.57`.
+**Example 3 (smooth turn):** Bot faces **0 rad** (east), wants **π/2** (south). `angleDelta(0, π/2) ≈ 1.57`.
 With `dt = 0.0167` and `k = 8`: `min(1, 0.0167 × 8) ≈ 0.133`, so
 `angle += 1.57 × 0.133 ≈ 0.21` rad this frame (~12°), not an instant snap.
 
@@ -67,27 +94,104 @@ Plain `(x, y)` plus a small set of operations:
 | --------- | ------- | ----------- |
 | Length | $\|v\| = \sqrt{v_x^2 + v_y^2}$ or `Math.hypot(vx, vy)` | Speed, normalize |
 | Normalize | $\hat{v} = v / \|v\|$ | Direction from input |
-| Scale to speed | `vx = dirX * SPEED`, same for `vy` | Movement |
-| Dot (optional) | $a_x b_x + a_y b_y$ | Facing target, projections |
+| Scale to speed | `vx = directionX * SPEED`, same for `vy` | Turn “which way” into px/s |
+| Dot (optional) | $a_x b_x + a_y b_y$ | In front vs behind, “how much along…” |
 
-**Diagonal movement:** Without normalization, W+D is ~41% faster than W alone. Zone Royale
-normalises keyboard input in [`playerVelocity()`](../src/systems/player.ts):
+**Diagonal movement:** Without normalization, W+D is ~41% faster than W alone.
+
+- Nếu ko chuẩn hoá: di chuyển chéo (ấn W + D) sẽ nhanh hơn di chuyển theo hướng W hoặc D.
+
+**Example 1 (length):** Velocity `(173, 173)` → `hypot(173, 173) ≈ 245` (= full run speed after normalize + scale).
+
+### Scale to speed (what `playerVelocity` really does)
+
+Keyboard input is only **direction signs**: **W** → `moveY = -1`, **D** → `moveX = +1`, etc.
+([`readControls()`](../src/core/input.ts)). Those numbers are **not** pixels per second yet.
+
+**Two steps** in [`playerVelocity()`](../src/systems/player.ts):
+
+1. **Normalize** — turn input into a **unit direction** (length 1):  
+   $\hat{d}_x = m_x / m$, $\hat{d}_y = m_y / m$ where $m = \mathrm{hypot}(m_x, m_y)$.
+2. **Scale** — multiply by [`PLAYER_SPEED`](../src/config/constants.ts) (**245**) so the velocity
+   vector’s length equals run speed:  
+   $v_x = \hat{d}_x \times 245$, $v_y = \hat{d}_y \times 245$.
 
 ```ts
 const m = Math.hypot(mx, my) || 1;
 return { vx: (mx / m) * PLAYER_SPEED, vy: (my / m) * PLAYER_SPEED };
 ```
 
-**Example (length):** Velocity `(173, 173)` → `hypot(173, 173) ≈ 245` (= full run speed after normalize).
+**Example 2a — only W (scale after normalize):**
 
-**Example (normalize + scale):** Input **W+D** → `(mx, my) = (1, 1)`:
+| Step | $m_x$ | $m_y$ | $m$ | $\hat{d}$ | $v_x$ | $v_y$ |
+| ---- | ----- | ----- | --- | --------- | ----- | ----- |
+| Input | 0 | −1 | 1 | (0, −1) | 0 | **−245** |
 
-- $m = \sqrt{1^2 + 1^2} \approx 1.414$
-- $v_x = v_y = (1 / 1.414) \times 245 \approx 173.2$ px/s
-- Speed stays **245** px/s, not $245\sqrt{2} \approx 346$ if you skipped normalization.
+One axis, direction already length 1 → scale just flips sign on Y and applies **245**.
 
-**Example (dot):** Forward `(1, 0)` and to-target vector `(0.6, 0.8)`:
-$1 \times 0.6 + 0 \times 0.8 = 0.6$ → target is mostly to the right (cosine of angle between them).
+**Example 2b — W+D (why both steps matter):**
+
+| | Wrong: skip normalize, use `vx = mx * SPEED` | Right: normalize then scale |
+| --- | --- | --- |
+| Input | $m_x = 1$, $m_y = -1$ | same |
+| Velocity | $(245,\; -245)$ | $(173.2,\; -173.2)$ |
+| Length `hypot` | $245\sqrt{2} \approx 346$ px/s | **245** px/s |
+
+Diagonal would be **41% faster** than holding a single key if you only multiplied raw input by `SPEED`.
+Normalize picks a direction on the circle; scale sets how fast you travel along that direction.
+
+**Example 2c — no keys:**
+
+| $m_x$ | $m_y$ | $m$ | Result |
+| ----- | ----- | --- | ------ |
+| 0 | 0 | `|| 1` guard | $(v_x, v_y) = (0, 0)$ |
+
+---
+
+### Dot product (optional but useful)
+
+**Formula:** $a \cdot b = a_x b_x + a_y b_y$ (one number, not a vector).
+
+**Meaning in one line:** “How much does $b$ point along $a$?”
+
+- If **$a$ is a unit vector** (length 1), $a \cdot b$ is the length of $b$ **projected onto** $a$’s line
+  (like the shadow of $b$ on the east–west axis when $a$ is east).
+- If **both are unit vectors**, $a \cdot b = \cos(\text{angle between them})$:
+  **1** = same direction, **0** = perpendicular, **−1** = opposite.
+
+Zone Royale mostly uses `atan2` for aim, but dot is the usual pattern for “in my forward cone?” or
+strafe along a wall.
+
+**Example 3a — in front vs behind (world axes, player facing east):**
+
+Player at **(1000, 1000)**, facing **right** → unit forward $f = (1, 0)$.
+
+| Enemy at | Vector to enemy $t = \text{enemy} - \text{player}$ | $f \cdot t = 1 \cdot t_x + 0 \cdot t_y$ | Read |
+| -------- | ---------------------------------------------------- | ---------------------------------------- | ---- |
+| (1100, 1000) | (100, 0) | **+100** | Ahead (to the right) |
+| (900, 1000) | (−100, 0) | **−100** | Behind (to the left) |
+| (1000, 1100) | (0, 100) | **0** | Straight to the **side** (down on screen) |
+
+**Example 3b — “mostly in front” with two unit vectors:**
+
+Facing direction $\hat{f} = (1, 0)$. Direction to target (normalized) $\hat{t} = (0.6, 0.8)$
+(roughly east-north-east on the compass, but here “north” on screen is **negative** $y$ — this
+$\hat{t}$ points down-right).
+
+$$
+\hat{f} \cdot \hat{t} = 1 \times 0.6 + 0 \times 0.8 = 0.6
+$$
+
+$\cos^{-1}(0.6) \approx 53°$ off your forward line → target is in front-right, not dead ahead (which
+would be **1.0**).
+
+**Example 3c — tie to movement (not in code, but same math):**
+
+Your velocity $v = (173, -173)$ (W+D). Unit direction $\hat{d} = (0.707, -0.707)$.
+Want “how much am I moving east?” → $\hat{e}_x \cdot v$ with east $\hat{e}_x = (1,0)$:
+
+$1 \cdot 173 + 0 \cdot (-173) = 173$ px/s of your **245** px/s is eastward; the rest is northward
+(negative $y$).
 
 ---
 
@@ -112,20 +216,20 @@ $$
 
 **Random spread:** `angle + (random - 0.5) * spreadRadians`.
 
-**Example (aim):** Player at **(100, 200)**, crosshair at **(400, 200)**:
+**Example 1 (aim):** Player at **(100, 200)**, crosshair at **(400, 200)**:
 
 - $\theta = \mathrm{atan2}(0,\; 300) = 0$ rad (east).
 
-**Example (bullet velocity):** Pistol [`speed`](../src/config/weapons.ts) **1150** px/s, $\theta = 0$:
+**Example 2 (bullet velocity):** Pistol [`speed`](../src/config/weapons.ts) **1150** px/s, $\theta = 0$:
 
 - $v_x = 1150$, $v_y = 0$.
 
-**Example (aim east-north-east):** Same player, crosshair **(400, 300)**:
+**Example 3 (aim east-north-east):** Same player, crosshair **(400, 300)**:
 
 - $\theta = \mathrm{atan2}(100,\; 300) \approx 0.322$ rad (~18.4°)
 - $v_x \approx 1150 \cos(0.322) \approx 1091$, $v_y \approx 1150 \sin(0.322) \approx 361$.
 
-**Example (`angleDelta`):** From **170°** to **-170°** (both near west): shortest turn is **+20°**,
+**Example 4 (`angleDelta`):** From **170°** to **-170°** (both near west): shortest turn is **+20°**,
 not −340° — that is what `angleDelta` returns in radians.
 
 ---
