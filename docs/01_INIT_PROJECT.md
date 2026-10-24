@@ -225,7 +225,7 @@ Use this as a default map before inventing a new folder:
 | New match rule (modes, respawn) | `systems/match.ts` | `core/game.ts` phase wiring, `ui/screens.ts` | `match.test.ts` |
 
 If a feature does not fit the table, **add a short subsection here or a new `docs/NN_TOPIC.md`**
-and link it from [docs/README.md](README.md) so the next contributor knows the pattern.
+and cross-link it from this file or from related docs so the next contributor knows the pattern.
 
 ### Systems design habits
 
@@ -247,7 +247,7 @@ and link it from [docs/README.md](README.md) so the next contributor knows the p
 3. New knobs in `config/`, not magic numbers in systems.
 4. Vitest coverage for changed rules; use `tests/helpers.ts` and seeded RNG.
 5. TSDoc on new exports; `pnpm typecheck && pnpm lint && pnpm test && pnpm build`.
-6. Doc update if you introduced a new pattern (this file or `docs/README.md`).
+6. Doc update if you introduced a new pattern (this file or a new `docs/NN_TOPIC.md`).
 
 ## 5. How the game loop and systems fit together
 
@@ -363,7 +363,8 @@ match to the end screen, restarts, and fails on any console error or failed requ
 - **Formatting** is Prettier's job: run `pnpm format`; don't hand-format.
 - **Naming.** `camelCase` for functions/variables, `PascalCase` for types/classes,
   `UPPER_SNAKE_CASE` for constants; one module per concept, file names in `camelCase.ts`.
-- **New docs** go in `docs/` and must be listed in [docs/README.md](README.md).
+- **New docs** go in `docs/` as `NN_TOPIC.md` and should link to [01_INIT_PROJECT.md](01_INIT_PROJECT.md)
+  (and be mentioned in the root [README.md](../README.md) project layout section if they are a major topic).
 
 ## 8. Differences from the prototype
 
