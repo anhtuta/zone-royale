@@ -87,6 +87,29 @@ export class Camera {
   }
 
   /**
+   * Visibility test for an axis-aligned world-space rectangle.
+   * AABB means axis-aligned bounding box.
+   * It’s the smallest rectangle aligned with the world axes (not rotated) that fully contains an object.
+   * It's defined by four numbers: left, top, right, bottom.
+   * inViewAabb checks whether that rectangle overlaps the camera’s view rectangle
+   * (also axis-aligned: from (cam.x, cam.y) to (cam.x + width, cam.y + height)).
+   *
+   * @param left - Left edge.
+   * @param top - Top edge.
+   * @param right - Right edge.
+   * @param bottom - Bottom edge.
+   * @returns `true` if any part of the rect may be on screen.
+   */
+  inViewAabb(left: number, top: number, right: number, bottom: number): boolean {
+    return (
+      right > this.x &&
+      left < this.x + this.width &&
+      bottom > this.y &&
+      top < this.y + this.height
+    );
+  }
+
+  /**
    * Converts a screen-space point to world space.
    *
    * @param sx - Screen X in CSS pixels.

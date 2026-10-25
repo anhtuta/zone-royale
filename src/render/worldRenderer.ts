@@ -17,7 +17,7 @@ import { dist2 } from '../utils/math';
 import type { House } from '../world/types';
 import { drawEntity } from './entityRenderer';
 import { drawLoot } from './lootRenderer';
-import { drawTree } from './treeRenderer';
+import { drawTree, treeSpriteInView } from './treeRenderer';
 
 /** Options for {@link drawWorld}. */
 export interface WorldRenderOptions {
@@ -215,7 +215,7 @@ export function drawWorld(
     ctx.strokeRect(o.x, o.y, o.w, o.h);
   }
   for (const o of world.obstacles) {
-    if (o.t !== 'tree' || !cam.inView(o.x, o.y, o.vr)) continue;
+    if (o.t !== 'tree' || !treeSpriteInView(cam, o)) continue;
     drawTree(ctx, o, 'sprite');
   }
   for (const p of world.particles) {

@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 
+import type { Camera } from '../core/camera';
 import { USE_OBSTACLE_IMAGES } from '../config/env';
 import { TAU } from '../config/constants';
 import { shade } from '../utils/color';
@@ -11,8 +12,23 @@ import type { TreeObstacle } from '../world/types';
 
 import treeUrl from '../assets/sprites/large_tree.png';
 
+/** World height of the PNG tree sprite (`h = vr × this`). */
+const SPRITE_HEIGHT_MUL = 2.7;
+/** Fraction of `h` above the obstacle centre where the sprite top is drawn. */
+const SPRITE_TOP_FRAC = 0.9;
+/** Width/height fallback until the PNG finishes loading. */
+const SPRITE_FALLBACK_ASPECT = 0.85;
+
 let treeImage: HTMLImageElement | null = null;
 let treeLoadPromise: Promise<void> | null = null;
+
+/** Axis-aligned bounds of the tree canopy / sprite draw pass. */
+export interface TreeSpriteBounds {
+  readonly left: number;
+  readonly top: number;
+  readonly right: number;
+  readonly bottom: number;
+}
 
 /**
  * Loads the tree PNG when {@link USE_OBSTACLE_IMAGES} is enabled.
@@ -36,6 +52,65 @@ export function loadTreeSprite(): Promise<void> {
 }
 
 /**
+ * World-space AABB of the tree art drawn in the sprite pass (PNG or Canvas).
+ *
+ * @param tree - Tree obstacle.
+ * @returns Rectangle used for culling and matching {@link drawTree} `'sprite'` layer.
+ */
+export function treeSpriteBounds(tree: TreeObstacle): TreeSpriteBounds {
+  if (USE_OBSTACLE_IMAGES && treeImage) {
+    const { left, top, w, h } = treeImageDrawRect(tree.x, tree.y, tree.vr);
+    return { left, top, right: left + w, bottom: top + h };
+  }
+  return treeCanvasSpriteBounds(tree);
+}
+
+/**
+ * Whether any part of the sprite-pass tree art may be visible.
+ *
+ * @param cam - Camera.
+ * @param tree - Tree obstacle.
+ * @returns `true` if the sprite layer should be drawn.
+ */
+export function treeSpriteInView(cam: Camera, tree: TreeObstacle): boolean {
+  const b = treeSpriteBounds(tree);
+  return cam.inViewAabb(b.left, b.top, b.right, b.bottom);
+}
+
+/**
+ * @param x - Obstacle centre X.
+ * @param y - Obstacle centre Y.
+ * @param vr - Visual canopy radius.
+ * @returns PNG draw rect (`left`, `top`, `w`, `h`).
+ */
+function treeImageDrawRect(
+  x: number,
+  y: number,
+  vr: number,
+): { left: number; top: number; w: number; h: number } {
+  const h = vr * SPRITE_HEIGHT_MUL;
+  const aspect =
+    treeImage && treeImage.naturalHeight > 0
+      ? treeImage.naturalWidth / treeImage.naturalHeight
+      : SPRITE_FALLBACK_ASPECT;
+  const w = h * aspect;
+  return { left: x - w / 2, top: y - h * SPRITE_TOP_FRAC, w, h };
+}
+
+/**
+ * @param tree - Tree obstacle.
+ * @returns Bounds that cover procedural clumps and trunk.
+ */
+function treeCanvasSpriteBounds(tree: TreeObstacle): TreeSpriteBounds {
+  const { x, y, r, vr } = tree;
+  const edge = 1.12;
+  const halfW = vr * 0.64 + vr * 0.62 * edge;
+  const top = y - vr * 0.62 - vr * 0.78 * edge;
+  const bottom = y + Math.max(r * 0.48, vr * 0.08);
+  return { left: x - halfW, top, right: x + halfW, bottom };
+}
+
+/**
  * Draws a ground shadow (call before entities) or the full tree (call after entities).
  *
  * @param ctx - Drawing context in world space.
@@ -56,9 +131,8 @@ export function drawTree(
     return;
   }
   if (USE_OBSTACLE_IMAGES && treeImage) {
-    const h = vr * 2.7;
-    const w = h * (treeImage.naturalWidth / treeImage.naturalHeight);
-    ctx.drawImage(treeImage, x - w / 2, y - h * 0.9, w, h);
+    const { left, top, w, h } = treeImageDrawRect(x, y, vr);
+    ctx.drawImage(treeImage, left, top, w, h);
     return;
   }
   drawTreeCanvas(ctx, tree);
