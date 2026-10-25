@@ -8,7 +8,7 @@ import { TAU } from '../config/constants';
 import { WEAPONS } from '../config/weapons';
 import type { Entity } from '../entities/entity';
 import { shade } from '../utils/color';
-import { healthColor } from './draw';
+import { drawSoftGroundShadow, healthColor } from './draw';
 import { combatantSpritesReady, drawCombatantSprite } from './spriteAssets';
 
 /**
@@ -25,10 +25,7 @@ export function drawEntity(ctx: CanvasRenderingContext2D, e: Entity, gameTime: n
   const useSprite = combatantSpritesReady();
   ctx.save();
   ctx.translate(e.x, e.y);
-  ctx.fillStyle = 'rgba(0,0,0,.25)';
-  ctx.beginPath();
-  ctx.ellipse(3, 5, e.r, e.r * 0.85, 0, 0, TAU);
-  ctx.fill();
+  drawSoftGroundShadow(ctx, 3, 5, e.r, e.r * 0.85);
   ctx.save();
   ctx.rotate(e.angle);
   if (useSprite) {

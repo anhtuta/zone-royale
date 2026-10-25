@@ -9,6 +9,7 @@ import { treeSpriteDef } from '../config/obstacleSprites';
 import { USE_OBSTACLE_IMAGES } from '../config/env';
 import { TAU } from '../config/constants';
 import { shade } from '../utils/color';
+import { drawSoftGroundShadow } from './draw';
 import type { TreeObstacle } from '../world/types';
 import { getTreeImage, loadObstacleSprites } from './obstacleSprites';
 
@@ -139,18 +140,13 @@ export function drawTree(
   const footY = tree.y + def.drawOffsetY;
 
   if (layer === 'shadow') {
-    ctx.fillStyle = 'rgba(0,0,0,.22)';
-    ctx.beginPath();
-    ctx.ellipse(
+    drawSoftGroundShadow(
+      ctx,
       footX + def.shadowOffsetX,
       footY + def.shadowOffsetY,
       vr * def.shadowRadiusXMul,
       vr * def.shadowRadiusYMul,
-      0,
-      0,
-      TAU,
     );
-    ctx.fill();
     return;
   }
 

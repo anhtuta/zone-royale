@@ -4,6 +4,49 @@
  * @packageDocumentation
  */
 
+import { TAU } from '../config/constants';
+
+/** Peak opacity at the centre of soft ground shadows (rocks, trees, entities). */
+export const GROUND_SHADOW_CENTER_ALPHA = 0.9;
+
+/**
+ * Normalized radius (0–1) where the shadow is still mostly opaque before fading to the edge.
+ */
+export const GROUND_SHADOW_CORE_STOP = 0.7;
+
+/**
+ * Draws a soft elliptical ground shadow via radial gradient (no `filter` / `shadowBlur`).
+ *
+ * @param ctx - Drawing context in the target space (world or already translated).
+ * @param cx - Ellipse centre X.
+ * @param cy - Ellipse centre Y.
+ * @param rx - Horizontal radius.
+ * @param ry - Vertical radius.
+ */
+export function drawSoftGroundShadow(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+): void {
+  if (rx <= 0 || ry <= 0) return;
+  const peak = GROUND_SHADOW_CENTER_ALPHA;
+  const core = GROUND_SHADOW_CORE_STOP;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(rx, ry);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+  g.addColorStop(0, `rgba(0,0,0,${peak})`);
+  g.addColorStop(core, `rgba(0,0,0,${peak * 0.55})`);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, 1, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
 /**
  * Adds a rounded-rectangle path to the context (does not fill or stroke).
  *

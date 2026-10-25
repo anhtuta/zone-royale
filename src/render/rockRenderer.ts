@@ -9,6 +9,7 @@ import { rockSpriteDef, rockVisualBaseRadius } from '../config/obstacleSprites';
 import { USE_OBSTACLE_IMAGES } from '../config/env';
 import { TAU } from '../config/constants';
 import { shade } from '../utils/color';
+import { drawSoftGroundShadow } from './draw';
 import type { RockObstacle } from '../world/types';
 import { getRockImage } from './obstacleSprites';
 
@@ -85,18 +86,13 @@ export function drawRock(ctx: CanvasRenderingContext2D, rock: RockObstacle): voi
   const def = rockSpriteDef(rock.variant);
   const cx = rock.x + def.drawOffsetX;
   const cy = rock.y + def.drawOffsetY;
-  ctx.fillStyle = 'rgba(0,0,0,.25)';
-  ctx.beginPath();
-  ctx.ellipse(
+  drawSoftGroundShadow(
+    ctx,
     cx + def.shadowOffsetX,
     cy + def.shadowOffsetY,
     r * def.shadowRadiusXMul,
     r * def.shadowRadiusYMul,
-    0,
-    0,
-    TAU,
   );
-  ctx.fill();
 
   const img = getRockImage(rock.variant);
   if (USE_OBSTACLE_IMAGES && img) {

@@ -12,7 +12,7 @@ Vocab:
 - Procedural foliage: tán lá được tạo ra bằng thuật toán.
 - Canopy: the visible leafy mass above the trunk — what you see as “the tree”, not the collision circle.
   - Gameplay collision uses `r` (small circle at the obstacle centre).
-  - Drawing uses **`vr`** (“visual radius”): on the map, `vr ≈ 1.55 × r`, so the art is much larger than the hitbox (see `fuzzyClump` in [`treeRenderer.ts`](../src/render/treeRenderer.ts)).
+  - Drawing uses **`vr`** (“visual radius”): `vr = mapgenBaseR × TREE_CANOPY_VR_MUL` (default mul ~1.55), so art is larger than collision `r` when `collisionRadiusScale < 1` (see `fuzzyClump` in [`treeRenderer.ts`](../src/render/treeRenderer.ts)).
 - Clump: one blob of procedural foliage from `fuzzyClump()`: a wobbly circle with radial green shading and speckles.
   - `drawTreeCanvas` draws three clumps.
 - Culling: not drawing something because it can’t be on screen, to save work each frame.
@@ -38,8 +38,9 @@ fraction of `r`. It lives in the per-variant catalog (and can default from `r` u
 tuned). All movement, bullets, line-of-sight, loot clearance, and AI must use the
 **collision centre**, not the foot.
 
-Add a small pure helper (e.g. `treeCollisionCenter(tree)` in `utils/` or
-`systems/collision.ts`) so render, mapgen, and tests share one definition.
+Pure helpers in [`world/obstacleGeometry.ts`](../src/world/obstacleGeometry.ts)
+(`treeSpriteFoot`, `treeCollisionCenter`, `circleObstacleCollision`) so render,
+mapgen, minimap, and tests share one definition.
 
 **Rocks:** sprite is anchored so its visual mass is centred on `(x, y)` (tune per
 variant with offset/scale in config).
@@ -75,12 +76,16 @@ Data only — no `document` / `Image`. Suggested shape per variant:
 | Field | Purpose |
 | ----- | ------- |
 | `id` | Stable string key (tests, optional future saves) |
-| `url` | Static import re-exported for the render layer |
-| `heightMul` | World height from `r` (rock) or `vr` (tree) |
+| `src` | Static import (Vite URL) for the render layer |
+| `heightMul` | World height from rock visual base `r` or tree `vr` |
 | `anchor` | `'center'` (rock) or `'bottom-center'` (tree) |
-| `collisionLift` | Tree only: foot → collision centre (px or × `r`) |
-| `collisionRadiusScale` | Optional multiplier on generated `r` for wide/narrow art |
-| `drawOffsetX`, `drawOffsetY` | Fine-tune after first in-game pass |
+| `mapgenBaseR` | Fixed spawn radius per variant (same art ⇒ same size) |
+| `collisionLiftR` | Tree: collision centre at `footY − collisionLiftR × r` |
+| `collisionRadiusScale` | Multiplier on `mapgenBaseR` for **stored** `r` only (not sprite scale) |
+| `drawOffsetX`, `drawOffsetY` | Nudge draw + foot/collision after anchor |
+| `shadowOffsetX`, `shadowOffsetY`, `shadowRadiusXMul`, `shadowRadiusYMul` | Ellipse shadow (see [Ground shadows](#ground-shadows)) |
+
+Shared layout type: **`ObstacleSpriteLayout`** (`RockSpriteDef` / `TreeSpriteDef`).
 
 Ordered arrays define variant indices: `ROCK_VARIANTS`, `TREE_VARIANTS`.
 
@@ -102,6 +107,7 @@ subtle global tint later.
 
 - `USE_OBSTACLE_IMAGES` from `VITE_USE_OBSTACLE_IMAGES` (default `false` in
   [`.env.example`](../.env.example)).
+- `VITE_DEBUG_OBSTACLE_COLLISION` — pink collision rings for tuning (see Phase 6).
 - When false: no image loads required; `loadObstacleSprites()` resolves immediately.
 - When true: preload all rock + tree variants at boot (parallel `Promise.all`).
 
@@ -113,7 +119,7 @@ subtle global tint later.
 - **Trees:** canopy / overhang in the bitmap does **not** block unless we later
   change `segmentObstacle` (out of scope). Blocking radius remains `r` at the
   collision centre.
-- **Tuning:** per-variant `collisionRadiusScale` and tree `collisionLift` so
+- **Tuning:** per-variant `collisionRadiusScale` and tree `collisionLiftR` so
   transparent grass fringes do not feel unfair.
 
 No alpha hit-testing or polygon footprints in v1.
@@ -124,9 +130,10 @@ No alpha hit-testing or polygon footprints in v1.
 | ------ | ---- |
 | [`config/obstacleSprites.ts`](../src/config/obstacleSprites.ts) | Variant tables |
 | [`render/obstacleSprites.ts`](../src/render/obstacleSprites.ts) | Load images, `getRockImage(n)`, `getTreeImage(n)` |
+| [`render/draw.ts`](../src/render/draw.ts) | `drawSoftGroundShadow` — global soft ellipse shadows (gradient) |
 | [`render/rockRenderer.ts`](../src/render/rockRenderer.ts) | `drawRock`, `rockSpriteBounds`, culling |
 | [`render/treeRenderer.ts`](../src/render/treeRenderer.ts) | Multi-variant trees, foot anchor, bounds |
-| [`render/worldRenderer.ts`](../src/render/worldRenderer.ts) | Call rock/tree drawers; remove inline rock circles when images enabled |
+| [`render/worldRenderer.ts`](../src/render/worldRenderer.ts) | Shadow pass (trees), rocks, entities; procedural walls unchanged |
 | [`main.ts`](../src/main.ts) | `loadObstacleSprites()` (replace or wrap `loadTreeSprite`) |
 
 Procedural fallbacks stay in `rockRenderer` / `treeRenderer` (extract rock Canvas
@@ -137,9 +144,8 @@ art from `worldRenderer` when implementing).
 In `scatter()`:
 
 1. Pick `variant` with the same seeded RNG as today (`utils/random.ts`).
-2. Apply optional `collisionRadiusScale` when choosing `r`.
-3. For trees, set `vr` as today; position `(x, y)` is the **foot** (may require
-   small adjustment to how we think about placement vs houses/other obstacles).
+2. Set `r` from `mapgenBaseR × collisionRadiusScale` (per variant).
+3. Trees: `vr = mapgenBaseR × TREE_CANOPY_VR_MUL` (visual size independent of collision scale); `(x, y)` is the **foot**.
 
 ## Implementation phases
 
@@ -187,7 +193,7 @@ centre. With `collisionLiftR === 0`, foot equals legacy centre until Phase 6 tun
 
 ### Phase 4 — Rock renderer (done)
 
-- [x] [`render/rockRenderer.ts`](../src/render/rockRenderer.ts): bounds, shadow, `drawRock` (image + procedural).
+- [x] [`render/rockRenderer.ts`](../src/render/rockRenderer.ts): bounds, soft shadow (`drawSoftGroundShadow`), `drawRock` (image + procedural).
 - [x] [`worldRenderer.ts`](../src/render/worldRenderer.ts) uses `rockInView` + `drawRock`.
 - [x] `tests/rockRenderer.test.ts` — bounds smoke tests.
 
@@ -196,8 +202,9 @@ centre. With `collisionLiftR === 0`, foot equals legacy centre until Phase 6 tun
 ### Phase 5 — Tree renderer multi-variant (done)
 
 - [x] [`treeRenderer.ts`](../src/render/treeRenderer.ts): `treeSpriteDef` per variant (`heightMul`, offsets).
-- [x] Bottom-centre foot anchor via `treeSpriteDrawRect`; shadow at foot (`SHADOW_BELOW_FOOT_FRAC`).
+- [x] Bottom-centre foot anchor via `treeSpriteDrawRect`; shadow at foot + per-variant offsets in catalog.
 - [x] `treeSpriteInView` uses sprite AABB (+ shadow pad); shadow pass uses same culling.
+- [x] Soft ground shadow via [`drawSoftGroundShadow`](../src/render/draw.ts) (shared with rocks and entities).
 - [x] Procedural `drawTreeCanvas` unchanged as fallback.
 
 **Exit criteria:** All five tree assets rotate by `variant`; culling correct.
@@ -238,18 +245,40 @@ All four live on **`ObstacleSpriteLayout`** (shared by rocks and trees).
 Use `VITE_DEBUG_OBSTACLE_COLLISION=true`, restart `pnpm dev`, tweak catalog, refresh.
 Gameplay still uses circles only (no canopy hit-test).
 
+### Ground shadows
+
+Obstacle (and entity) footprints use **one** helper — no `ctx.filter` or `shadowBlur`
+(per-draw blur is costly with many trees).
+
+| Piece | Location |
+| ----- | -------- |
+| Draw | [`drawSoftGroundShadow()`](../src/render/draw.ts) — unit circle + `scale(rx, ry)` + radial gradient |
+| Global darkness / feather | `GROUND_SHADOW_CENTER_ALPHA`, `GROUND_SHADOW_CORE_STOP` in the same file |
+| Position & size | Per variant on **`ObstacleSpriteLayout`**: `shadowOffsetX/Y`, `shadowRadiusXMul/YMul` |
+| Rocks | Centre anchor + `drawOffset`; radii `r × mul` |
+| Trees | Foot + `drawOffset`; radii `vr × mul` |
+| Entities | [`entityRenderer.ts`](../src/render/entityRenderer.ts) — fixed offset `(3, 5)`, radii `r` / `0.85r` |
+
+Walls keep a simple offset `fillRect` shadow in `worldRenderer` (not the gradient ellipse).
+
+Tests: [`tests/drawGroundShadow.test.ts`](../tests/drawGroundShadow.test.ts).
+
 ### Known issues (ongoing)
 
 Canopy foliage remains **non-blocking** by design; trees use a wider trunk circle via
 `collisionRadiusScale` (>1) but not full bitmap coverage. Tighten in the catalog if
 cover feels wrong.
 
-### Phase 7 — Tests and CI
+### Phase 7 — Tests and CI (done)
 
-- Bounds tests per variant (at least one rock + one tree smoke, pattern like
-  [`tests/treeRenderer.test.ts`](../tests/treeRenderer.test.ts)).
-- Mapgen test: `variant` in range for N obstacles with fixed seed.
-- `pnpm typecheck && pnpm lint && pnpm test && pnpm build`.
+- [x] Rock/tree bounds smoke: [`tests/rockRenderer.test.ts`](../tests/rockRenderer.test.ts),
+  [`tests/treeRenderer.test.ts`](../tests/treeRenderer.test.ts).
+- [x] Mapgen variants + radius: [`tests/mapgen.test.ts`](../tests/mapgen.test.ts),
+  [`tests/obstacleMapgenRadius.test.ts`](../tests/obstacleMapgenRadius.test.ts).
+- [x] Catalog / geometry: [`tests/obstacleSprites.catalog.test.ts`](../tests/obstacleSprites.catalog.test.ts),
+  [`tests/obstacleGeometry.test.ts`](../tests/obstacleGeometry.test.ts),
+  [`tests/drawGroundShadow.test.ts`](../tests/drawGroundShadow.test.ts).
+- [x] Before merge: `pnpm typecheck && pnpm lint && pnpm test && pnpm build`.
 
 ## WebP vs Canvas (rationale)
 
