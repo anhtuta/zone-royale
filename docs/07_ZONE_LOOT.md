@@ -145,6 +145,47 @@ New file **`src/config/zoneLoot.ts`** (preferred over bloating `constants.ts`):
 
 Match **`mapSize`** comes from `world.mapSize` (set in `createMatch()`).
 
+## Implementation phases
+
+Work through in order; each phase should pass `pnpm typecheck && pnpm test` before
+the next. The whole feature can still ship in one PR if you prefer—phases 2–3 reuse
+`fillDeficit()` and placement from phase 1.
+
+### Phase 1 — Zone pulse supply
+
+- [ ] Add `config/zoneLoot.ts` (`ammoFloorForMap`, base floors, margin, placement tries).
+- [ ] Add `systems/zoneLoot.ts`: count ground ammo per family, spawn in safe disk
+  (`circleFree`), build `LootItem` ammo boxes.
+- [ ] Telegraph when `spawned > 0`: `pushSystemFeed` + `showMessage` (v1 copy above).
+- [ ] Wire `core/simulation.ts` after `updateZone`: run supply on `phaseAdvanced` and
+  `closed` only (not `shrinkStarted`).
+- [ ] Tests: `ammoFloorForMap`, placement inside zone, `phaseAdvanced` fill, telegraph
+  on spawn vs no spawn.
+
+**Exit criteria:** After a shrink ends (or zone closes), ground ammo per family reaches
+map-scaled floors when placement succeeds; players see feed + toast when boxes appear.
+
+### Phase 2 — Periodic wait top-up
+
+- [ ] Add `world.zoneLootTimer` (init in `createMatch()`).
+- [ ] During `zone.state === 'wait'` (not `final`), tick timer; every
+  `PERIODIC_SUPPLY_INTERVAL_S` run deficit fill with `PERIODIC_MAX_BOXES_PER_FAMILY` cap.
+- [ ] Reset timer after a zone pulse (`phaseAdvanced` / `closed` supply run).
+- [ ] Tests: periodic only in `wait`, respects per-family cap, telegraph unchanged.
+
+**Exit criteria:** Long waits between shrinks can add ammo without waiting for the next
+`phaseAdvanced`; phase boundaries remain the main catch-up.
+
+### Phase 3 — Regression, sim smoke, tuning
+
+- [ ] `combat.test.ts`: elimination with zero reserve → no ammo loot; weapon drops keep
+  `mag`.
+- [ ] Headless sim: drain ground ammo, advance zone, assert new boxes exist.
+- [ ] Tune `ZONE_LOOT_BASE_FLOOR` / `PERIODIC_SUPPLY_INTERVAL_S` after playtests.
+
+**Exit criteria:** No accidental elimination ammo drip; late-match dry scenario covered by
+tests; knobs documented in this file match shipped constants.
+
 ## Code map (planned)
 
 | Area | Responsibility |
