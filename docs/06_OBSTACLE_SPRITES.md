@@ -141,16 +141,18 @@ the next.
 - [x] Move sprites into `obstacles/rocks/` and `obstacles/trees/`.
 - [x] Fix existing `Large_Tree.webp` import path in `treeRenderer.ts`.
 
-### Phase 1 — Catalog and types
+### Phase 1 — Catalog and types (done)
 
-- Add `config/obstacleSprites.ts` with all variants, imports, and placeholder
+- [x] Add `config/obstacleSprites.ts` with all variants, imports, and placeholder
   layout numbers (copy current tree constants as defaults for `Large_Tree`).
-- Add `variant: number` to `RockObstacle` and `TreeObstacle`; update TSDoc for
+- [x] Add `variant: number` to `RockObstacle` and `TreeObstacle`; update TSDoc for
   tree `(x, y)` = bottom-centre.
-- Add `treeCollisionCenter()` (and exports used by collision).
-- Update any tests/fixtures that construct obstacles by hand.
+- [x] Add `treeCollisionCenter()` in `world/obstacleGeometry.ts` (collision +
+  minimap + debug use `circleObstacleCollision()`).
+- [x] Update tests/fixtures; `tests/obstacleGeometry.test.ts`.
 
-**Exit criteria:** Types compile; helper unit-tested; no visual change yet.
+**Exit criteria:** Types compile; helper unit-tested; no visual change yet (`collisionLiftR`
+is `0`; mapgen sets `variant: 0` until Phase 2).
 
 ### Phase 2 — Mapgen variant + tree foot semantics
 

@@ -6,6 +6,7 @@
 
 import { TAU } from '../config/constants';
 import type { Camera } from '../core/camera';
+import { circleObstacleCollision } from '../world/obstacleGeometry';
 import type { Obstacle } from '../world/types';
 
 /** Stroke for circular obstacles (rocks, trees). */
@@ -16,7 +17,7 @@ const LINE_WIDTH = 2;
 
 /**
  * Outlines each obstacle's collision geometry in world space.
- * Trees use the trunk circle at `(x, y)` with radius `r` (same as {@link segmentObstacle}).
+ * Trees use {@link treeCollisionCenter} (same as {@link segmentObstacle}).
  *
  * @param ctx - Drawing context in world space.
  * @param obstacles - Map obstacles.
@@ -39,10 +40,11 @@ export function drawObstacleCollisionDebug(
       ctx.strokeRect(o.x, o.y, o.w, o.h);
       continue;
     }
-    if (!cam.inView(o.x, o.y, o.r)) continue;
+    const { x: cx, y: cy, r } = circleObstacleCollision(o);
+    if (!cam.inView(cx, cy, r)) continue;
     ctx.strokeStyle = CIRCLE_STROKE;
     ctx.beginPath();
-    ctx.arc(o.x, o.y, o.r, 0, TAU);
+    ctx.arc(cx, cy, r, 0, TAU);
     ctx.stroke();
   }
 

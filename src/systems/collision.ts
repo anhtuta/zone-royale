@@ -9,6 +9,7 @@
 
 import { clamp, dist2 } from '../utils/math';
 import { segmentCircle, segmentRect } from '../utils/geometry';
+import { circleObstacleCollision } from '../world/obstacleGeometry';
 import type { House, Obstacle } from '../world/types';
 
 /** Anything with a position and a radius that can be pushed out of obstacles. */
@@ -49,8 +50,9 @@ export function segmentObstacle(
       if (o.x > maxx || o.x + o.w < minx || o.y > maxy || o.y + o.h < miny) continue;
       t = segmentRect(x1, y1, x2, y2, o.x, o.y, o.w, o.h);
     } else {
-      if (o.x - o.r > maxx || o.x + o.r < minx || o.y - o.r > maxy || o.y + o.r < miny) continue;
-      t = segmentCircle(x1, y1, x2, y2, o.x, o.y, o.r);
+      const { x: cx, y: cy, r } = circleObstacleCollision(o);
+      if (cx - r > maxx || cx + r < minx || cy - r > maxy || cy + r < miny) continue;
+      t = segmentCircle(x1, y1, x2, y2, cx, cy, r);
     }
     if (t >= 0 && (best < 0 || t < best)) best = t;
   }
@@ -99,7 +101,10 @@ export function circleFree(
       const cx = clamp(x, o.x, o.x + o.w);
       const cy = clamp(y, o.y, o.y + o.h);
       if (dist2(x, y, cx, cy) < r * r) return false;
-    } else if (dist2(x, y, o.x, o.y) < (r + o.r) * (r + o.r)) return false;
+    } else {
+      const c = circleObstacleCollision(o);
+      if (dist2(x, y, c.x, c.y) < (r + c.r) * (r + c.r)) return false;
+    }
   }
   return true;
 }
@@ -159,15 +164,16 @@ export function resolveCollision(
         else e.y = o.y + o.h + e.r;
       }
     } else {
-      const rr = o.r + e.r;
-      const dx = e.x - o.x;
-      const dy = e.y - o.y;
+      const { x: cx, y: cy, r: or } = circleObstacleCollision(o);
+      const rr = or + e.r;
+      const dx = e.x - cx;
+      const dy = e.y - cy;
       if (Math.abs(dx) > rr || Math.abs(dy) > rr) continue;
       const d2 = dx * dx + dy * dy;
       if (d2 < rr * rr) {
         const d = Math.sqrt(d2) || 0.01;
-        e.x = o.x + (dx / d) * rr;
-        e.y = o.y + (dy / d) * rr;
+        e.x = cx + (dx / d) * rr;
+        e.y = cy + (dy / d) * rr;
       }
     }
   }

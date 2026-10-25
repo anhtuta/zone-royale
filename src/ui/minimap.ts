@@ -7,6 +7,7 @@
 import { TAU } from '../config/constants';
 import type { Camera } from '../core/camera';
 import type { World } from '../core/world';
+import { circleObstacleCollision } from '../world/obstacleGeometry';
 import type { GameMap } from '../world/types';
 
 /** Minimap size in CSS pixels. */
@@ -44,9 +45,16 @@ export function buildMinimapBase(
       m.fillStyle = '#4e342e';
       m.fillRect(o.x * k, o.y * k, Math.max(1, o.w * k), Math.max(1, o.h * k));
     } else {
+      const { x: cx, y: cy, r } = circleObstacleCollision(o);
       m.fillStyle = o.t === 'tree' ? '#2e5d27' : '#8d8d8d';
       m.beginPath();
-      m.arc(o.x * k, o.y * k, Math.max(1.2, o.r * k * (o.t === 'tree' ? 1.4 : 1)), 0, TAU);
+      m.arc(
+        cx * k,
+        cy * k,
+        Math.max(1.2, r * k * (o.t === 'tree' ? 1.4 : 1)),
+        0,
+        TAU,
+      );
       m.fill();
     }
   }

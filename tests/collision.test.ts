@@ -15,7 +15,7 @@ import type { Obstacle } from '../src/world/types';
 import { buildHouseWalls, housesTooClose, WALL_THICKNESS } from '../src/world/houses';
 
 const wall: Obstacle = { t: 'wall', x: 100, y: 0, w: 20, h: 200 };
-const rock: Obstacle = { t: 'rock', x: 300, y: 100, r: 30, shade: 0 };
+const rock: Obstacle = { t: 'rock', x: 300, y: 100, r: 30, variant: 0, shade: 0 };
 
 describe('segment intersection', () => {
   it('segmentCircle finds the entry point', () => {

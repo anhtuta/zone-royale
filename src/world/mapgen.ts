@@ -124,8 +124,8 @@ function scatter(
         continue;
       const o: Obstacle =
         kind === 'tree'
-          ? { t: 'tree', x, y, r, vr: r * 1.55, shade: rand(-12, 12) }
-          : { t: 'rock', x, y, r, shade: rand(-15, 15) };
+          ? { t: 'tree', x, y, r, vr: r * 1.55, variant: 0, shade: rand(-12, 12) }
+          : { t: 'rock', x, y, r, variant: 0, shade: rand(-15, 15) };
       map.obstacles.push(o);
       break;
     }
