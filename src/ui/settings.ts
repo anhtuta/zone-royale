@@ -69,6 +69,11 @@ export class SettingsModal {
     this.root.classList.add('hidden');
   }
 
+  /** Whether the settings overlay is visible (blocks menu shortcuts). */
+  isOpen(): boolean {
+    return !this.root.classList.contains('hidden');
+  }
+
   /** Persists the form and notifies listeners. */
   private save(): void {
     const settings: MatchSettings = {
