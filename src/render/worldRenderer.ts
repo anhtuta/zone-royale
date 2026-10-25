@@ -8,6 +8,7 @@
  * @packageDocumentation
  */
 
+import { DEBUG_OBSTACLE_COLLISION } from '../config/env';
 import { TAU } from '../config/constants';
 import type { Camera } from '../core/camera';
 import type { World } from '../core/world';
@@ -17,6 +18,7 @@ import { dist2 } from '../utils/math';
 import type { House } from '../world/types';
 import { drawEntity } from './entityRenderer';
 import { drawLoot } from './lootRenderer';
+import { drawObstacleCollisionDebug } from './obstacleCollisionDebug';
 import { drawTree, treeSpriteInView } from './treeRenderer';
 
 /** Options for {@link drawWorld}. */
@@ -237,4 +239,7 @@ export function drawWorld(
     ctx.fillText(f.text, f.x, f.y);
   }
   ctx.globalAlpha = 1;
+  if (DEBUG_OBSTACLE_COLLISION) {
+    drawObstacleCollisionDebug(ctx, world.obstacles, cam);
+  }
 }
