@@ -197,6 +197,30 @@ centre.
 
 **Exit criteria:** No obvious foot sliding; collision feels fair.
 
+### Known issues (fix in Phases 5–6)
+
+Until foot anchoring and per-variant layout land, **`VITE_USE_OBSTACLE_IMAGES=true`**
+with the current [`treeRenderer.ts`](../src/render/treeRenderer.ts) shows mismatches
+between art and gameplay:
+
+| Symptom | Cause |
+| ------- | ----- |
+| Bullets pass through the leafy PNG / canopy but stop lower on the tree | Collision uses only a **trunk circle** at `(x, y)` with radius `r` ([`collision.ts`](../src/systems/collision.ts)); `vr` and the bitmap are **visual-only**. The canopy sits mostly **above** `(x, y)`, so shots often miss the circle. |
+| It feels like the **shadow** blocks shots | The shadow is **not** a collider. The ellipse is drawn at `y + 0.5·vr`, which overlaps the same trunk circle players hit near the ground—so blocking aligns with the shadow more than with the sprite. |
+| Shadow sits **below** the bottom of the PNG | Shadow uses procedural layout (`y + 0.5·vr`). The PNG is placed with `SPRITE_TOP_FRAC` so its bottom is near `y + 0.27·vr`—about `0.23·vr` higher than the shadow centre. |
+
+**Today’s code** still treats tree `(x, y)` as the **collision centre** (see
+[`world/types.ts`](../src/world/types.ts)); the bottom-centre foot model in this doc
+is the **target** after Phases 1–2 (`treeCollisionCenter()`).
+
+**Phase 5** should tie shadow + sprite to the same foot / catalog anchors (per variant).
+**Phase 6** should tune `collisionLift`, `collisionRadiusScale`, and optionally a
+larger blocking radius if cover should match visible foliage (still circles only).
+
+**Local debug:** `VITE_DEBUG_OBSTACLE_COLLISION=true` draws gameplay outlines via
+[`render/obstacleCollisionDebug.ts`](../src/render/obstacleCollisionDebug.ts); update
+that module when `treeCollisionCenter()` exists so the ring matches sim.
+
 ### Phase 7 — Tests and CI
 
 - Bounds tests per variant (at least one rock + one tree smoke, pattern like
