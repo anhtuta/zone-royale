@@ -100,11 +100,10 @@ Plain `(x, y)` plus a small set of operations:
 | Scale to speed | `vx = directionX * SPEED`, same for `vy` | Turn “which way” into px/s |
 | Dot (optional) | $a_x b_x + a_y b_y$ | In front vs behind, “how much along…” |
 
-**Diagonal movement:** Without normalization, W+D is ~41% faster than W alone.
+**Diagonal movement:** Without normalization, W+D is ~41% faster than W alone. Zone Royale
+normalises in [`playerVelocity()`](../src/systems/player.ts) so diagonals stay at **245** px/s.
 
-- Nếu ko chuẩn hoá: di chuyển chéo (ấn W + D) sẽ nhanh hơn di chuyển theo hướng W hoặc D.
-
-**Example 1 (length):** Velocity `(173, 173)` → `hypot(173, 173) ≈ 245` (= full run speed after normalize + scale).
+**Example 1 (length):** **W+D** velocity `(173, -173)` → `hypot(173, -173) ≈ 245` (= full run speed after normalize + scale).
 
 ### Scale to speed (what `playerVelocity` really does)
 
@@ -193,8 +192,8 @@ would be **1.0**).
 Your velocity $v = (173, -173)$ (W+D). Unit direction $\hat{d} = (0.707, -0.707)$.
 Want “how much am I moving east?” → $\hat{e}_x \cdot v$ with east $\hat{e}_x = (1,0)$:
 
-$1 \cdot 173 + 0 \cdot (-173) = 173$ px/s of your **245** px/s is eastward; the rest is northward
-(negative $y$).
+$1 \cdot 173 + 0 \cdot (-173) = 173$ px/s of your **245** px/s is eastward; the rest is upward on screen
+($v_y = -173$, decreasing $y$).
 
 ---
 
@@ -359,11 +358,13 @@ $(1500 - 400,\; 1200 - 300) = (1100,\; 900)$. Camera at **(1000, 900)**, `dt = 0
 
 Optional extension: damage falloff `damage * clamp(1 - d / range, 0, 1)`.
 
-**Example (lead):** Bot shoots pistol (**bullet speed 1150**). Target **400** px away, moving up
-$v_y = 200$ px/s, bot `skill = 0.8`:
+**Example (lead):** Bot shoots pistol (**bullet speed 1150**). Target **400** px away, moving **up on screen**
+($v_y = -200$ px/s), bot `skill = 0.8`:
 
 - $t_{\mathrm{flight}} \approx (400 / 1150) \times 0.8 \approx 0.28$ s
-- Lead offset on Y: $200 \times 0.28 \approx 56$ px → aim at target position **+56** on Y.
+- Lead offset on Y: $v_y \times t_{\mathrm{flight}} = -200 \times 0.28 \approx -56$ px → aim at
+  **$y_{\mathrm{target}} - 56$** (56 px higher on screen than their current position; same as
+  `t.y + t.vy * lead` in [`systems/ai.ts`](../src/systems/ai.ts)).
 
 **Example (`combatRadial`):** Pistol `range = 750` → [`preferredRange`](../src/systems/ai.ts)
 $\min(375,\; 420) = 375$ px, band **±60**:
@@ -378,7 +379,7 @@ $\min(375,\; 420) = 375$ px, band **±60**:
 
 - $(1 - 0.5) \times 0.3 + 0.05 + 800/4000 = 0.15 + 0.05 + 0.2 = 0.4$ rad (~23°) extra jitter scale.
 
-**Example (moving spread):** Standing still → factor **1**. Running at **(173, 173)** → `hypot > 30` →
+**Example (moving spread):** Standing still → factor **1**. Running **W+D** at **(173, -173)** → `hypot > 30` →
 spread × **1.35** (pistol base spread 0.035 rad → effective ~0.047 rad).
 
 **Example (armor, not in table but common):** Hit for **50** damage, **30** armor left,
@@ -433,7 +434,7 @@ absorb more than you have.
 Full 3D linear algebra or a physics engine is not required for this style of game — it is
 mostly trig, clamp, distance, and a handful of intersection tests kept in `utils/`.
 
-**Example (putting it together):** One frame at 60 FPS: read **W+D** → velocity **(173, 173)**;
+**Example (putting it together):** One frame at 60 FPS: read **W+D** → velocity **(173, -173)**;
 integrate position with `dt`; `resolveCollision` if inside a wall; check loot with $d^2 < 34^2$;
 aim with `atan2`; fire bullet with $v = 1150 \times (\cos\theta,\; \sin\theta)$; camera `lerp`
 toward player with $t \approx 0.17$.
