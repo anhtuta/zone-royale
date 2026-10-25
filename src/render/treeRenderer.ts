@@ -10,7 +10,7 @@ import { TAU } from '../config/constants';
 import { shade } from '../utils/color';
 import type { TreeObstacle } from '../world/types';
 
-import treeUrl from '../assets/sprites/large_tree.png';
+import treeUrl from '../assets/sprites/Large_Tree.webp';
 
 /** World height of the PNG tree sprite (`h = vr × this`). */
 const SPRITE_HEIGHT_MUL = 2.7;
@@ -18,15 +18,24 @@ const SPRITE_HEIGHT_MUL = 2.7;
 const SPRITE_TOP_FRAC = 0.9;
 /** Width/height fallback until the PNG finishes loading. */
 const SPRITE_FALLBACK_ASPECT = 0.85;
+/**
+ * Downward reach of procedural side clumps as a fraction of `vr`
+ * (`cy = y − 0.05·vr`, `rad = 0.62·vr`, outline `sin × wobble × 0.9`).
+ */
+const PROC_CANOPY_BOTTOM_FRAC = 0.592;
 
 let treeImage: HTMLImageElement | null = null;
 let treeLoadPromise: Promise<void> | null = null;
 
 /** Axis-aligned bounds of the tree canopy / sprite draw pass. */
 export interface TreeSpriteBounds {
+  /** Minimum X (world). */
   readonly left: number;
+  /** Minimum Y (world). */
   readonly top: number;
+  /** Maximum X (world). */
   readonly right: number;
+  /** Maximum Y (world). */
   readonly bottom: number;
 }
 
@@ -106,7 +115,8 @@ function treeCanvasSpriteBounds(tree: TreeObstacle): TreeSpriteBounds {
   const edge = 1.12;
   const halfW = vr * 0.64 + vr * 0.62 * edge;
   const top = y - vr * 0.62 - vr * 0.78 * edge;
-  const bottom = y + Math.max(r * 0.48, vr * 0.08);
+  const bottom =
+    y + Math.max(r * 0.48, vr * PROC_CANOPY_BOTTOM_FRAC) * edge;
   return { left: x - halfW, top, right: x + halfW, bottom };
 }
 
