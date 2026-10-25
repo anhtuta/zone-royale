@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { treeSpriteDef } from '../src/config/obstacleSprites';
 import { treeSpriteBounds, treeSpriteDrawRect } from '../src/render/treeRenderer';
+import { treeSpriteFoot } from '../src/world/obstacleGeometry';
 
 describe('treeSpriteDrawRect', () => {
   it('anchors sprite bottom at the foot with per-variant heightMul', () => {
@@ -9,9 +10,10 @@ describe('treeSpriteDrawRect', () => {
     const tree = { t: 'tree' as const, x: 120, y: 400, r, vr, variant: 3, shade: 0 };
     const def = treeSpriteDef(3);
     const aspect = 0.8;
+    const foot = treeSpriteFoot(tree);
     const { left, top, w, h } = treeSpriteDrawRect(tree, aspect);
-    expect(left + w / 2).toBeCloseTo(tree.x);
-    expect(top + h).toBeCloseTo(tree.y);
+    expect(left + w / 2).toBeCloseTo(foot.x);
+    expect(top + h).toBeCloseTo(foot.y);
     expect(h).toBeCloseTo(vr * def.heightMul);
     expect(w).toBeCloseTo(h * aspect);
   });

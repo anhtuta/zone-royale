@@ -1,5 +1,10 @@
 import { describe, expect, it, afterEach } from 'vitest';
-import { ROCK_SPRITES, TREE_SPRITES } from '../src/config/obstacleSprites';
+import {
+  ROCK_SPRITES,
+  TREE_CANOPY_VR_MUL,
+  TREE_SPRITES,
+  treeSpriteDef,
+} from '../src/config/obstacleSprites';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
 import {
   DECOR_COUNT,
@@ -69,6 +74,18 @@ describe('generateMap', () => {
     for (const v of a.trees) {
       expect(v).toBeGreaterThanOrEqual(0);
       expect(v).toBeLessThan(TREE_SPRITES.length);
+    }
+  });
+
+  it('decouples tree vr from collision radius scale', () => {
+    setRandomSource(createSeededRandom(9001));
+    const trees = generateMap(1200).obstacles.filter((o) => o.t === 'tree');
+    expect(trees.length).toBeGreaterThan(0);
+    for (const tree of trees) {
+      if (tree.t !== 'tree') continue;
+      const scale = treeSpriteDef(tree.variant).collisionRadiusScale;
+      expect(tree.r / tree.vr).toBeCloseTo(scale / TREE_CANOPY_VR_MUL, 5);
+      expect(tree.vr / tree.r).not.toBeCloseTo(TREE_CANOPY_VR_MUL, 2);
     }
   });
 });

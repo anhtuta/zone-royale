@@ -45,13 +45,25 @@ export function treeFootCollisionCenter(
 }
 
 /**
- * Gameplay collision centre for a placed tree (`tree.x`, `tree.y` = foot).
+ * Bottom-centre of the tree sprite in world space (includes catalog `drawOffsetX/Y`).
+ *
+ * @param tree - Tree obstacle (`tree.x`, `tree.y` = map anchor).
+ * @returns Foot used for drawing and collision lift.
+ */
+export function treeSpriteFoot(tree: TreeObstacle): WorldPoint {
+  const def = treeSpriteDef(tree.variant);
+  return { x: tree.x + def.drawOffsetX, y: tree.y + def.drawOffsetY };
+}
+
+/**
+ * Gameplay collision centre for a placed tree.
  *
  * @param tree - Tree obstacle.
  * @returns Circle centre used by {@link segmentObstacle} and movement resolution.
  */
 export function treeCollisionCenter(tree: TreeObstacle): WorldPoint {
-  return treeFootCollisionCenter(tree.x, tree.y, tree.r, tree.variant);
+  const foot = treeSpriteFoot(tree);
+  return treeFootCollisionCenter(foot.x, foot.y, tree.r, tree.variant);
 }
 
 /**

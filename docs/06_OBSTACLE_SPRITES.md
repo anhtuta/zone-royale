@@ -213,17 +213,25 @@ centre. With `collisionLiftR === 0`, foot equals legacy centre until Phase 6 tun
 
 **Exit criteria:** No obvious foot sliding; collision feels fair (re-tune catalog after art changes).
 
-#### Tuning reference (initial pass)
+#### Tuning reference
+
+Edit [`config/obstacleSprites.ts`](../src/config/obstacleSprites.ts) per variant:
+
+| Field | Effect |
+| ----- | ------ |
+| **`heightMul`** | Sprite height = `vr × heightMul` — **make the tree bigger** by raising this (e.g. 3.0 → 3.5). |
+| **`drawOffsetY`** | Moves the **image** up (negative) or down (positive) relative to map `(x,y)`. Collision foot uses the same offset. |
+| **`collisionLiftR`** | Moves the **collision circle up**: centre at `footY − collisionLiftR × r`. Raise if the pink debug ring sits too low (try +0.1 steps). |
+| **`collisionRadiusScale`** | **Collision only:** stored `r = baseR × scale`. Does **not** change sprite size (`vr` / rock `heightMul` use unscaled `baseR`). |
 
 | Variant | Notes |
 | ------- | ----- |
 | `foothill_*` | Slightly smaller collision (`~0.9×`) vs grass fringe |
 | `*_cake` | Tighter collision, sprite nudged up (`drawOffsetY`) |
-| `bb_grove` | Tallest sprite; higher lift + wider trunk circle |
-| `large_tree` | Baseline `heightMul` 2.7, `collisionLiftR` 0.5 |
+| `xmas_2025` / `clashmas_*` | Tall art with transparent padding — higher `heightMul`, negative `drawOffsetY`, `collisionLiftR` ~1.0+ |
 
-Use `VITE_DEBUG_OBSTACLE_COLLISION=true` and adjust catalog fields — gameplay still uses
-circles only (no canopy hit-test).
+Use `VITE_DEBUG_OBSTACLE_COLLISION=true`, restart `pnpm dev`, tweak catalog, refresh.
+Gameplay still uses circles only (no canopy hit-test).
 
 ### Known issues (ongoing)
 

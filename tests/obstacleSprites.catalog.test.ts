@@ -14,7 +14,7 @@ describe('obstacleSprites catalog tuning', () => {
 
   it('trees lift collision centre above the foot', () => {
     for (let v = 0; v < 5; v++) {
-      expect(treeSpriteDef(v).collisionLiftR).toBeGreaterThanOrEqual(0.5);
+      expect(treeSpriteDef(v).collisionLiftR).toBeGreaterThanOrEqual(0.9);
       expect(treeSpriteDef(v).collisionRadiusScale).toBeGreaterThanOrEqual(1.05);
     }
     expect(treeCollisionRadius(24, 3)).toBeCloseTo(24 * 1.05);

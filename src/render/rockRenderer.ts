@@ -5,7 +5,7 @@
  */
 
 import type { Camera } from '../core/camera';
-import { rockSpriteDef } from '../config/obstacleSprites';
+import { rockSpriteDef, rockVisualBaseRadius } from '../config/obstacleSprites';
 import { USE_OBSTACLE_IMAGES } from '../config/env';
 import { TAU } from '../config/constants';
 import { shade } from '../utils/color';
@@ -65,7 +65,7 @@ function rockImageDrawRect(
   img: HTMLImageElement,
 ): { left: number; top: number; w: number; h: number } {
   const def = rockSpriteDef(rock.variant);
-  const h = rock.r * def.heightMul;
+  const h = rockVisualBaseRadius(rock) * def.heightMul;
   const aspect =
     img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : SPRITE_FALLBACK_ASPECT;
   const w = h * aspect;

@@ -7,12 +7,13 @@
 import {
   ROCK_SPRITES,
   rockCollisionRadius,
+  TREE_CANOPY_VR_MUL,
   TREE_SPRITES,
   treeCollisionRadius,
 } from '../config/obstacleSprites';
 import { pick, rand, randInt } from '../utils/random';
 import { circleFree, inHouse } from '../systems/collision';
-import { treeFootCollisionCenter } from './obstacleGeometry';
+import { treeFootCollisionCenter, treeSpriteFoot } from './obstacleGeometry';
 import { buildHouseWalls, housesTooClose } from './houses';
 import type { Decor, GameMap, House } from './types';
 
@@ -131,10 +132,12 @@ function scatter(
       const x = rand(60, mapSize - 60);
       const y = rand(60, mapSize - 60);
       if (kind === 'tree') {
-        // `(x, y)` is the sprite foot; clearance uses the trunk collision circle.
-        const { x: cx, y: cy } = treeFootCollisionCenter(x, y, r, variant);
+        const vr = baseR * TREE_CANOPY_VR_MUL;
+        const candidate = { t: 'tree' as const, x, y, r, vr, variant, shade: 0 };
+        const foot = treeSpriteFoot(candidate);
+        const { x: cx, y: cy } = treeFootCollisionCenter(foot.x, foot.y, r, variant);
         if (
-          inHouse(map.houses, x, y, r + 50) ||
+          inHouse(map.houses, foot.x, foot.y, r + 50) ||
           !circleFree(map.obstacles, cx, cy, r + 45, mapSize)
         )
           continue;
@@ -143,7 +146,7 @@ function scatter(
           x,
           y,
           r,
-          vr: r * 1.55,
+          vr,
           variant,
           shade: rand(-12, 12),
         });

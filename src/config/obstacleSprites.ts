@@ -31,7 +31,8 @@ export interface ObstacleSpriteLayout {
   /** Nudge draw position in world pixels (after anchor). */
   readonly drawOffsetY: number;
   /**
-   * Multiplier applied to mapgen base radius `r` for this variant (collision + stored `r`).
+   * Multiplier on mapgen **base** radius for **collision only** (stored obstacle `r`).
+   * Sprite size uses {@link obstacleMapgenBaseRadius}, not scaled `r`.
    */
   readonly collisionRadiusScale: number;
 }
@@ -46,6 +47,7 @@ export interface RockSpriteDef extends ObstacleSpriteLayout {
   readonly anchor: 'center';
 }
 
+// Def = the shape of one defined entry.
 /** One tree variant entry. */
 export interface TreeSpriteDef extends ObstacleSpriteLayout {
   /** Stable key for tests and tooling. */
@@ -55,7 +57,8 @@ export interface TreeSpriteDef extends ObstacleSpriteLayout {
   /** Trees use foot (bottom-centre) anchoring. */
   readonly anchor: 'bottom-center';
   /**
-   * Collision centre is `(x, y − collisionLiftR × r)` where `(x, y)` is the foot.
+   * Collision centre is `(footY − collisionLiftR × r)` where foot includes `drawOffsetY`.
+   * Increase to move the circle **up** toward the trunk (typical range ~0.9–1.3 for tall sprites).
    */
   readonly collisionLiftR: number;
 }
@@ -114,29 +117,32 @@ const treeLayout = (id: string, src: string, tuning: TreeTuning = {}): TreeSprit
 export const TREE_SPRITES: readonly TreeSpriteDef[] = [
   treeLayout('bb_grove', bbGroveUrl, {
     heightMul: 3.05,
-    drawOffsetY: -6,
-    collisionLiftR: 0.58,
+    drawOffsetY: -8,
+    collisionLiftR: 2.05,
     collisionRadiusScale: 1.12,
   }),
   treeLayout('clashmas_2015', clashmas2015Url, {
-    heightMul: 2.95,
-    collisionLiftR: 0.52,
+    heightMul: 3.2,
+    drawOffsetY: -10,
+    collisionLiftR: 2.1,
     collisionRadiusScale: 1.08,
   }),
   treeLayout('clashmas_2024', clashmas2024Url, {
-    heightMul: 3.1,
-    drawOffsetY: -4,
-    collisionLiftR: 0.54,
+    heightMul: 3.25,
+    drawOffsetY: -10,
+    collisionLiftR: 2.12,
     collisionRadiusScale: 1.1,
   }),
   treeLayout('large_tree', largeTreeUrl, {
-    heightMul: 2.7,
-    collisionLiftR: 0.5,
+    heightMul: 2.85,
+    drawOffsetY: -6,
+    collisionLiftR: 2.15,
     collisionRadiusScale: 1.05,
   }),
   treeLayout('xmas_2025', xmas2025Url, {
-    heightMul: 2.85,
-    collisionLiftR: 0.53,
+    heightMul: 3.35,
+    drawOffsetY: -12,
+    collisionLiftR: 2.15,
     collisionRadiusScale: 1.08,
   }),
 ];
@@ -189,4 +195,31 @@ export function rockCollisionRadius(baseR: number, variant: number): number {
  */
 export function treeCollisionRadius(baseR: number, variant: number): number {
   return baseR * treeSpriteDef(variant).collisionRadiusScale;
+}
+
+/**
+ * Canopy visual radius from mapgen base radius (`vr` on {@link TreeObstacle}).
+ * Independent of {@link collisionRadiusScale}.
+ */
+export const TREE_CANOPY_VR_MUL = 1.55;
+
+/**
+ * Mapgen base radius recovered from stored collision `r` (rocks or trees).
+ *
+ * @param collisionR - Stored gameplay radius after scaling.
+ * @param collisionRadiusScale - Variant `collisionRadiusScale`.
+ */
+export function obstacleMapgenBaseRadius(
+  collisionR: number,
+  collisionRadiusScale: number,
+): number {
+  return collisionR / collisionRadiusScale;
+}
+
+/**
+ * @param rock - Rock with scaled collision `r`.
+ * @returns Base radius used for sprite `heightMul` (not collision).
+ */
+export function rockVisualBaseRadius(rock: { readonly r: number; readonly variant: number }): number {
+  return obstacleMapgenBaseRadius(rock.r, rockSpriteDef(rock.variant).collisionRadiusScale);
 }
