@@ -10,7 +10,7 @@ import { TAU } from '../config/constants';
 import { shade } from '../utils/color';
 import type { TreeObstacle } from '../world/types';
 
-import treeUrl from '../assets/sprites/Large_Tree.webp';
+import treeUrl from '../assets/sprites/obstacles/trees/Large_Tree.webp';
 
 /** World height of the PNG tree sprite (`h = vr × this`). */
 const SPRITE_HEIGHT_MUL = 2.7;
