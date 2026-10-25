@@ -175,7 +175,7 @@ export function drawWorld(
     drawRock(ctx, o);
   }
   for (const o of world.obstacles) {
-    if (o.t !== 'tree' || !cam.inView(o.x, o.y, o.vr)) continue;
+    if (o.t !== 'tree' || !treeSpriteInView(cam, o)) continue;
     drawTree(ctx, o, 'shadow');
   }
   ctx.lineCap = 'round';

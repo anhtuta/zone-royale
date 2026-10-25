@@ -193,11 +193,12 @@ centre. With `collisionLiftR === 0`, foot equals legacy centre until Phase 6 tun
 
 **Exit criteria:** Rocks show random variants when flag true; circles when false.
 
-### Phase 5 — Tree renderer multi-variant
+### Phase 5 — Tree renderer multi-variant (done)
 
-- Refactor `treeRenderer.ts` to use catalog + per-variant images.
-- Bottom-centre anchor; per-variant bounds for culling (`treeSpriteInView`).
-- Procedural `drawTreeCanvas` unchanged as fallback.
+- [x] [`treeRenderer.ts`](../src/render/treeRenderer.ts): `treeSpriteDef` per variant (`heightMul`, offsets).
+- [x] Bottom-centre foot anchor via `treeSpriteDrawRect`; shadow at foot (`SHADOW_BELOW_FOOT_FRAC`).
+- [x] `treeSpriteInView` uses sprite AABB (+ shadow pad); shadow pass uses same culling.
+- [x] Procedural `drawTreeCanvas` unchanged as fallback.
 
 **Exit criteria:** All five tree assets rotate by `variant`; culling correct.
 
@@ -211,25 +212,16 @@ centre. With `collisionLiftR === 0`, foot equals legacy centre until Phase 6 tun
 
 **Exit criteria:** No obvious foot sliding; collision feels fair.
 
-### Known issues (fix in Phases 5–6)
+### Known issues (tune in Phase 6)
 
-Until foot anchoring and per-variant layout land, **`VITE_USE_OBSTACLE_IMAGES=true`**
-with the current [`treeRenderer.ts`](../src/render/treeRenderer.ts) shows mismatches
-between art and gameplay:
+Sprite **foot anchor and shadow** are aligned in Phase 5. Remaining gameplay vs art gaps:
 
-| Symptom | Cause |
-| ------- | ----- |
-| Bullets pass through the leafy PNG / canopy but stop lower on the tree | Collision uses only a **trunk circle** at `(x, y)` with radius `r` ([`collision.ts`](../src/systems/collision.ts)); `vr` and the bitmap are **visual-only**. The canopy sits mostly **above** `(x, y)`, so shots often miss the circle. |
-| It feels like the **shadow** blocks shots | The shadow is **not** a collider. The ellipse is drawn at `y + 0.5·vr`, which overlaps the same trunk circle players hit near the ground—so blocking aligns with the shadow more than with the sprite. |
-| Shadow sits **below** the bottom of the PNG | Shadow uses procedural layout (`y + 0.5·vr`). The PNG is placed with `SPRITE_TOP_FRAC` so its bottom is near `y + 0.27·vr`—about `0.23·vr` higher than the shadow centre. |
+| Symptom | Cause / fix in Phase 6 |
+| ------- | ---------------------- |
+| Bullets pass through leafy PNG canopy | Collision is still a **trunk circle** (`r` at `treeCollisionCenter()`); canopy is visual-only unless `collisionRadiusScale` / lift are tuned. |
+| Shadow vs blocking feel mismatched | Shadow is not a collider; tune `collisionLiftR` and per-variant offsets so the debug circle matches expectations. |
 
-**Today’s code** still treats tree `(x, y)` as the **collision centre** (see
-[`world/types.ts`](../src/world/types.ts)); the bottom-centre foot model in this doc
-is the **target** after Phases 1–2 (`treeCollisionCenter()`).
-
-**Phase 5** should tie shadow + sprite to the same foot / catalog anchors (per variant).
-**Phase 6** should tune `collisionLift`, `collisionRadiusScale`, and optionally a
-larger blocking radius if cover should match visible foliage (still circles only).
+**Phase 6:** per-asset `heightMul`, `drawOffset`, `collisionLiftR`, `collisionRadiusScale`; optional larger blocking radius for cover (still circles).
 
 **Local debug:** `VITE_DEBUG_OBSTACLE_COLLISION=true` draws gameplay outlines via
 [`render/obstacleCollisionDebug.ts`](../src/render/obstacleCollisionDebug.ts); update
