@@ -9,8 +9,7 @@ import { USE_OBSTACLE_IMAGES } from '../config/env';
 import { TAU } from '../config/constants';
 import { shade } from '../utils/color';
 import type { TreeObstacle } from '../world/types';
-
-import treeUrl from '../assets/sprites/obstacles/trees/Large_Tree.webp';
+import { getTreeImage, loadObstacleSprites } from './obstacleSprites';
 
 /** World height of the PNG tree sprite (`h = vr × this`). */
 const SPRITE_HEIGHT_MUL = 2.7;
@@ -23,9 +22,6 @@ const SPRITE_FALLBACK_ASPECT = 0.85;
  * (`cy = y − 0.05·vr`, `rad = 0.62·vr`, outline `sin × wobble × 0.9`).
  */
 const PROC_CANOPY_BOTTOM_FRAC = 0.592;
-
-let treeImage: HTMLImageElement | null = null;
-let treeLoadPromise: Promise<void> | null = null;
 
 /** Axis-aligned bounds of the tree canopy / sprite draw pass. */
 export interface TreeSpriteBounds {
@@ -40,24 +36,11 @@ export interface TreeSpriteBounds {
 }
 
 /**
- * Loads the tree PNG when {@link USE_OBSTACLE_IMAGES} is enabled.
- *
- * @returns Resolves immediately when images are disabled or already loaded.
+ * @deprecated Use {@link loadObstacleSprites} from `./obstacleSprites`.
+ * @returns Same promise as {@link loadObstacleSprites}.
  */
 export function loadTreeSprite(): Promise<void> {
-  if (!USE_OBSTACLE_IMAGES) return Promise.resolve();
-  if (treeImage) return Promise.resolve();
-  if (treeLoadPromise) return treeLoadPromise;
-  treeLoadPromise = new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      treeImage = img;
-      resolve();
-    };
-    img.onerror = () => reject(new Error('Failed to load tree sprite'));
-    img.src = treeUrl;
-  });
-  return treeLoadPromise;
+  return loadObstacleSprites();
 }
 
 /**
@@ -67,8 +50,9 @@ export function loadTreeSprite(): Promise<void> {
  * @returns Rectangle used for culling and matching {@link drawTree} `'sprite'` layer.
  */
 export function treeSpriteBounds(tree: TreeObstacle): TreeSpriteBounds {
-  if (USE_OBSTACLE_IMAGES && treeImage) {
-    const { left, top, w, h } = treeImageDrawRect(tree.x, tree.y, tree.vr);
+  const img = getTreeImage(tree.variant);
+  if (USE_OBSTACLE_IMAGES && img) {
+    const { left, top, w, h } = treeImageDrawRect(tree.x, tree.y, tree.vr, img);
     return { left, top, right: left + w, bottom: top + h };
   }
   return treeCanvasSpriteBounds(tree);
@@ -96,12 +80,11 @@ function treeImageDrawRect(
   x: number,
   y: number,
   vr: number,
+  img: HTMLImageElement,
 ): { left: number; top: number; w: number; h: number } {
   const h = vr * SPRITE_HEIGHT_MUL;
   const aspect =
-    treeImage && treeImage.naturalHeight > 0
-      ? treeImage.naturalWidth / treeImage.naturalHeight
-      : SPRITE_FALLBACK_ASPECT;
+    img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : SPRITE_FALLBACK_ASPECT;
   const w = h * aspect;
   return { left: x - w / 2, top: y - h * SPRITE_TOP_FRAC, w, h };
 }
@@ -140,9 +123,10 @@ export function drawTree(
     ctx.fill();
     return;
   }
-  if (USE_OBSTACLE_IMAGES && treeImage) {
-    const { left, top, w, h } = treeImageDrawRect(x, y, vr);
-    ctx.drawImage(treeImage, left, top, w, h);
+  const img = getTreeImage(tree.variant);
+  if (USE_OBSTACLE_IMAGES && img) {
+    const { left, top, w, h } = treeImageDrawRect(x, y, vr, img);
+    ctx.drawImage(img, left, top, w, h);
     return;
   }
   drawTreeCanvas(ctx, tree);

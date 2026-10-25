@@ -73,7 +73,7 @@ const rockLayout = (id: string, src: string): RockSpriteDef => ({
   collisionRadiusScale: 1,
 });
 
-/** Ordered rock variants; index is stored on {@link RockObstacle.variant}. */
+/** Ordered rock variants; index is stored on `RockObstacle.variant` in `world/types.ts`. */
 export const ROCK_SPRITES: readonly RockSpriteDef[] = [
   rockLayout('foothill_6', foothill6Url),
   rockLayout('foothill_7', foothill7Url),
@@ -96,7 +96,7 @@ const treeLayout = (
   collisionLiftR: overrides.collisionLiftR ?? 0,
 });
 
-/** Ordered tree variants; index is stored on {@link TreeObstacle.variant}. */
+/** Ordered tree variants; index is stored on `TreeObstacle.variant` in `world/types.ts`. */
 export const TREE_SPRITES: readonly TreeSpriteDef[] = [
   treeLayout('bb_grove', bbGroveUrl),
   treeLayout('clashmas_2015', clashmas2015Url),

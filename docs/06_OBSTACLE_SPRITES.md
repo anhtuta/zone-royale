@@ -112,7 +112,7 @@ No alpha hit-testing or polygon footprints in v1.
 | Module | Role |
 | ------ | ---- |
 | [`config/obstacleSprites.ts`](../src/config/obstacleSprites.ts) | Variant tables |
-| `render/obstacleSprites.ts` (new) | Load images, `getRockImage(n)`, `getTreeImage(n)` |
+| [`render/obstacleSprites.ts`](../src/render/obstacleSprites.ts) | Load images, `getRockImage(n)`, `getTreeImage(n)` |
 | `render/rockRenderer.ts` (new) | `drawRock`, `rockSpriteBounds`, culling |
 | [`render/treeRenderer.ts`](../src/render/treeRenderer.ts) | Multi-variant trees, foot anchor, bounds |
 | [`render/worldRenderer.ts`](../src/render/worldRenderer.ts) | Call rock/tree drawers; remove inline rock circles when images enabled |
@@ -164,12 +164,13 @@ is `0`; mapgen sets `variant: 0` until Phase 2).
 **Exit criteria:** Seeded maps pick stable variants; collision uses tree collision
 centre. With `collisionLiftR === 0`, foot equals legacy centre until Phase 6 tuning.
 
-### Phase 3 — Sprite loading
+### Phase 3 — Sprite loading (done)
 
-- Add `render/obstacleSprites.ts`: `loadObstacleSprites()`, gated by
-  `USE_OBSTACLE_IMAGES`.
-- Wire `main.ts` to call it (deprecate single-image `loadTreeSprite` or make it
-  a thin alias).
+- [x] [`render/obstacleSprites.ts`](../src/render/obstacleSprites.ts):
+  `loadObstacleSprites()`, `obstacleSpritesReady()`, `getRockImage` / `getTreeImage`.
+- [x] Gated by `USE_OBSTACLE_IMAGES`; any load failure rejects the batch.
+- [x] [`main.ts`](../src/main.ts) calls `loadObstacleSprites()` (fire-and-forget).
+- [x] `loadTreeSprite()` → thin alias; trees draw via `getTreeImage(tree.variant)` when ready.
 
 **Exit criteria:** With flag true, all images load; with false, instant resolve.
 
