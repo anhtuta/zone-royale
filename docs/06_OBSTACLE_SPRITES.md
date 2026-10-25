@@ -7,6 +7,17 @@ Gameplay collision stays **circles**; only rendering and culling use sprite boun
 Related: [01_INIT_PROJECT.md](01_INIT_PROJECT.md) (layers), [04_GAME_MATH.md](04_GAME_MATH.md)
 (collision broad phase), [05_MATCH_SETTINGS.md](05_MATCH_SETTINGS.md) (mapgen).
 
+Vocab:
+
+- Procedural foliage: tán lá được tạo ra bằng thuật toán.
+- Canopy: the visible leafy mass above the trunk — what you see as “the tree”, not the collision circle.
+  - Gameplay collision uses `r` (small circle at the obstacle centre).
+  - Drawing uses **`vr`** (“visual radius”): on the map, `vr ≈ 1.55 × r`, so the art is much larger than the hitbox (see `fuzzyClump` in [`treeRenderer.ts`](../src/render/treeRenderer.ts)).
+- Clump: one blob of procedural foliage from `fuzzyClump()`: a wobbly circle with radial green shading and speckles.
+  - `drawTreeCanvas` draws three clumps.
+- Culling: not drawing something because it can’t be on screen, to save work each frame.
+  - See `drawWorld` in [`worldRenderer.ts`](../src/render/worldRenderer.ts).
+
 ## Goals
 
 - Draw **rocks** from random variants at map creation (not per frame).
@@ -113,7 +124,7 @@ No alpha hit-testing or polygon footprints in v1.
 | ------ | ---- |
 | [`config/obstacleSprites.ts`](../src/config/obstacleSprites.ts) | Variant tables |
 | [`render/obstacleSprites.ts`](../src/render/obstacleSprites.ts) | Load images, `getRockImage(n)`, `getTreeImage(n)` |
-| `render/rockRenderer.ts` (new) | `drawRock`, `rockSpriteBounds`, culling |
+| [`render/rockRenderer.ts`](../src/render/rockRenderer.ts) | `drawRock`, `rockSpriteBounds`, culling |
 | [`render/treeRenderer.ts`](../src/render/treeRenderer.ts) | Multi-variant trees, foot anchor, bounds |
 | [`render/worldRenderer.ts`](../src/render/worldRenderer.ts) | Call rock/tree drawers; remove inline rock circles when images enabled |
 | [`main.ts`](../src/main.ts) | `loadObstacleSprites()` (replace or wrap `loadTreeSprite`) |
@@ -174,10 +185,11 @@ centre. With `collisionLiftR === 0`, foot equals legacy centre until Phase 6 tun
 
 **Exit criteria:** With flag true, all images load; with false, instant resolve.
 
-### Phase 4 — Rock renderer
+### Phase 4 — Rock renderer (done)
 
-- Add `render/rockRenderer.ts`: bounds, shadow, `drawRock` (image + procedural).
-- Replace inline rock drawing in `worldRenderer.ts`.
+- [x] [`render/rockRenderer.ts`](../src/render/rockRenderer.ts): bounds, shadow, `drawRock` (image + procedural).
+- [x] [`worldRenderer.ts`](../src/render/worldRenderer.ts) uses `rockInView` + `drawRock`.
+- [x] `tests/rockRenderer.test.ts` — bounds smoke tests.
 
 **Exit criteria:** Rocks show random variants when flag true; circles when false.
 
