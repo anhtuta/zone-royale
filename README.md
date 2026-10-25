@@ -77,5 +77,6 @@ tests/       Vitest unit tests
 docs/        project documentation
 ```
 
-See [docs/INIT_PROJECT.md](docs/INIT_PROJECT.md) for the architecture and conventions, and
-[docs/README.md](docs/README.md) for the documentation index.
+See [docs/01_INIT_PROJECT.md](docs/01_INIT_PROJECT.md) for architecture and conventions.
+Other topic docs use numbered names in `docs/` (for example `02_COMBATANT_ART.md`,
+`03_MULTIPLAYER.md`, `04_GAME_MATH.md`).

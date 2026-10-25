@@ -17,6 +17,7 @@ import { dist2 } from '../utils/math';
 import type { House } from '../world/types';
 import { drawEntity } from './entityRenderer';
 import { drawLoot } from './lootRenderer';
+import { drawTree } from './treeRenderer';
 
 /** Options for {@link drawWorld}. */
 export interface WorldRenderOptions {
@@ -184,6 +185,10 @@ export function drawWorld(
     ctx.arc(o.x - o.r * 0.3, o.y - o.r * 0.3, o.r * 0.45, 0, TAU);
     ctx.fill();
   }
+  for (const o of world.obstacles) {
+    if (o.t !== 'tree' || !cam.inView(o.x, o.y, o.vr)) continue;
+    drawTree(ctx, o, 'shadow');
+  }
   ctx.lineCap = 'round';
   for (const b of world.bullets) {
     ctx.strokeStyle = b.color;
@@ -210,24 +215,7 @@ export function drawWorld(
   }
   for (const o of world.obstacles) {
     if (o.t !== 'tree' || !cam.inView(o.x, o.y, o.vr)) continue;
-    ctx.fillStyle = 'rgba(0,0,0,.22)';
-    ctx.beginPath();
-    ctx.arc(o.x + 6, o.y + 8, o.vr, 0, TAU);
-    ctx.fill();
-    ctx.globalAlpha = 0.93;
-    ctx.fillStyle = shade('#2f6b2a', o.shade);
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, o.vr, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = shade('#3f8a36', o.shade);
-    ctx.beginPath();
-    ctx.arc(o.x - o.vr * 0.18, o.y - o.vr * 0.2, o.vr * 0.68, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.1)';
-    ctx.beginPath();
-    ctx.arc(o.x - o.vr * 0.3, o.y - o.vr * 0.35, o.vr * 0.3, 0, TAU);
-    ctx.fill();
-    ctx.globalAlpha = 1;
+    drawTree(ctx, o, 'sprite');
   }
   for (const p of world.particles) {
     ctx.globalAlpha = Math.max(0, p.life / p.max);
