@@ -416,7 +416,7 @@ Tree at **x = 1900** → off-screen, skip draw.
   `systems/` for reproducible tests.
 
 **Example (`clamp`):** `mapSize` **5000**, entity tries **x = 5050** with
-radius **18** → clamp to $[18,\; 5982]$ → **5982**.
+radius **18** → clamp to $[18,\; 5000 - 18] = [18,\; 4982]$ → **4982**.
 
 **Example (`min` for damage):** Armor absorb uses `min(remainingArmor, damage × 0.6)` so you never
 absorb more than you have.
