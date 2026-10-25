@@ -143,7 +143,7 @@ export function drawTree(
     ctx.beginPath();
     ctx.ellipse(
       footX + def.shadowOffsetX,
-      footY + vr * def.shadowOffsetYFrac,
+      footY + def.shadowOffsetY,
       vr * def.shadowRadiusXMul,
       vr * def.shadowRadiusYMul,
       0,

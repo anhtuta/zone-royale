@@ -39,7 +39,30 @@ export interface ObstacleSpriteLayout {
    * Fixed mapgen radius for this variant (same art ⇒ same `r`, `vr`, and draw size).
    */
   readonly mapgenBaseR: number;
+  /**
+   * Shadow ellipse centre X offset from the sprite anchor (after `drawOffsetX`).
+   * Rocks: centre anchor; trees: foot.
+   */
+  readonly shadowOffsetX: number;
+  /**
+   * Shadow ellipse centre Y offset from the sprite anchor (after `drawOffsetY`), in pixels.
+   */
+  readonly shadowOffsetY: number;
+  /**
+   * Shadow horizontal radius multiplier (rocks: `× r`; trees: `× vr`).
+   */
+  readonly shadowRadiusXMul: number;
+  /**
+   * Shadow vertical radius multiplier (rocks: `× r`; trees: `× vr`).
+   */
+  readonly shadowRadiusYMul: number;
 }
+
+/** Per-variant shadow overrides for {@link rockLayout} / {@link treeLayout}. */
+export type ObstacleShadowTuning = Pick<
+  ObstacleSpriteLayout,
+  'shadowOffsetX' | 'shadowOffsetY' | 'shadowRadiusXMul' | 'shadowRadiusYMul'
+>;
 
 /** One rock variant entry. */
 export interface RockSpriteDef extends ObstacleSpriteLayout {
@@ -64,14 +87,6 @@ export interface TreeSpriteDef extends ObstacleSpriteLayout {
    * Increase to move the circle **up** toward the trunk (typical range ~0.9–1.3 for tall sprites).
    */
   readonly collisionLiftR: number;
-  /** Shadow ellipse centre X offset from foot (`footX + shadowOffsetX`). */
-  readonly shadowOffsetX: number;
-  /** Shadow centre Y = `footY + vr × shadowOffsetYFrac`. */
-  readonly shadowOffsetYFrac: number;
-  /** Shadow ellipse horizontal radius = `vr × shadowRadiusXMul`. */
-  readonly shadowRadiusXMul: number;
-  /** Shadow ellipse vertical radius = `vr × shadowRadiusYMul`. */
-  readonly shadowRadiusYMul: number;
 }
 
 /** Default rock {@link mapgenBaseR} (midpoint of legacy `scatter` 24–48 range). */
@@ -86,7 +101,8 @@ type RockTuning = Partial<
     RockSpriteDef,
     'heightMul' | 'drawOffsetX' | 'drawOffsetY' | 'collisionRadiusScale' | 'mapgenBaseR'
   >
->;
+> &
+  Partial<ObstacleShadowTuning>;
 
 /** Optional per-tree layout overrides for {@link treeLayout}. */
 type TreeTuning = Partial<
@@ -98,12 +114,9 @@ type TreeTuning = Partial<
     | 'collisionRadiusScale'
     | 'collisionLiftR'
     | 'mapgenBaseR'
-    | 'shadowOffsetX'
-    | 'shadowOffsetYFrac'
-    | 'shadowRadiusXMul'
-    | 'shadowRadiusYMul'
   >
->;
+> &
+  Partial<ObstacleShadowTuning>;
 
 const rockLayout = (id: string, src: string, tuning: RockTuning = {}): RockSpriteDef => ({
   id,
@@ -114,21 +127,45 @@ const rockLayout = (id: string, src: string, tuning: RockTuning = {}): RockSprit
   drawOffsetY: tuning.drawOffsetY ?? 0,
   collisionRadiusScale: tuning.collisionRadiusScale ?? 1,
   mapgenBaseR: tuning.mapgenBaseR ?? DEFAULT_ROCK_MAPGEN_BASE_R,
+  shadowOffsetX: tuning.shadowOffsetX ?? 4,
+  shadowOffsetY: tuning.shadowOffsetY ?? 6,
+  shadowRadiusXMul: tuning.shadowRadiusXMul ?? 1,
+  shadowRadiusYMul: tuning.shadowRadiusYMul ?? 1,
 });
 
 /** Ordered rock variants; index is stored on `RockObstacle.variant` in `world/types.ts`. */
 export const ROCK_SPRITES: readonly RockSpriteDef[] = [
-  rockLayout('foothill_6', foothill6Url, { heightMul: 2.35, collisionRadiusScale: 0.92 }),
-  rockLayout('foothill_7', foothill7Url, { heightMul: 2.3, collisionRadiusScale: 0.9 }),
+  rockLayout('foothill_6', foothill6Url, {
+    heightMul: 2.35, collisionRadiusScale: 0.92,
+    shadowOffsetX: 0,
+    shadowOffsetY: 8,
+    shadowRadiusXMul: 1,
+    shadowRadiusYMul: 0.7,
+  }),
+  rockLayout('foothill_7', foothill7Url, {
+    heightMul: 2.3, collisionRadiusScale: 0.9,
+    shadowOffsetX: 0,
+    shadowOffsetY: 8,
+    shadowRadiusXMul: 1.1,
+    shadowRadiusYMul: 0.8,
+  }),
   rockLayout('sword_cake', swordCakeUrl, {
-    heightMul: 2.55,
+    heightMul: 1.55,
     drawOffsetY: -5,
-    collisionRadiusScale: 0.86,
+    collisionRadiusScale: 0.6,
+    shadowOffsetX: 0,
+    shadowOffsetY: 20,
+    shadowRadiusXMul: 1,
+    shadowRadiusYMul: 0.4,
   }),
   rockLayout('anniversary_cake_6', anniversaryCakeUrl, {
-    heightMul: 2.5,
+    heightMul: 1.5,
     drawOffsetY: -4,
-    collisionRadiusScale: 0.86,
+    collisionRadiusScale: 0.6,
+    shadowOffsetX: 0,
+    shadowOffsetY: 14,
+    shadowRadiusXMul: 1.2,
+    shadowRadiusYMul: 0.4,
   }),
 ];
 
@@ -143,7 +180,7 @@ const treeLayout = (id: string, src: string, tuning: TreeTuning = {}): TreeSprit
   collisionLiftR: tuning.collisionLiftR ?? 0.5,
   mapgenBaseR: tuning.mapgenBaseR ?? DEFAULT_TREE_MAPGEN_BASE_R,
   shadowOffsetX: tuning.shadowOffsetX ?? 5,
-  shadowOffsetYFrac: tuning.shadowOffsetYFrac ?? 0.1,
+  shadowOffsetY: tuning.shadowOffsetY ?? 4,
   shadowRadiusXMul: tuning.shadowRadiusXMul ?? 1.05,
   shadowRadiusYMul: tuning.shadowRadiusYMul ?? 0.38,
 });
@@ -156,7 +193,7 @@ export const TREE_SPRITES: readonly TreeSpriteDef[] = [
     collisionLiftR: 1.3,
     collisionRadiusScale: 1.7,
     shadowOffsetX: 0,
-    shadowOffsetYFrac: -0.5,
+    shadowOffsetY: -19,
     shadowRadiusXMul: 1.2,
     shadowRadiusYMul: 0.4,
   }),
@@ -166,7 +203,7 @@ export const TREE_SPRITES: readonly TreeSpriteDef[] = [
     collisionLiftR: 1.4,
     collisionRadiusScale: 1.2,
     shadowOffsetX: 0,
-    shadowOffsetYFrac: -0.5,
+    shadowOffsetY: -19,
     shadowRadiusXMul: 0.6,
     shadowRadiusYMul: 0.4,
   }),
@@ -176,7 +213,7 @@ export const TREE_SPRITES: readonly TreeSpriteDef[] = [
     collisionLiftR: 1.6,
     collisionRadiusScale: 1.1,
     shadowOffsetX: -1,
-    shadowOffsetYFrac: -0.5,
+    shadowOffsetY: -19,
     shadowRadiusXMul: 0.5,
     shadowRadiusYMul: 0.2,
   }),
@@ -186,7 +223,7 @@ export const TREE_SPRITES: readonly TreeSpriteDef[] = [
     collisionLiftR: 1.3,
     collisionRadiusScale: 1.7,
     shadowOffsetX: 0,
-    shadowOffsetYFrac: -0.5,
+    shadowOffsetY: -19,
     shadowRadiusXMul: 0.6,
     shadowRadiusYMul: 0.4,
   }),
@@ -196,7 +233,7 @@ export const TREE_SPRITES: readonly TreeSpriteDef[] = [
     collisionLiftR: 2.15,
     collisionRadiusScale: 1.08,
     shadowOffsetX: 0,
-    shadowOffsetYFrac: 0,
+    shadowOffsetY: 0,
     shadowRadiusXMul: 0,
     shadowRadiusYMul: 0,
   }),

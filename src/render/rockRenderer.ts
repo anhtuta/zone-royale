@@ -81,10 +81,21 @@ function rockImageDrawRect(
  * @param rock - Rock obstacle data.
  */
 export function drawRock(ctx: CanvasRenderingContext2D, rock: RockObstacle): void {
-  const { x, y, r } = rock;
+  const { r } = rock;
+  const def = rockSpriteDef(rock.variant);
+  const cx = rock.x + def.drawOffsetX;
+  const cy = rock.y + def.drawOffsetY;
   ctx.fillStyle = 'rgba(0,0,0,.25)';
   ctx.beginPath();
-  ctx.arc(x + 4, y + 6, r, 0, TAU);
+  ctx.ellipse(
+    cx + def.shadowOffsetX,
+    cy + def.shadowOffsetY,
+    r * def.shadowRadiusXMul,
+    r * def.shadowRadiusYMul,
+    0,
+    0,
+    TAU,
+  );
   ctx.fill();
 
   const img = getRockImage(rock.variant);
