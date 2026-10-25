@@ -222,7 +222,8 @@ Edit [`config/obstacleSprites.ts`](../src/config/obstacleSprites.ts) per variant
 | **`heightMul`** | Sprite height = `vr × heightMul` — **make the tree bigger** by raising this (e.g. 3.0 → 3.5). |
 | **`drawOffsetY`** | Moves the **image** up (negative) or down (positive) relative to map `(x,y)`. Collision foot uses the same offset. |
 | **`collisionLiftR`** | Moves the **collision circle up**: centre at `footY − collisionLiftR × r`. Raise if the pink debug ring sits too low (try +0.1 steps). |
-| **`collisionRadiusScale`** | **Collision only:** stored `r = baseR × scale`. Does **not** change sprite size (`vr` / rock `heightMul` use unscaled `baseR`). |
+| **`mapgenBaseR`** | Fixed spawn size for this variant (same image ⇒ same `r`, `vr`, and draw scale). |
+| **`collisionRadiusScale`** | **Collision only:** stored `r = mapgenBaseR × scale`. Does **not** change sprite size (`vr` / rock `heightMul` use `mapgenBaseR`). |
 
 | Variant | Notes |
 | ------- | ----- |

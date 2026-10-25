@@ -35,6 +35,10 @@ export interface ObstacleSpriteLayout {
    * Sprite size uses {@link obstacleMapgenBaseRadius}, not scaled `r`.
    */
   readonly collisionRadiusScale: number;
+  /**
+   * Fixed mapgen radius for this variant (same art ⇒ same `r`, `vr`, and draw size).
+   */
+  readonly mapgenBaseR: number;
 }
 
 /** One rock variant entry. */
@@ -47,7 +51,6 @@ export interface RockSpriteDef extends ObstacleSpriteLayout {
   readonly anchor: 'center';
 }
 
-// Def = the shape of one defined entry.
 /** One tree variant entry. */
 export interface TreeSpriteDef extends ObstacleSpriteLayout {
   /** Stable key for tests and tooling. */
@@ -63,16 +66,30 @@ export interface TreeSpriteDef extends ObstacleSpriteLayout {
   readonly collisionLiftR: number;
 }
 
+/** Default rock {@link mapgenBaseR} (midpoint of legacy `scatter` 24–48 range). */
+export const DEFAULT_ROCK_MAPGEN_BASE_R = 36;
+
+/** Default tree {@link mapgenBaseR} (midpoint of legacy `scatter` 20–28 range). */
+export const DEFAULT_TREE_MAPGEN_BASE_R = 24;
+
 /** Optional per-rock layout overrides for {@link rockLayout}. */
 type RockTuning = Partial<
-  Pick<RockSpriteDef, 'heightMul' | 'drawOffsetX' | 'drawOffsetY' | 'collisionRadiusScale'>
+  Pick<
+    RockSpriteDef,
+    'heightMul' | 'drawOffsetX' | 'drawOffsetY' | 'collisionRadiusScale' | 'mapgenBaseR'
+  >
 >;
 
 /** Optional per-tree layout overrides for {@link treeLayout}. */
 type TreeTuning = Partial<
   Pick<
     TreeSpriteDef,
-    'heightMul' | 'drawOffsetX' | 'drawOffsetY' | 'collisionRadiusScale' | 'collisionLiftR'
+    | 'heightMul'
+    | 'drawOffsetX'
+    | 'drawOffsetY'
+    | 'collisionRadiusScale'
+    | 'collisionLiftR'
+    | 'mapgenBaseR'
   >
 >;
 
@@ -84,6 +101,7 @@ const rockLayout = (id: string, src: string, tuning: RockTuning = {}): RockSprit
   drawOffsetX: tuning.drawOffsetX ?? 0,
   drawOffsetY: tuning.drawOffsetY ?? 0,
   collisionRadiusScale: tuning.collisionRadiusScale ?? 1,
+  mapgenBaseR: tuning.mapgenBaseR ?? DEFAULT_ROCK_MAPGEN_BASE_R,
 });
 
 /** Ordered rock variants; index is stored on `RockObstacle.variant` in `world/types.ts`. */
@@ -111,6 +129,7 @@ const treeLayout = (id: string, src: string, tuning: TreeTuning = {}): TreeSprit
   drawOffsetY: tuning.drawOffsetY ?? 0,
   collisionRadiusScale: tuning.collisionRadiusScale ?? 1.05,
   collisionLiftR: tuning.collisionLiftR ?? 0.5,
+  mapgenBaseR: tuning.mapgenBaseR ?? DEFAULT_TREE_MAPGEN_BASE_R,
 });
 
 /** Ordered tree variants; index is stored on `TreeObstacle.variant` in `world/types.ts`. */

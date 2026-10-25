@@ -77,6 +77,34 @@ describe('generateMap', () => {
     }
   });
 
+  it('uses identical r for every rock of the same variant', () => {
+    setRandomSource(createSeededRandom(4242));
+    const rocks = generateMap(2000).obstacles.filter((o) => o.t === 'rock');
+    const byVariant = new Map<number, number>();
+    for (const rock of rocks) {
+      if (rock.t !== 'rock') continue;
+      const prev = byVariant.get(rock.variant);
+      if (prev !== undefined) expect(rock.r).toBe(prev);
+      else byVariant.set(rock.variant, rock.r);
+    }
+  });
+
+  it('uses identical r and vr for every tree of the same variant', () => {
+    setRandomSource(createSeededRandom(4242));
+    const trees = generateMap(2000).obstacles.filter((o) => o.t === 'tree');
+    const byVariant = new Map<number, { r: number; vr: number }>();
+    for (const tree of trees) {
+      if (tree.t !== 'tree') continue;
+      const prev = byVariant.get(tree.variant);
+      if (prev) {
+        expect(tree.r).toBe(prev.r);
+        expect(tree.vr).toBe(prev.vr);
+      } else {
+        byVariant.set(tree.variant, { r: tree.r, vr: tree.vr });
+      }
+    }
+  });
+
   it('decouples tree vr from collision radius scale', () => {
     setRandomSource(createSeededRandom(9001));
     const trees = generateMap(1200).obstacles.filter((o) => o.t === 'tree');

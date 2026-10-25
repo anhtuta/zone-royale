@@ -7,9 +7,11 @@
 import {
   ROCK_SPRITES,
   rockCollisionRadius,
+  rockSpriteDef,
   TREE_CANOPY_VR_MUL,
   TREE_SPRITES,
   treeCollisionRadius,
+  treeSpriteDef,
 } from '../config/obstacleSprites';
 import { pick, rand, randInt } from '../utils/random';
 import { circleFree, inHouse } from '../systems/collision';
@@ -108,23 +110,26 @@ function placeHouses(
  * @param map - Map being built.
  * @param mapSize - World side length in pixels.
  * @param count - How many to attempt.
- * @param rmin - Minimum radius.
- * @param rmax - Maximum radius.
+ * @param _rmin - Unused; per-variant size is {@link mapgenBaseR} in the catalog.
+ * @param _rmax - Unused; per-variant size is {@link mapgenBaseR} in the catalog.
  * @param kind - `'rock'` or `'tree'`.
  */
 function scatter(
   map: GameMap,
   mapSize: number,
   count: number,
-  rmin: number,
-  rmax: number,
+  _rmin: number,
+  _rmax: number,
   kind: 'rock' | 'tree',
 ): void {
   const variantCount = kind === 'tree' ? TREE_SPRITES.length : ROCK_SPRITES.length;
   for (let i = 0; i < count; i++) {
     for (let tries = 0; tries < 40; tries++) {
       const variant = randInt(0, variantCount - 1);
-      const baseR = rand(rmin, rmax);
+      const baseR =
+        kind === 'tree'
+          ? treeSpriteDef(variant).mapgenBaseR
+          : rockSpriteDef(variant).mapgenBaseR;
       const r =
         kind === 'tree'
           ? treeCollisionRadius(baseR, variant)
