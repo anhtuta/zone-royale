@@ -64,6 +64,14 @@ export interface TreeSpriteDef extends ObstacleSpriteLayout {
    * Increase to move the circle **up** toward the trunk (typical range ~0.9–1.3 for tall sprites).
    */
   readonly collisionLiftR: number;
+  /** Shadow ellipse centre X offset from foot (`footX + shadowOffsetX`). */
+  readonly shadowOffsetX: number;
+  /** Shadow centre Y = `footY + vr × shadowOffsetYFrac`. */
+  readonly shadowOffsetYFrac: number;
+  /** Shadow ellipse horizontal radius = `vr × shadowRadiusXMul`. */
+  readonly shadowRadiusXMul: number;
+  /** Shadow ellipse vertical radius = `vr × shadowRadiusYMul`. */
+  readonly shadowRadiusYMul: number;
 }
 
 /** Default rock {@link mapgenBaseR} (midpoint of legacy `scatter` 24–48 range). */
@@ -90,6 +98,10 @@ type TreeTuning = Partial<
     | 'collisionRadiusScale'
     | 'collisionLiftR'
     | 'mapgenBaseR'
+    | 'shadowOffsetX'
+    | 'shadowOffsetYFrac'
+    | 'shadowRadiusXMul'
+    | 'shadowRadiusYMul'
   >
 >;
 
@@ -130,6 +142,10 @@ const treeLayout = (id: string, src: string, tuning: TreeTuning = {}): TreeSprit
   collisionRadiusScale: tuning.collisionRadiusScale ?? 1.05,
   collisionLiftR: tuning.collisionLiftR ?? 0.5,
   mapgenBaseR: tuning.mapgenBaseR ?? DEFAULT_TREE_MAPGEN_BASE_R,
+  shadowOffsetX: tuning.shadowOffsetX ?? 5,
+  shadowOffsetYFrac: tuning.shadowOffsetYFrac ?? 0.1,
+  shadowRadiusXMul: tuning.shadowRadiusXMul ?? 1.05,
+  shadowRadiusYMul: tuning.shadowRadiusYMul ?? 0.38,
 });
 
 /** Ordered tree variants; index is stored on `TreeObstacle.variant` in `world/types.ts`. */
@@ -139,30 +155,50 @@ export const TREE_SPRITES: readonly TreeSpriteDef[] = [
     drawOffsetY: -8,
     collisionLiftR: 1.3,
     collisionRadiusScale: 1.7,
+    shadowOffsetX: 0,
+    shadowOffsetYFrac: -0.5,
+    shadowRadiusXMul: 1.2,
+    shadowRadiusYMul: 0.4,
   }),
   treeLayout('clashmas_2015', clashmas2015Url, {
     heightMul: 2.2,
     drawOffsetY: -10,
     collisionLiftR: 1.4,
     collisionRadiusScale: 1.2,
+    shadowOffsetX: 0,
+    shadowOffsetYFrac: -0.5,
+    shadowRadiusXMul: 0.6,
+    shadowRadiusYMul: 0.4,
   }),
   treeLayout('clashmas_2024', clashmas2024Url, {
     heightMul: 2.4,
     drawOffsetY: -10,
     collisionLiftR: 1.6,
     collisionRadiusScale: 1.1,
+    shadowOffsetX: -1,
+    shadowOffsetYFrac: -0.5,
+    shadowRadiusXMul: 0.5,
+    shadowRadiusYMul: 0.2,
   }),
   treeLayout('large_tree', largeTreeUrl, {
     heightMul: 2.85,
     drawOffsetY: -6,
     collisionLiftR: 1.3,
     collisionRadiusScale: 1.7,
+    shadowOffsetX: 0,
+    shadowOffsetYFrac: -0.5,
+    shadowRadiusXMul: 0.6,
+    shadowRadiusYMul: 0.4,
   }),
   treeLayout('xmas_2025', xmas2025Url, {
     heightMul: 3.35,
     drawOffsetY: -12,
     collisionLiftR: 2.15,
     collisionRadiusScale: 1.08,
+    shadowOffsetX: 0,
+    shadowOffsetYFrac: 0,
+    shadowRadiusXMul: 0,
+    shadowRadiusYMul: 0,
   }),
 ];
 

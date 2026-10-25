@@ -14,8 +14,6 @@ import { getTreeImage, loadObstacleSprites } from './obstacleSprites';
 
 /** Width/height fallback until the image finishes loading. */
 const SPRITE_FALLBACK_ASPECT = 0.85;
-/** Shadow ellipse centre below the foot (`footY + vr × this`). */
-const SHADOW_BELOW_FOOT_FRAC = 0.1;
 /**
  * Downward reach of procedural side clumps as a fraction of `vr`
  * (`cy = y − 0.05·vr`, `rad = 0.62·vr`, outline `sin × wobble × 0.9`).
@@ -144,10 +142,10 @@ export function drawTree(
     ctx.fillStyle = 'rgba(0,0,0,.22)';
     ctx.beginPath();
     ctx.ellipse(
-      footX + 5,
-      footY + vr * SHADOW_BELOW_FOOT_FRAC,
-      vr * 1.05,
-      vr * 0.38,
+      footX + def.shadowOffsetX,
+      footY + vr * def.shadowOffsetYFrac,
+      vr * def.shadowRadiusXMul,
+      vr * def.shadowRadiusYMul,
       0,
       0,
       TAU,
