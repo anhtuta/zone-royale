@@ -147,7 +147,7 @@ Normalize picks a direction on the circle; scale sets how fast you travel along 
 
 | $m_x$ | $m_y$ | $m$ | Result |
 | ----- | ----- | --- | ------ |
-| 0 | 0 | `|| 1` guard | $(v_x, v_y) = (0, 0)$ |
+| 0 | 0 | `OR 1` guard | $(v_x, v_y) = (0, 0)$ |
 
 ---
 
