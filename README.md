@@ -78,5 +78,4 @@ docs/        project documentation
 ```
 
 See [docs/01_INIT_PROJECT.md](docs/01_INIT_PROJECT.md) for architecture and conventions.
-Other topic docs use numbered names in `docs/` (for example `02_COMBATANT_ART.md`,
-`03_MULTIPLAYER.md`, `04_GAME_MATH.md`).
+Other topic docs use numbered names in `docs/`.

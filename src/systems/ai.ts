@@ -15,7 +15,7 @@
  * @packageDocumentation
  */
 
-import { BOT_PICK_RANGE, BOT_SIGHT, BOT_SPEED, MAP_SIZE, TAU } from '../config/constants';
+import { BOT_PICK_RANGE, BOT_SIGHT, BOT_SPEED, TAU } from '../config/constants';
 import { WEAPONS, type WeaponStats } from '../config/weapons';
 import type { World } from '../core/world';
 import { otherSlot, type BotBrain, type Entity } from '../entities/entity';
@@ -178,8 +178,8 @@ export function chooseWanderPoint(b: Entity, zone: Zone, needSafe: boolean): Mov
   const a = rand(0, TAU);
   const d = Math.sqrt(random()) * rr;
   return {
-    x: clamp(cx + Math.cos(a) * d, 60, MAP_SIZE - 60),
-    y: clamp(cy + Math.sin(a) * d, 60, MAP_SIZE - 60),
+    x: clamp(cx + Math.cos(a) * d, 60, zone.mapSize - 60),
+    y: clamp(cy + Math.sin(a) * d, 60, zone.mapSize - 60),
   };
 }
 

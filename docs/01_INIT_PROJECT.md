@@ -62,12 +62,13 @@ zone-royale/
 
 **`src/config`** – no logic, only data.
 
-| File           | Contents                                                              |
-| -------------- | --------------------------------------------------------------------- |
-| `constants.ts` | Map size, speeds, sight/pickup ranges, HP/armor caps, timings, colors |
-| `weapons.ts`   | `WEAPONS` stat table (5 weapons), ammo families, colors, box sizes    |
-| `zone.ts`      | `PHASES` (6 wait/shrink/radius/dps entries) and drift factors         |
-| `bots.ts`      | Bot names and body colors                                             |
+| File                | Contents                                                              |
+| ------------------- | --------------------------------------------------------------------- |
+| `constants.ts`      | Speeds, sight/pickup ranges, HP/armor caps, timings, colors             |
+| `matchSettings.ts`  | Per-match map size and player-count presets (see [05_MATCH_SETTINGS.md](05_MATCH_SETTINGS.md)) |
+| `weapons.ts`        | `WEAPONS` stat table (5 weapons), ammo families, colors, box sizes    |
+| `zone.ts`           | Phase timing/DPS; end radii scale via `buildZonePhases()`               |
+| `bots.ts`           | Bot names and body colors                                             |
 
 **`src/core`** – the parts that glue everything together.
 

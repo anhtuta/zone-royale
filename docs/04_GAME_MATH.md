@@ -5,7 +5,8 @@ Common formulas and patterns used in top-down games like Zone Royale. Most logic
 systems apply them each frame with a delta time `dt`.
 
 **Related:** [01_INIT_PROJECT.md](01_INIT_PROJECT.md) (layer boundaries, `stepWorld()`),
-[03_MULTIPLAYER.md](03_MULTIPLAYER.md) (determinism, `PlayerControls`).
+[03_MULTIPLAYER.md](03_MULTIPLAYER.md) (determinism, `PlayerControls`),
+[05_MATCH_SETTINGS.md](05_MATCH_SETTINGS.md) (configurable map size and player count).
 
 **Note: World axes (not school Descartes):** The sim uses the same convention as **Canvas / the screen, origin top-left**:
 
@@ -19,11 +20,13 @@ systems apply them each frame with a delta time `dt`.
 There is no single “origin” module — this is wired in [`readControls()`](../src/core/input.ts)
 (`W` → `moveY -= 1`, `S` → `moveY += 1`) and applied in [`stepWorld()`](../src/core/simulation.ts)
 (`e.y += e.vy * dt`). Map corner **(0, 0)** is the **top-left** of the world; $y$ grows toward the
-bottom ([`MAP_SIZE`](../src/config/constants.ts) is the width and height).
+bottom (`World.mapSize` from match settings — see [05_MATCH_SETTINGS.md](05_MATCH_SETTINGS.md)).
 
 Vocab (thuật ngữ trong game math - verify this!!!):
 
 - Normalize: chuẩn hóa vector về độ dài 1. Việc chuẩn hoá giúp tránh trường hợp đi chéo bị nhanh hơn đi thẳng.
+  - Vector normalization is the process of scaling a vector so that its length (magnitude) becomes exactly 1, turning it into what is called a unit vector.
+  - Normalization strips away the size of a vector and preserves only its direction.
 - Magnitude: độ dài của vector.
 - Integration: tích phân vị trí theo thời gian???.
 - LERP: linear interpolation: nội suy tuyến tính giữa 2 giá trị???.
@@ -411,7 +414,7 @@ Tree at **x = 1900** → off-screen, skip draw.
 - **Gameplay RNG** — [`utils/random.ts`](../src/utils/random.ts) (seeded); avoid `Math.random()` in
   `systems/` for reproducible tests.
 
-**Example (`clamp`):** [`MAP_SIZE`](../src/config/constants.ts) **6000**, entity tries **x = 6050** with
+**Example (`clamp`):** `mapSize` **5000**, entity tries **x = 5050** with
 radius **18** → clamp to $[18,\; 5982]$ → **5982**.
 
 **Example (`min` for damage):** Armor absorb uses `min(remainingArmor, damage × 0.6)` so you never

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { BOT_SIGHT, MAP_SIZE } from '../src/config/constants';
+import { BOT_SIGHT } from '../src/config/constants';
 import { WEAPONS } from '../src/config/weapons';
 import {
   aimErrorScale,
@@ -111,7 +111,7 @@ describe('zone awareness', () => {
     for (let i = 0; i < 100; i++) {
       const p = chooseWanderPoint(b, w.zone, false);
       expect(p.x).toBeGreaterThanOrEqual(60);
-      expect(p.x).toBeLessThanOrEqual(MAP_SIZE - 60);
+      expect(p.x).toBeLessThanOrEqual(w.mapSize - 60);
       expect(Math.hypot(p.x - w.zone.tx, p.y - w.zone.ty)).toBeLessThanOrEqual(
         w.zone.tr * 0.75 + 1e-6,
       );
@@ -135,7 +135,7 @@ describe('updateBot', () => {
 
   it('acquires a target, waits its reaction time, then shoots', () => {
     const w = makeWorld();
-    const b = bot(1500, 1700);
+    const b = bot(w.player.x + 200, w.player.y + 200);
     w.entities.push(b);
     updateBot(w, b, 1 / 60);
     expect(b.ai!.target).toBe(w.player);
@@ -147,13 +147,15 @@ describe('updateBot', () => {
 
   it('runs away from an enemy when it has no usable weapon', () => {
     const w = makeWorld();
-    const b = bot(1500, 1700);
+    const b = bot(w.player.x + 200, w.player.y + 100);
     w.entities.push(b);
     b.weapons = [{ type: 'pistol', mag: 0 }, null];
     b.ammo.light = 0;
     updateBot(w, b, 1 / 60);
     expect(b.ai!.target).toBe(w.player);
-    expect(b.vy).toBeGreaterThan(0); // player is above (smaller y): move down/away
+    const awayX = b.x - w.player.x;
+    const awayY = b.y - w.player.y;
+    expect(b.vx * awayX + b.vy * awayY).toBeGreaterThan(0);
   });
 
   it('walks to and picks up loot it wants', () => {

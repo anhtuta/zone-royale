@@ -4,13 +4,7 @@
  * @packageDocumentation
  */
 
-import {
-  ARMOR_AMOUNT,
-  LOOT_CLEARANCE,
-  MAP_SIZE,
-  MEDKIT_AMOUNT,
-  TAU,
-} from '../config/constants';
+import { ARMOR_AMOUNT, LOOT_CLEARANCE, MEDKIT_AMOUNT, TAU } from '../config/constants';
 import { AMMO_AMOUNT, WEAPONS, type AmmoType, type WeaponType } from '../config/weapons';
 import type { LootItem } from '../entities/loot';
 import { pick, rand, randInt, random } from '../utils/random';
@@ -65,7 +59,12 @@ export function categoryForRoll(roll: number): LootCategory {
  * @param obstacles - Map obstacles (paired ammo must not spawn inside geometry).
  * @returns One or two new items.
  */
-export function rollLoot(x: number, y: number, obstacles: readonly Obstacle[]): LootItem[] {
+export function rollLoot(
+  x: number,
+  y: number,
+  obstacles: readonly Obstacle[],
+  mapSize: number,
+): LootItem[] {
   const category = categoryForRoll(random());
   if (category === 'weapon') {
     const type = weaponForRoll(random());
@@ -73,7 +72,7 @@ export function rollLoot(x: number, y: number, obstacles: readonly Obstacle[]): 
     const a = rand(0, TAU);
     const ox = x + Math.cos(a) * 30;
     const oy = y + Math.sin(a) * 30;
-    const ammoFree = circleFree(obstacles, ox, oy, LOOT_CLEARANCE);
+    const ammoFree = circleFree(obstacles, ox, oy, LOOT_CLEARANCE, mapSize);
     return [
       { kind: 'weapon', type, mag: WEAPONS[type].mag, x, y },
       {
@@ -104,6 +103,7 @@ export function rollLoot(x: number, y: number, obstacles: readonly Obstacle[]): 
 export function spawnInitialLoot(
   houses: readonly House[],
   obstacles: readonly Obstacle[],
+  mapSize: number,
 ): LootItem[] {
   const loot: LootItem[] = [];
   for (const h of houses) {
@@ -112,8 +112,8 @@ export function spawnInitialLoot(
       for (let tries = 0; tries < 20; tries++) {
         const x = rand(h.x + 40, h.x + h.w - 40);
         const y = rand(h.y + 40, h.y + h.h - 40);
-        if (circleFree(obstacles, x, y, LOOT_CLEARANCE)) {
-          loot.push(...rollLoot(x, y, obstacles));
+        if (circleFree(obstacles, x, y, LOOT_CLEARANCE, mapSize)) {
+          loot.push(...rollLoot(x, y, obstacles, mapSize));
           break;
         }
       }
@@ -121,10 +121,10 @@ export function spawnInitialLoot(
   }
   for (let i = 0; i < OPEN_LOOT_SPOTS; i++) {
     for (let tries = 0; tries < 20; tries++) {
-      const x = rand(80, MAP_SIZE - 80);
-      const y = rand(80, MAP_SIZE - 80);
-      if (circleFree(obstacles, x, y, 26)) {
-        loot.push(...rollLoot(x, y, obstacles));
+      const x = rand(80, mapSize - 80);
+      const y = rand(80, mapSize - 80);
+      if (circleFree(obstacles, x, y, 26, mapSize)) {
+        loot.push(...rollLoot(x, y, obstacles, mapSize));
         break;
       }
     }

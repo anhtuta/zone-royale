@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { MAP_SIZE, ZONE_START_RADIUS } from '../src/config/constants';
+import { DEFAULT_MATCH_SETTINGS, zoneStartRadius } from '../src/config/matchSettings';
 import { PHASES } from '../src/config/zone';
 import {
   createZone,
@@ -12,6 +12,9 @@ import {
 } from '../src/systems/zone';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
 
+const MAP_SIZE = DEFAULT_MATCH_SETTINGS.mapSize;
+const ZONE_START_RADIUS = zoneStartRadius(MAP_SIZE);
+
 beforeEach(() => setRandomSource(createSeededRandom(31)));
 afterEach(() => setRandomSource(Math.random));
 
@@ -23,11 +26,12 @@ describe('zone phases', () => {
       expect(PHASES[i]!.dps).toBeGreaterThan(PHASES[i - 1]!.dps);
     }
     expect(PHASES.at(-1)!.r).toBe(0);
-    expect(totalZoneDuration()).toBe(252);
+    const z = createZone(MAP_SIZE);
+    expect(totalZoneDuration(z)).toBe(252);
   });
 
   it('starts covering the map and waiting for phase 1', () => {
-    const z = createZone();
+    const z = createZone(MAP_SIZE);
     expect(z).toMatchObject({
       x: MAP_SIZE / 2,
       y: MAP_SIZE / 2,
@@ -40,14 +44,14 @@ describe('zone phases', () => {
   });
 
   it('starting radius covers the farthest spawn corners', () => {
-    const z = createZone();
+    const z = createZone(MAP_SIZE);
     const edge = MAP_SIZE - 120;
     expect(isOutsideZone(z, edge, edge)).toBe(false);
   });
 
   it('next circle stays inside the map and inside the drift limit', () => {
     for (let i = 0; i < 50; i++) {
-      const z = createZone();
+      const z = createZone(MAP_SIZE);
       const m = Math.min(z.tr + 60, MAP_SIZE / 2);
       expect(z.tx).toBeGreaterThanOrEqual(m);
       expect(z.tx).toBeLessThanOrEqual(MAP_SIZE - m);
@@ -58,7 +62,7 @@ describe('zone phases', () => {
   });
 
   it('later phases drift further (up to 80% of the radius difference)', () => {
-    const z = createZone();
+    const z = createZone(MAP_SIZE);
     z.phase = 1;
     z.r = PHASES[0]!.r;
     setupPhase(z);
@@ -75,7 +79,7 @@ describe('zone phases', () => {
 
 describe('updateZone', () => {
   it('waits, then shrinks, interpolating centre and radius', () => {
-    const z = createZone();
+    const z = createZone(MAP_SIZE);
     expect(updateZone(z, 44)).toBeNull();
     expect(updateZone(z, 1)).toBe('shrinkStarted');
     expect(z.state).toBe('shrink');
@@ -86,7 +90,7 @@ describe('updateZone', () => {
   });
 
   it('advances to the next phase when the shrink ends', () => {
-    const z = createZone();
+    const z = createZone(MAP_SIZE);
     updateZone(z, 45);
     const tx = z.tx;
     expect(updateZone(z, 30)).toBe('phaseAdvanced');
@@ -97,9 +101,9 @@ describe('updateZone', () => {
   });
 
   it('closes completely after all phases and then stays put', () => {
-    const z = createZone();
+    const z = createZone(MAP_SIZE);
     const events: string[] = [];
-    for (let t = 0; t < totalZoneDuration() + 5; t += 0.1) {
+    for (let t = 0; t < totalZoneDuration(z) + 5; t += 0.1) {
       const e = updateZone(z, 0.1);
       if (e) events.push(e);
     }
@@ -113,7 +117,7 @@ describe('updateZone', () => {
 
 describe('zone damage', () => {
   it('dps follows the phase and is boosted once closed', () => {
-    const z = createZone();
+    const z = createZone(MAP_SIZE);
     expect(zoneDps(z)).toBe(1);
     z.phase = 5;
     expect(zoneDps(z)).toBe(14);
@@ -122,7 +126,7 @@ describe('zone damage', () => {
   });
 
   it('isOutsideZone compares distance with the radius', () => {
-    const z = createZone();
+    const z = createZone(MAP_SIZE);
     z.r = 100;
     expect(isOutsideZone(z, z.x + 99, z.y)).toBe(false);
     expect(isOutsideZone(z, z.x + 101, z.y)).toBe(true);
@@ -133,7 +137,6 @@ describe('zone damage', () => {
     expect(zoneTickDamage(h, 0.3, 4)).toBe(0);
     expect(zoneTickDamage(h, 0.3, 4)).toBe(2);
     expect(h.zoneTick).toBeCloseTo(0.1);
-    // 2 seconds outside at 6 dps = 4 ticks of 3 damage
     const e = { zoneTick: 0 };
     let total = 0;
     for (let i = 0; i < 8; i++) total += zoneTickDamage(e, 0.25, 6);

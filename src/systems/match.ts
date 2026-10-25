@@ -4,7 +4,12 @@
  * @packageDocumentation
  */
 
-import { MAP_SIZE, NUM_BOTS, PLAYER_COLOR } from '../config/constants';
+import { PLAYER_COLOR } from '../config/constants';
+import {
+  DEFAULT_MATCH_SETTINGS,
+  numBots,
+  type MatchSettings,
+} from '../config/matchSettings';
 import { BOT_COLORS, BOT_NAMES } from '../config/bots';
 import type { Camera } from '../core/camera';
 import type { SoundSink, World } from '../core/world';
@@ -28,6 +33,7 @@ export type MatchOutcome = 'won' | 'dead';
  * Finds a spawn point on open ground, outside houses and at least `minDist`
  * from every existing entity. After 300 failed attempts the spacing rule is
  * dropped so a point is always returned.
+ * It is only used to place the player and bots, not to place obstacles.
  *
  * @param obstacles - Map obstacles.
  * @param houses - House footprints.
@@ -40,39 +46,47 @@ export function findSpawnPoint(
   houses: readonly House[],
   entities: readonly Entity[],
   minDist: number,
+  mapSize: number,
 ): { x: number; y: number } {
   for (let tries = 0; tries < 300; tries++) {
-    const x = rand(120, MAP_SIZE - 120);
-    const y = rand(120, MAP_SIZE - 120);
-    if (inHouse(houses, x, y, 30) || !circleFree(obstacles, x, y, 30)) continue;
+    const x = rand(120, mapSize - 120);
+    const y = rand(120, mapSize - 120);
+    if (inHouse(houses, x, y, 30) || !circleFree(obstacles, x, y, 30, mapSize)) continue;
     if (entities.some((e) => dist2(e.x, e.y, x, y) < minDist * minDist)) continue;
     return { x, y };
   }
   for (;;) {
-    const x = rand(120, MAP_SIZE - 120);
-    const y = rand(120, MAP_SIZE - 120);
-    if (circleFree(obstacles, x, y, 30)) return { x, y };
+    const x = rand(120, mapSize - 120);
+    const y = rand(120, mapSize - 120);
+    if (circleFree(obstacles, x, y, 30, mapSize)) return { x, y };
   }
 }
 
 /**
- * Builds a brand-new match: map, loot, the player, {@link NUM_BOTS} bots and
- * the zone. The camera is snapped onto the player.
+ * Builds a brand-new match: map, loot, the player, bots and the zone. The
+ * camera is snapped onto the player.
  *
  * @param camera - Camera to use (kept across matches).
  * @param sound - Audio output, or `null` for silent/headless play.
+ * @param settings - Map size and player count.
  * @returns A world in the `playing` phase.
  */
-export function createMatch(camera: Camera, sound: SoundSink | null = null): World {
-  const map = generateMap();
-  const loot = spawnInitialLoot(map.houses, map.obstacles);
+export function createMatch(
+  camera: Camera,
+  sound: SoundSink | null = null,
+  settings: MatchSettings = DEFAULT_MATCH_SETTINGS,
+): World {
+  const mapSize = settings.mapSize;
+  const botCount = numBots(settings);
+  const map = generateMap(mapSize);
+  const loot = spawnInitialLoot(map.houses, map.obstacles, mapSize);
   const entities: Entity[] = [];
-  let p = findSpawnPoint(map.obstacles, map.houses, entities, 0);
+  let p = findSpawnPoint(map.obstacles, map.houses, entities, 0, mapSize);
   const player = createEntity(true, 'You', PLAYER_COLOR, p.x, p.y);
   entities.push(player);
   const names = shuffled(BOT_NAMES);
-  for (let i = 0; i < NUM_BOTS; i++) {
-    p = findSpawnPoint(map.obstacles, map.houses, entities, BOT_SPAWN_SPACING);
+  for (let i = 0; i < botCount; i++) {
+    p = findSpawnPoint(map.obstacles, map.houses, entities, BOT_SPAWN_SPACING, mapSize);
     entities.push(
       createEntity(
         false,
@@ -83,10 +97,11 @@ export function createMatch(camera: Camera, sound: SoundSink | null = null): Wor
       ),
     );
   }
-  const zone = createZone();
+  const zone = createZone(mapSize);
   camera.centerOn(player);
   return {
     phase: 'playing',
+    mapSize,
     obstacles: map.obstacles,
     houses: map.houses,
     decor: map.decor,

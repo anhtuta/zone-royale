@@ -4,14 +4,8 @@
  * @packageDocumentation
  */
 
-/** Width and height of the square play area, in world pixels. */
-export const MAP_SIZE = 6000;
-
 /** A full turn in radians (2π). */
 export const TAU = Math.PI * 2;
-
-/** Number of AI opponents spawned in every match (plus one human player). */
-export const NUM_BOTS = 199;
 
 /** Player movement speed in pixels per second. */
 export const PLAYER_SPEED = 245;
@@ -58,12 +52,6 @@ export const ARMOR_AMOUNT = 50;
 
 /** Seconds between zone damage ticks for an entity standing outside the zone. */
 export const ZONE_TICK = 0.5;
-
-/**
- * Radius of the safe zone at the very start of a match. Derived from {@link MAP_SIZE}
- * so the circle reaches past the map corners (≈2150 when `MAP_SIZE` is 3000).
- */
-export const ZONE_START_RADIUS = Math.ceil((MAP_SIZE / 2) * Math.SQRT2) + 30;
 
 /** Max number of kill-feed lines visible at once. */
 export const KILLFEED_MAX = 6;

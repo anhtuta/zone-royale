@@ -42,6 +42,8 @@ export interface SoundSink {
 export interface World {
   /** Current high-level state. */
   phase: GamePhase;
+  /** Square play area side length in world pixels. */
+  mapSize: number;
   /** Solid obstacles. */
   obstacles: Obstacle[];
   /** House footprints. */

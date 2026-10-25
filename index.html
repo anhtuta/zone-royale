@@ -13,7 +13,7 @@
     <div id="startScreen" class="overlay">
       <div class="panel">
         <h1>ZONE ROYALE</h1>
-        <p class="sub">20 players drop in. The zone closes in. Only one walks out.</p>
+        <p class="sub" id="startSub">50 players drop in. The zone closes in. Only one walks out.</p>
         <table class="controls">
           <tr>
             <td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></td>
@@ -40,7 +40,29 @@
             <td>Switch weapon</td>
           </tr>
         </table>
-        <button id="startBtn">PLAY</button>
+        <div class="panel-actions">
+          <button id="settingsOpenBtn" type="button" class="btn-secondary">SETTINGS</button>
+          <button id="startBtn" type="button">PLAY</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="settingsScreen" class="overlay hidden">
+      <div class="panel panel-settings">
+        <h2 class="settings-title">Match settings</h2>
+        <p class="sub settings-hint">Applied on the next match. Saved in this browser.</p>
+        <label class="settings-field">
+          <span>Map size</span>
+          <select id="settingMapSize"></select>
+        </label>
+        <label class="settings-field">
+          <span>Players</span>
+          <select id="settingNumPlayers"></select>
+        </label>
+        <div class="panel-actions">
+          <button id="settingsCancelBtn" type="button" class="btn-secondary">CANCEL</button>
+          <button id="settingsSaveBtn" type="button">SAVE</button>
+        </div>
       </div>
     </div>
 
@@ -58,7 +80,10 @@
           <div class="stat"><b id="stDmg">0</b><span>Damage</span></div>
           <div class="stat"><b id="stTime">0:00</b><span>Survived</span></div>
         </div>
-        <button id="restartBtn">PLAY AGAIN</button>
+        <div class="panel-actions">
+          <button id="homeBtn" type="button" class="btn-secondary">HOME</button>
+          <button id="restartBtn" type="button">PLAY AGAIN</button>
+        </div>
       </div>
     </div>
 

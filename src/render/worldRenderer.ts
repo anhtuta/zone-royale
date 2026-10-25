@@ -8,7 +8,7 @@
  * @packageDocumentation
  */
 
-import { MAP_SIZE, TAU } from '../config/constants';
+import { TAU } from '../config/constants';
 import type { Camera } from '../core/camera';
 import type { World } from '../core/world';
 import { lootName } from '../entities/loot';
@@ -36,22 +36,23 @@ const GRID = 100;
  * @param cam - Camera.
  */
 function drawGround(ctx: CanvasRenderingContext2D, world: World, cam: Camera): void {
+  const mapSize = world.mapSize;
   ctx.fillStyle = '#26331f';
   ctx.fillRect(cam.x, cam.y, cam.width, cam.height);
   ctx.fillStyle = '#5a8a48';
-  ctx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
+  ctx.fillRect(0, 0, mapSize, mapSize);
   ctx.strokeStyle = 'rgba(0,0,0,.07)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   const x0 = Math.max(0, Math.floor(cam.x / GRID) * GRID);
   const y0 = Math.max(0, Math.floor(cam.y / GRID) * GRID);
-  for (let x = x0; x <= Math.min(MAP_SIZE, cam.x + cam.width); x += GRID) {
+  for (let x = x0; x <= Math.min(mapSize, cam.x + cam.width); x += GRID) {
     ctx.moveTo(x, Math.max(0, cam.y));
-    ctx.lineTo(x, Math.min(MAP_SIZE, cam.y + cam.height));
+    ctx.lineTo(x, Math.min(mapSize, cam.y + cam.height));
   }
-  for (let y = y0; y <= Math.min(MAP_SIZE, cam.y + cam.height); y += GRID) {
+  for (let y = y0; y <= Math.min(mapSize, cam.y + cam.height); y += GRID) {
     ctx.moveTo(Math.max(0, cam.x), y);
-    ctx.lineTo(Math.min(MAP_SIZE, cam.x + cam.width), y);
+    ctx.lineTo(Math.min(mapSize, cam.x + cam.width), y);
   }
   ctx.stroke();
   for (const d of world.decor) {
@@ -62,7 +63,7 @@ function drawGround(ctx: CanvasRenderingContext2D, world: World, cam: Camera): v
   }
   ctx.strokeStyle = '#1b2a14';
   ctx.lineWidth = 6;
-  ctx.strokeRect(-3, -3, MAP_SIZE + 6, MAP_SIZE + 6);
+  ctx.strokeRect(-3, -3, mapSize + 6, mapSize + 6);
 }
 
 /**

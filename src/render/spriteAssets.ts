@@ -143,6 +143,7 @@ function drawArm(
   strokeLimb(ctx, mx, my, hx, hy, 3.6, skin);
 }
 
+/** Hand silhouette when drawing combatants. */
 type HandPose = 'open' | 'grip';
 
 /**

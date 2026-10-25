@@ -8,7 +8,10 @@ import {
   weaponForRoll,
 } from '../src/systems/lootSpawner';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
+import { DEFAULT_MATCH_SETTINGS } from '../src/config/matchSettings';
 import { generateMap } from '../src/world/mapgen';
+
+const MAP_SIZE = DEFAULT_MATCH_SETTINGS.mapSize;
 
 afterEach(() => setRandomSource(Math.random));
 
@@ -31,7 +34,7 @@ describe('loot tables', () => {
   it('weapon spots come with a full magazine and matching ammo', () => {
     const rolls = [0.1, 0.8, 0];
     setRandomSource(() => rolls.shift() ?? 0);
-    const items = rollLoot(500, 500, []);
+    const items = rollLoot(500, 500, [], MAP_SIZE);
     expect(items).toHaveLength(2);
     expect(items[0]).toMatchObject({ kind: 'weapon', type: 'rifle', mag: WEAPONS.rifle.mag });
     expect(items[1]).toMatchObject({ kind: 'ammo', type: 'medium', amount: AMMO_AMOUNT.medium });
@@ -42,22 +45,22 @@ describe('loot tables', () => {
     const rolls = [0.1, 0.8, 0];
     setRandomSource(() => rolls.shift() ?? 0);
     const obstacles = [{ t: 'rock' as const, x: 530, y: 500, r: 30, shade: 0 }];
-    const items = rollLoot(500, 500, obstacles);
+    const items = rollLoot(500, 500, obstacles, MAP_SIZE);
     expect(items[1]).toMatchObject({ kind: 'ammo', x: 500, y: 500 });
   });
 
   it('health and armor spots give 40 hp / 50 armor', () => {
     setRandomSource(() => 0.7);
-    expect(rollLoot(0, 0, [])).toEqual([{ kind: 'health', amount: 40, x: 0, y: 0 }]);
+    expect(rollLoot(0, 0, [], MAP_SIZE)).toEqual([{ kind: 'health', amount: 40, x: 0, y: 0 }]);
     setRandomSource(() => 0.9);
-    expect(rollLoot(0, 0, [])).toEqual([{ kind: 'armor', amount: 50, x: 0, y: 0 }]);
+    expect(rollLoot(0, 0, [], MAP_SIZE)).toEqual([{ kind: 'armor', amount: 50, x: 0, y: 0 }]);
   });
 });
 
 describe('map generation and loot spawning', () => {
   it('generates houses, rocks, trees and decor without overlaps', () => {
     setRandomSource(createSeededRandom(2024));
-    const map = generateMap();
+    const map = generateMap(MAP_SIZE);
     expect(map.houses.length).toBeGreaterThanOrEqual(5);
     expect(map.obstacles.filter((o) => o.t === 'wall')).toHaveLength(map.houses.length * 6);
     expect(map.obstacles.filter((o) => o.t === 'rock').length).toBeGreaterThan(20);
@@ -67,10 +70,11 @@ describe('map generation and loot spawning', () => {
 
   it('places loot inside houses and across the map on free ground', () => {
     setRandomSource(createSeededRandom(77));
-    const map = generateMap();
-    const loot = spawnInitialLoot(map.houses, map.obstacles);
+    const map = generateMap(MAP_SIZE);
+    const loot = spawnInitialLoot(map.houses, map.obstacles, MAP_SIZE);
     expect(loot.length).toBeGreaterThan(130);
-    for (const l of loot) expect(circleFree(map.obstacles, l.x, l.y, 20)).toBe(true);
+    for (const l of loot)
+      expect(circleFree(map.obstacles, l.x, l.y, 20, MAP_SIZE)).toBe(true);
     const inHouses = loot.filter((l) =>
       map.houses.some((h) => l.x > h.x && l.x < h.x + h.w && l.y > h.y && l.y < h.y + h.h),
     );
