@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_MATCH_SETTINGS,
+  maxPlayersForMap,
+  maxSelectablePlayers,
   normalizeMatchSettings,
   numBots,
   zoneStartRadius,
@@ -17,6 +19,15 @@ describe('match settings', () => {
     expect(normalizeMatchSettings({ mapSize: 999, numPlayers: 12 })).toEqual(
       DEFAULT_MATCH_SETTINGS,
     );
+  });
+
+  it('caps player count on small maps', () => {
+    expect(maxPlayersForMap(1000)).toBeLessThan(500);
+    expect(maxSelectablePlayers(1000)).toBe(100);
+    expect(normalizeMatchSettings({ mapSize: 1000, numPlayers: 1000 })).toEqual({
+      mapSize: 1000,
+      numPlayers: 100,
+    });
   });
 
   it('scales zone start radius with map size', () => {

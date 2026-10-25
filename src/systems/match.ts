@@ -7,7 +7,12 @@
 import { PLAYER_COLOR } from '../config/constants';
 import {
   DEFAULT_MATCH_SETTINGS,
+  minBodySpawnSeparation,
+  normalizeMatchSettings,
   numBots,
+  SPAWN_EDGE_MARGIN,
+  spawnCapacityArea,
+  spawnUsableSide,
   type MatchSettings,
 } from '../config/matchSettings';
 import { BOT_COLORS, BOT_NAMES } from '../config/bots';
@@ -26,13 +31,28 @@ import { createZone } from './zone';
 /** Minimum distance between bot spawn points. */
 export const BOT_SPAWN_SPACING = 420;
 
+/** Spawn clearance radius checked against obstacles and houses. */
+const SPAWN_CLEARANCE = 30;
+
+/**
+ * Bot spawn spacing for a map and headcount: prefers {@link BOT_SPAWN_SPACING}
+ * but shrinks on small or crowded maps so placement can succeed.
+ */
+export function botSpawnSpacing(mapSize: number, numPlayers: number): number {
+  const body = minBodySpawnSeparation();
+  const side = spawnUsableSide(mapSize);
+  const densityCap = Math.sqrt(spawnCapacityArea(mapSize) / numPlayers);
+  const ideal = (side / Math.sqrt(numPlayers)) * 0.82;
+  const preferred = Math.min(BOT_SPAWN_SPACING, Math.max(body, ideal));
+  return Math.max(body, Math.min(preferred, densityCap));
+}
+
 /** How a match ended for the player. */
 export type MatchOutcome = 'won' | 'dead';
 
 /**
  * Finds a spawn point on open ground, outside houses and at least `minDist`
- * from every existing entity. After 300 failed attempts the spacing rule is
- * dropped so a point is always returned.
+ * from every existing entity (never less than non-overlapping body separation).
  * It is only used to place the player and bots, not to place obstacles.
  *
  * @param obstacles - Map obstacles.
@@ -48,18 +68,19 @@ export function findSpawnPoint(
   minDist: number,
   mapSize: number,
 ): { x: number; y: number } {
-  for (let tries = 0; tries < 300; tries++) {
-    const x = rand(120, mapSize - 120);
-    const y = rand(120, mapSize - 120);
-    if (inHouse(houses, x, y, 30) || !circleFree(obstacles, x, y, 30, mapSize)) continue;
-    if (entities.some((e) => dist2(e.x, e.y, x, y) < minDist * minDist)) continue;
+  const sep = Math.max(minDist, minBodySpawnSeparation());
+  const margin = SPAWN_EDGE_MARGIN;
+  for (let tries = 0; tries < 5000; tries++) {
+    const x = rand(margin, mapSize - margin);
+    const y = rand(margin, mapSize - margin);
+    if (inHouse(houses, x, y, SPAWN_CLEARANCE) || !circleFree(obstacles, x, y, SPAWN_CLEARANCE, mapSize))
+      continue;
+    if (entities.some((e) => dist2(e.x, e.y, x, y) < sep * sep)) continue;
     return { x, y };
   }
-  for (;;) {
-    const x = rand(120, mapSize - 120);
-    const y = rand(120, mapSize - 120);
-    if (circleFree(obstacles, x, y, 30, mapSize)) return { x, y };
-  }
+  throw new Error(
+    'findSpawnPoint: no spawn with separation ' + sep + ' on map ' + mapSize,
+  );
 }
 
 /**
@@ -76,8 +97,10 @@ export function createMatch(
   sound: SoundSink | null = null,
   settings: MatchSettings = DEFAULT_MATCH_SETTINGS,
 ): World {
-  const mapSize = settings.mapSize;
-  const botCount = numBots(settings);
+  const resolved = normalizeMatchSettings(settings);
+  const mapSize = resolved.mapSize;
+  const botCount = numBots(resolved);
+  const botSpacing = botSpawnSpacing(mapSize, resolved.numPlayers);
   const map = generateMap(mapSize);
   const loot = spawnInitialLoot(map.houses, map.obstacles, mapSize);
   const entities: Entity[] = [];
@@ -86,7 +109,7 @@ export function createMatch(
   entities.push(player);
   const names = shuffled(BOT_NAMES);
   for (let i = 0; i < botCount; i++) {
-    p = findSpawnPoint(map.obstacles, map.houses, entities, BOT_SPAWN_SPACING, mapSize);
+    p = findSpawnPoint(map.obstacles, map.houses, entities, botSpacing, mapSize);
     entities.push(
       createEntity(
         false,

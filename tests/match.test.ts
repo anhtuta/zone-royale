@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { BOT_NAMES } from '../src/config/bots';
-import { DEFAULT_MATCH_SETTINGS, numBots } from '../src/config/matchSettings';
+import {
+  DEFAULT_MATCH_SETTINGS,
+  minBodySpawnSeparation,
+  numBots,
+} from '../src/config/matchSettings';
 import { Camera } from '../src/core/camera';
 import { stepWorld } from '../src/core/simulation';
 import {
@@ -142,9 +146,17 @@ describe('match setup', () => {
     expect(new Set(w.entities.map((e) => e.name)).size).toBe(
       1 + Math.min(botCount, BOT_NAMES.length),
     );
+    const bodySep = minBodySpawnSeparation();
     for (const e of w.entities) {
       expect(circleFree(w.obstacles, e.x, e.y, 30, w.mapSize)).toBe(true);
       expect(e.weapons[0]?.type).toBe('pistol');
+    }
+    for (let i = 0; i < w.entities.length; i++) {
+      for (let j = i + 1; j < w.entities.length; j++) {
+        const a = w.entities[i]!;
+        const b = w.entities[j]!;
+        expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(bodySep - 0.01);
+      }
     }
     if (botCount <= 19) {
       const bots = w.entities.slice(1);
@@ -164,6 +176,21 @@ describe('match setup', () => {
     const houses = [{ x: 0, y: 0, w: 3000, h: 1500 }];
     const p = findSpawnPoint([], houses, [], 0, 5000);
     expect(inHouse(houses, p.x, p.y, 30)).toBeNull();
+  });
+
+  it('rejects overcrowded small-map settings without overlapping spawns', () => {
+    setRandomSource(createSeededRandom(99));
+    const w = createMatch(new Camera(1280, 720), null, { mapSize: 1000, numPlayers: 1000 });
+    expect(w.mapSize).toBe(1000);
+    expect(w.entities.length).toBe(100);
+    const bodySep = minBodySpawnSeparation();
+    for (let i = 0; i < w.entities.length; i++) {
+      for (let j = i + 1; j < w.entities.length; j++) {
+        const a = w.entities[i]!;
+        const b = w.entities[j]!;
+        expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(bodySep - 0.01);
+      }
+    }
   });
 });
 
