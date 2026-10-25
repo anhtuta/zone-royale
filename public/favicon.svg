@@ -1,28 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
   <rect width="64" height="64" rx="12" fill="#0d1117"/>
   <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <!-- SMG, side view -->
+    <!-- pistol, side view -->
     <path
-      fill="#ffca28"
+      fill="#ffeb3b"
       stroke="#f9a825"
       stroke-width="1.5"
-      d="M9 28 L9 32 L13 34 L17 32 L17 26 L13 24 Z"
+      d="M18 28 L42 28 L42 34 L38 34 L38 36 L22 36 L20 34 L18 34 Z"
     />
-    <rect x="15" y="24" width="26" height="11" rx="2" fill="#ffeb3b" stroke="#f9a825" stroke-width="1.5"/>
-    <rect x="39" y="26" width="17" height="5" rx="1" fill="#ffca28" stroke="#f9a825" stroke-width="1.5"/>
-    <rect x="52" y="25" width="5" height="7" rx="1" fill="#ffeb3b" stroke="#f9a825" stroke-width="1.5"/>
-    <rect x="24" y="34" width="9" height="15" rx="1.5" fill="#ffc107" stroke="#f57f17" stroke-width="1.5"/>
+    <rect x="40" y="27" width="14" height="6" rx="1" fill="#ffca28" stroke="#f9a825" stroke-width="1.5"/>
+    <rect x="52" y="26" width="4" height="8" rx="1" fill="#ffeb3b" stroke="#f9a825" stroke-width="1.5"/>
     <path
       fill="#ffc107"
       stroke="#f57f17"
       stroke-width="1.5"
-      d="M11 34 L9 46 L15 48 L17 36 Z"
+      d="M22 36 L18 48 L26 50 L30 38 Z"
     />
     <path
       stroke="#f57f17"
       stroke-width="2"
-      d="M19 35 Q22 39 26 35"
+      d="M24 37 Q27 41 30 37"
     />
-    <rect x="30" y="22" width="4" height="3" rx="0.5" fill="#f9a825" stroke="none"/>
+    <rect x="26" y="25" width="5" height="4" rx="0.5" fill="#f9a825" stroke="none"/>
   </g>
 </svg>
