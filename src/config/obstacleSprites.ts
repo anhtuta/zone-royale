@@ -2,6 +2,8 @@
  * Obstacle sprite catalog: variant metadata and bundled asset URLs.
  * Image loading stays in `render/`; this module is data-only.
  *
+ * Layout numbers are tuned in Phase 6 — use `VITE_DEBUG_OBSTACLE_COLLISION` to verify.
+ *
  * @packageDocumentation
  */
 
@@ -29,8 +31,7 @@ export interface ObstacleSpriteLayout {
   /** Nudge draw position in world pixels (after anchor). */
   readonly drawOffsetY: number;
   /**
-   * Multiplier on mapgen collision radius `r` for this variant (1 = default).
-   * Applied at scatter time in a later phase; catalog default only for now.
+   * Multiplier applied to mapgen base radius `r` for this variant (collision + stored `r`).
    */
   readonly collisionRadiusScale: number;
 }
@@ -55,54 +56,89 @@ export interface TreeSpriteDef extends ObstacleSpriteLayout {
   readonly anchor: 'bottom-center';
   /**
    * Collision centre is `(x, y − collisionLiftR × r)` where `(x, y)` is the foot.
-   * Phase 1 keeps `0` until foot placement is tuned (Phase 2 / 6).
    */
   readonly collisionLiftR: number;
 }
 
-/** Defaults copied from [`treeRenderer`](../render/treeRenderer.ts) for `Large_Tree`. */
-const LARGE_TREE_HEIGHT_MUL = 2.7;
+/** Optional per-rock layout overrides for {@link rockLayout}. */
+type RockTuning = Partial<
+  Pick<RockSpriteDef, 'heightMul' | 'drawOffsetX' | 'drawOffsetY' | 'collisionRadiusScale'>
+>;
 
-const rockLayout = (id: string, src: string): RockSpriteDef => ({
+/** Optional per-tree layout overrides for {@link treeLayout}. */
+type TreeTuning = Partial<
+  Pick<
+    TreeSpriteDef,
+    'heightMul' | 'drawOffsetX' | 'drawOffsetY' | 'collisionRadiusScale' | 'collisionLiftR'
+  >
+>;
+
+const rockLayout = (id: string, src: string, tuning: RockTuning = {}): RockSpriteDef => ({
   id,
   src,
-  heightMul: 2.2,
+  heightMul: tuning.heightMul ?? 2.2,
   anchor: 'center',
-  drawOffsetX: 0,
-  drawOffsetY: 0,
-  collisionRadiusScale: 1,
+  drawOffsetX: tuning.drawOffsetX ?? 0,
+  drawOffsetY: tuning.drawOffsetY ?? 0,
+  collisionRadiusScale: tuning.collisionRadiusScale ?? 1,
 });
 
 /** Ordered rock variants; index is stored on `RockObstacle.variant` in `world/types.ts`. */
 export const ROCK_SPRITES: readonly RockSpriteDef[] = [
-  rockLayout('foothill_6', foothill6Url),
-  rockLayout('foothill_7', foothill7Url),
-  rockLayout('sword_cake', swordCakeUrl),
-  rockLayout('anniversary_cake_6', anniversaryCakeUrl),
+  rockLayout('foothill_6', foothill6Url, { heightMul: 2.35, collisionRadiusScale: 0.92 }),
+  rockLayout('foothill_7', foothill7Url, { heightMul: 2.3, collisionRadiusScale: 0.9 }),
+  rockLayout('sword_cake', swordCakeUrl, {
+    heightMul: 2.55,
+    drawOffsetY: -5,
+    collisionRadiusScale: 0.86,
+  }),
+  rockLayout('anniversary_cake_6', anniversaryCakeUrl, {
+    heightMul: 2.5,
+    drawOffsetY: -4,
+    collisionRadiusScale: 0.86,
+  }),
 ];
 
-const treeLayout = (
-  id: string,
-  src: string,
-  overrides: Partial<Pick<TreeSpriteDef, 'heightMul' | 'collisionLiftR'>> = {},
-): TreeSpriteDef => ({
+const treeLayout = (id: string, src: string, tuning: TreeTuning = {}): TreeSpriteDef => ({
   id,
   src,
-  heightMul: overrides.heightMul ?? LARGE_TREE_HEIGHT_MUL,
+  heightMul: tuning.heightMul ?? 2.7,
   anchor: 'bottom-center',
-  drawOffsetX: 0,
-  drawOffsetY: 0,
-  collisionRadiusScale: 1,
-  collisionLiftR: overrides.collisionLiftR ?? 0,
+  drawOffsetX: tuning.drawOffsetX ?? 0,
+  drawOffsetY: tuning.drawOffsetY ?? 0,
+  collisionRadiusScale: tuning.collisionRadiusScale ?? 1.05,
+  collisionLiftR: tuning.collisionLiftR ?? 0.5,
 });
 
 /** Ordered tree variants; index is stored on `TreeObstacle.variant` in `world/types.ts`. */
 export const TREE_SPRITES: readonly TreeSpriteDef[] = [
-  treeLayout('bb_grove', bbGroveUrl),
-  treeLayout('clashmas_2015', clashmas2015Url),
-  treeLayout('clashmas_2024', clashmas2024Url),
-  treeLayout('large_tree', largeTreeUrl),
-  treeLayout('xmas_2025', xmas2025Url),
+  treeLayout('bb_grove', bbGroveUrl, {
+    heightMul: 3.05,
+    drawOffsetY: -6,
+    collisionLiftR: 0.58,
+    collisionRadiusScale: 1.12,
+  }),
+  treeLayout('clashmas_2015', clashmas2015Url, {
+    heightMul: 2.95,
+    collisionLiftR: 0.52,
+    collisionRadiusScale: 1.08,
+  }),
+  treeLayout('clashmas_2024', clashmas2024Url, {
+    heightMul: 3.1,
+    drawOffsetY: -4,
+    collisionLiftR: 0.54,
+    collisionRadiusScale: 1.1,
+  }),
+  treeLayout('large_tree', largeTreeUrl, {
+    heightMul: 2.7,
+    collisionLiftR: 0.5,
+    collisionRadiusScale: 1.05,
+  }),
+  treeLayout('xmas_2025', xmas2025Url, {
+    heightMul: 2.85,
+    collisionLiftR: 0.53,
+    collisionRadiusScale: 1.08,
+  }),
 ];
 
 /**
@@ -133,4 +169,24 @@ export function rockSpriteDef(variant: number): RockSpriteDef {
 export function treeSpriteDef(variant: number): TreeSpriteDef {
   const i = normalizeVariantIndex(variant, TREE_SPRITES.length);
   return TREE_SPRITES[i]!;
+}
+
+/**
+ * Collision radius after mapgen scaling for a rock variant.
+ *
+ * @param baseR - Radius before `collisionRadiusScale`.
+ * @param variant - Rock variant index.
+ */
+export function rockCollisionRadius(baseR: number, variant: number): number {
+  return baseR * rockSpriteDef(variant).collisionRadiusScale;
+}
+
+/**
+ * Collision radius after mapgen scaling for a tree variant.
+ *
+ * @param baseR - Radius before `collisionRadiusScale`.
+ * @param variant - Tree variant index.
+ */
+export function treeCollisionRadius(baseR: number, variant: number): number {
+  return baseR * treeSpriteDef(variant).collisionRadiusScale;
 }

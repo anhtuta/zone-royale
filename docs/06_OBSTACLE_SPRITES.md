@@ -202,30 +202,34 @@ centre. With `collisionLiftR === 0`, foot equals legacy centre until Phase 6 tun
 
 **Exit criteria:** All five tree assets rotate by `variant`; culling correct.
 
-### Phase 6 — Tuning and polish
+### Phase 6 — Tuning and polish (done)
 
-- In-game pass: adjust `heightMul`, offsets, `collisionLift`, `collisionRadiusScale`
-  per asset (cakes vs foothills vs grove).
-- Minimap ([`ui/minimap.ts`](../src/ui/minimap.ts)): keep circles at collision
-  centre (use helper for trees).
-- Update [`.env.example`](../.env.example) / README snippet if needed.
+- [x] Per-variant tables in [`config/obstacleSprites.ts`](../src/config/obstacleSprites.ts)
+  (`heightMul`, `drawOffset`, `collisionLiftR`, `collisionRadiusScale`).
+- [x] Mapgen applies `rockCollisionRadius` / `treeCollisionRadius` when scattering.
+- [x] Minimap already uses `circleObstacleCollision()` (collision centre for trees).
+- [x] [`.env.example`](../.env.example) points at the catalog for image mode tuning.
+- [x] `tests/obstacleSprites.catalog.test.ts` — sanity on tuned constants.
 
-**Exit criteria:** No obvious foot sliding; collision feels fair.
+**Exit criteria:** No obvious foot sliding; collision feels fair (re-tune catalog after art changes).
 
-### Known issues (tune in Phase 6)
+#### Tuning reference (initial pass)
 
-Sprite **foot anchor and shadow** are aligned in Phase 5. Remaining gameplay vs art gaps:
+| Variant | Notes |
+| ------- | ----- |
+| `foothill_*` | Slightly smaller collision (`~0.9×`) vs grass fringe |
+| `*_cake` | Tighter collision, sprite nudged up (`drawOffsetY`) |
+| `bb_grove` | Tallest sprite; higher lift + wider trunk circle |
+| `large_tree` | Baseline `heightMul` 2.7, `collisionLiftR` 0.5 |
 
-| Symptom | Cause / fix in Phase 6 |
-| ------- | ---------------------- |
-| Bullets pass through leafy PNG canopy | Collision is still a **trunk circle** (`r` at `treeCollisionCenter()`); canopy is visual-only unless `collisionRadiusScale` / lift are tuned. |
-| Shadow vs blocking feel mismatched | Shadow is not a collider; tune `collisionLiftR` and per-variant offsets so the debug circle matches expectations. |
+Use `VITE_DEBUG_OBSTACLE_COLLISION=true` and adjust catalog fields — gameplay still uses
+circles only (no canopy hit-test).
 
-**Phase 6:** per-asset `heightMul`, `drawOffset`, `collisionLiftR`, `collisionRadiusScale`; optional larger blocking radius for cover (still circles).
+### Known issues (ongoing)
 
-**Local debug:** `VITE_DEBUG_OBSTACLE_COLLISION=true` draws gameplay outlines via
-[`render/obstacleCollisionDebug.ts`](../src/render/obstacleCollisionDebug.ts); update
-that module when `treeCollisionCenter()` exists so the ring matches sim.
+Canopy foliage remains **non-blocking** by design; trees use a wider trunk circle via
+`collisionRadiusScale` (>1) but not full bitmap coverage. Tighten in the catalog if
+cover feels wrong.
 
 ### Phase 7 — Tests and CI
 

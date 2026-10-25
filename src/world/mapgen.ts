@@ -4,7 +4,12 @@
  * @packageDocumentation
  */
 
-import { ROCK_SPRITES, TREE_SPRITES } from '../config/obstacleSprites';
+import {
+  ROCK_SPRITES,
+  rockCollisionRadius,
+  TREE_SPRITES,
+  treeCollisionRadius,
+} from '../config/obstacleSprites';
 import { pick, rand, randInt } from '../utils/random';
 import { circleFree, inHouse } from '../systems/collision';
 import { treeFootCollisionCenter } from './obstacleGeometry';
@@ -117,8 +122,12 @@ function scatter(
   const variantCount = kind === 'tree' ? TREE_SPRITES.length : ROCK_SPRITES.length;
   for (let i = 0; i < count; i++) {
     for (let tries = 0; tries < 40; tries++) {
-      const r = rand(rmin, rmax);
       const variant = randInt(0, variantCount - 1);
+      const baseR = rand(rmin, rmax);
+      const r =
+        kind === 'tree'
+          ? treeCollisionRadius(baseR, variant)
+          : rockCollisionRadius(baseR, variant);
       const x = rand(60, mapSize - 60);
       const y = rand(60, mapSize - 60);
       if (kind === 'tree') {

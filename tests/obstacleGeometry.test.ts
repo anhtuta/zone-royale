@@ -16,17 +16,13 @@ describe('normalizeVariantIndex', () => {
 });
 
 describe('treeCollisionCenter', () => {
-  it('matches foot when collisionLiftR is zero (phase 1 default)', () => {
-    const tree = { t: 'tree' as const, x: 400, y: 900, r: 30, vr: 46.5, variant: 0, shade: 0 };
-    expect(treeCollisionCenter(tree)).toEqual({ x: 400, y: 900 });
-    expect(circleObstacleCollision(tree)).toMatchObject({ x: 400, y: 900, r: 30 });
-  });
-
   it('uses collisionLiftR from the variant catalog', () => {
-    const tree = { t: 'tree' as const, x: 100, y: 200, r: 20, vr: 31, variant: 0, shade: 0 };
-    const liftR = treeSpriteDef(0).collisionLiftR;
+    const tree = { t: 'tree' as const, x: 100, y: 200, r: 20, vr: 31, variant: 3, shade: 0 };
+    const liftR = treeSpriteDef(3).collisionLiftR;
+    expect(liftR).toBeGreaterThan(0);
     expect(treeCollisionCenter(tree)).toEqual({ x: 100, y: 200 - liftR * 20 });
-    expect(treeFootCollisionCenter(100, 200, 20, 0)).toEqual(treeCollisionCenter(tree));
+    expect(treeFootCollisionCenter(100, 200, 20, 3)).toEqual(treeCollisionCenter(tree));
+    expect(circleObstacleCollision(tree)).toMatchObject({ x: 100, y: 200 - liftR * 20, r: 20 });
   });
 });
 
