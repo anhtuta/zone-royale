@@ -154,16 +154,15 @@ the next.
 **Exit criteria:** Types compile; helper unit-tested; no visual change yet (`collisionLiftR`
 is `0`; mapgen sets `variant: 0` until Phase 2).
 
-### Phase 2 — Mapgen variant + tree foot semantics
+### Phase 2 — Mapgen variant + tree foot semantics (done)
 
-- `scatter()` assigns `variant` per rock/tree.
-- Mapgen / placement use `treeCollisionCenter()` for `circleFree` and overlap
-  checks (foot vs centre documented in comments).
-- Optional: migrate existing tree positions if foot semantics shift procedural
-  art (tune `lift` so gameplay feel matches pre-change).
+- [x] `scatter()` assigns `variant` per rock/tree (`randInt` over catalog size).
+- [x] Tree placement: foot at `(x, y)`; `circleFree` uses
+  `treeFootCollisionCenter()` (trunk circle, not the foot point).
+- [x] `tests/mapgen.test.ts` — seeded variant lists match.
 
 **Exit criteria:** Seeded maps pick stable variants; collision uses tree collision
-centre.
+centre. With `collisionLiftR === 0`, foot equals legacy centre until Phase 6 tuning.
 
 ### Phase 3 — Sprite loading
 

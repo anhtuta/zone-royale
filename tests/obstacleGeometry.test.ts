@@ -4,6 +4,7 @@ import {
   circleObstacleCollision,
   rockCollisionCenter,
   treeCollisionCenter,
+  treeFootCollisionCenter,
 } from '../src/world/obstacleGeometry';
 
 describe('normalizeVariantIndex', () => {
@@ -25,6 +26,7 @@ describe('treeCollisionCenter', () => {
     const tree = { t: 'tree' as const, x: 100, y: 200, r: 20, vr: 31, variant: 0, shade: 0 };
     const liftR = treeSpriteDef(0).collisionLiftR;
     expect(treeCollisionCenter(tree)).toEqual({ x: 100, y: 200 - liftR * 20 });
+    expect(treeFootCollisionCenter(100, 200, 20, 0)).toEqual(treeCollisionCenter(tree));
   });
 });
 

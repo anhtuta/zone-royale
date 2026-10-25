@@ -26,17 +26,32 @@ export function rockCollisionCenter(rock: RockObstacle): WorldPoint {
 }
 
 /**
- * Gameplay collision centre for a tree.
- * `(tree.x, tree.y)` is the sprite **foot** (bottom-centre); the trunk circle sits
- * `collisionLiftR × r` above the foot (see {@link treeSpriteDef}).
+ * Trunk collision centre from a tree foot position (mapgen placement).
+ *
+ * @param footX - Foot X (bottom-centre of sprite).
+ * @param footY - Foot Y.
+ * @param r - Trunk collision radius.
+ * @param variant - Sprite variant index.
+ * @returns Circle centre (`collisionLiftR × r` above the foot).
+ */
+export function treeFootCollisionCenter(
+  footX: number,
+  footY: number,
+  r: number,
+  variant: number,
+): WorldPoint {
+  const lift = treeSpriteDef(variant).collisionLiftR * r;
+  return { x: footX, y: footY - lift };
+}
+
+/**
+ * Gameplay collision centre for a placed tree (`tree.x`, `tree.y` = foot).
  *
  * @param tree - Tree obstacle.
  * @returns Circle centre used by {@link segmentObstacle} and movement resolution.
  */
 export function treeCollisionCenter(tree: TreeObstacle): WorldPoint {
-  const def = treeSpriteDef(tree.variant);
-  const lift = def.collisionLiftR * tree.r;
-  return { x: tree.x, y: tree.y - lift };
+  return treeFootCollisionCenter(tree.x, tree.y, tree.r, tree.variant);
 }
 
 /**
