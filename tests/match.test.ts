@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { BOT_NAMES } from '../src/config/bots';
-import { NUM_BOTS } from '../src/config/constants';
+import { DEFAULT_MATCH_SETTINGS, numBots } from '../src/config/matchSettings';
 import { Camera } from '../src/core/camera';
 import { stepWorld } from '../src/core/simulation';
 import {
@@ -133,20 +133,20 @@ describe('spectate target', () => {
 });
 
 describe('match setup', () => {
-  it('creates 1 player + NUM_BOTS bots on free, spaced-out ground outside houses', () => {
+  it('creates 1 player + bots on free, spaced-out ground outside houses', () => {
     setRandomSource(createSeededRandom(4242));
-    const w = createMatch(new Camera(1280, 720));
-    expect(w.entities).toHaveLength(1 + NUM_BOTS);
+    const w = createMatch(new Camera(1280, 720), null, DEFAULT_MATCH_SETTINGS);
+    const botCount = numBots(DEFAULT_MATCH_SETTINGS);
+    expect(w.entities).toHaveLength(1 + botCount);
     expect(w.entities.filter((e) => e.isPlayer)).toEqual([w.player]);
     expect(new Set(w.entities.map((e) => e.name)).size).toBe(
-      1 + Math.min(NUM_BOTS, BOT_NAMES.length),
+      1 + Math.min(botCount, BOT_NAMES.length),
     );
     for (const e of w.entities) {
-      expect(circleFree(w.obstacles, e.x, e.y, 30)).toBe(true);
+      expect(circleFree(w.obstacles, e.x, e.y, 30, w.mapSize)).toBe(true);
       expect(e.weapons[0]?.type).toBe('pistol');
     }
-    // Change NUM_BOTS to 19 to test the bots are spaced out
-    if (NUM_BOTS <= 19) {
+    if (botCount <= 19) {
       const bots = w.entities.slice(1);
       let close = 0;
       for (let i = 0; i < bots.length; i++)
@@ -162,7 +162,7 @@ describe('match setup', () => {
   it('findSpawnPoint avoids houses', () => {
     setRandomSource(createSeededRandom(8));
     const houses = [{ x: 0, y: 0, w: 3000, h: 1500 }];
-    const p = findSpawnPoint([], houses, [], 0);
+    const p = findSpawnPoint([], houses, [], 0, 5000);
     expect(inHouse(houses, p.x, p.y, 30)).toBeNull();
   });
 });
@@ -170,7 +170,8 @@ describe('match setup', () => {
 describe('headless simulation', { timeout: 60_000 }, () => {
   it('a full match (bots only, player kept alive in the zone centre) ends with a single survivor', () => {
     setRandomSource(createSeededRandom(2026));
-    const w = createMatch(new Camera(1280, 720));
+    const w = createMatch(new Camera(1280, 720), null, { mapSize: 5000, numPlayers: 20 });
+    const botCount = numBots({ mapSize: 5000, numPlayers: 20 });
     let outcome = null;
     let steps = 0;
     while (!outcome && steps < 60 * 400) {
@@ -187,18 +188,18 @@ describe('headless simulation', { timeout: 60_000 }, () => {
       .filter((e) => !e.isPlayer)
       .map((e) => e.place)
       .sort((a, b) => a - b);
-    expect(places).toEqual(Array.from({ length: NUM_BOTS }, (_, i) => i + 2));
+    expect(places).toEqual(Array.from({ length: botCount }, (_, i) => i + 2));
   });
 
   it('an idle player outside a closed zone is eventually eliminated', () => {
     setRandomSource(createSeededRandom(7));
-    const w = createMatch(new Camera(1280, 720));
+    const w = createMatch(new Camera(1280, 720), null, DEFAULT_MATCH_SETTINGS);
     for (const e of w.entities) if (!e.isPlayer) e.alive = false;
     w.entities.push(bot(10, 10)); // keep the match going
     w.entities.at(-1)!.alive = true;
     w.zone.r = 10;
-    w.zone.x = 2900;
-    w.zone.y = 2900;
+    w.zone.x = w.mapSize - 100;
+    w.zone.y = w.mapSize - 100;
     w.player.x = 200;
     w.player.y = 200;
     let outcome = null;

@@ -5,7 +5,6 @@
  */
 
 import { PICK_RANGE } from '../config/constants';
-import { PHASES } from '../config/zone';
 import { AMMO_COLORS, AMMO_NAMES, WEAPONS } from '../config/weapons';
 import type { Camera } from '../core/camera';
 import type { MouseState } from '../core/input';
@@ -39,7 +38,13 @@ export function zoneStatusText(zone: Zone): string {
  */
 export function zonePhaseText(zone: Zone): string {
   return (
-    'PHASE ' + (zone.phase + 1) + '/' + PHASES.length + '  •  ' + zoneDps(zone) + ' dmg/s outside'
+    'PHASE ' +
+      (zone.phase + 1) +
+      '/' +
+      zone.phases.length +
+      '  •  ' +
+      zoneDps(zone) +
+      ' dmg/s outside'
   );
 }
 

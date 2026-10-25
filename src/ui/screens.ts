@@ -32,18 +32,32 @@ export class Screens {
    * Wires the PLAY and PLAY AGAIN buttons.
    *
    * @param onPlay - Called when either play-again button is clicked.
+   * @param onHome - Returns to the start screen from the end overlay.
    * @param onExitSpectate - Leaves spectate mode and opens the defeat summary.
    */
-  constructor(onPlay: () => void, onExitSpectate: () => void) {
+  constructor(onPlay: () => void, onHome: () => void, onExitSpectate: () => void) {
     byId('startBtn').addEventListener('click', onPlay);
     byId('restartBtn').addEventListener('click', onPlay);
+    byId('homeBtn').addEventListener('click', onHome);
     byId('exitSpectateBtn').addEventListener('click', onExitSpectate);
+  }
+
+  /** Updates the start screen subtitle (HTML from `matchSettingsBlurb`). */
+  setStartBlurb(html: string): void {
+    byId('startSub').innerHTML = html;
   }
 
   /** Hides both overlays (a match is starting). */
   hideAll(): void {
     this.start.classList.add('hidden');
     this.end.classList.add('hidden');
+    this.hideSpectateBar();
+  }
+
+  /** Shows the start screen and hides the end overlay. */
+  showStart(): void {
+    this.end.classList.add('hidden');
+    this.start.classList.remove('hidden');
     this.hideSpectateBar();
   }
 

@@ -5,7 +5,6 @@
  * @packageDocumentation
  */
 
-import { MAP_SIZE } from '../config/constants';
 import type { Viewport } from '../core/canvas';
 import type { MouseState } from '../core/input';
 import type { World } from '../core/world';
@@ -23,8 +22,9 @@ import { drawWorld } from './worldRenderer';
 export function renderAttract(vp: Viewport, world: World, now: number): void {
   const ctx = vp.ctx;
   const cam = world.camera;
-  cam.x = MAP_SIZE / 2 - cam.width / 2 + Math.sin(now / 6000) * 600;
-  cam.y = MAP_SIZE / 2 - cam.height / 2 + Math.cos(now / 7000) * 500;
+  const mapSize = world.mapSize;
+  cam.x = mapSize / 2 - cam.width / 2 + Math.sin(now / 6000) * 600;
+  cam.y = mapSize / 2 - cam.height / 2 + Math.cos(now / 7000) * 500;
   ctx.setTransform(vp.dpr, 0, 0, vp.dpr, -Math.round(cam.x) * vp.dpr, -Math.round(cam.y) * vp.dpr);
   drawWorld(ctx, world, cam, { hidePlayer: true });
 }

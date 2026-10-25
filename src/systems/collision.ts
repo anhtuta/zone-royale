@@ -7,7 +7,6 @@
  * @packageDocumentation
  */
 
-import { MAP_SIZE } from '../config/constants';
 import { clamp, dist2 } from '../utils/math';
 import { segmentCircle, segmentRect } from '../utils/geometry';
 import type { House, Obstacle } from '../world/types';
@@ -92,8 +91,9 @@ export function circleFree(
   x: number,
   y: number,
   r: number,
+  mapSize: number,
 ): boolean {
-  if (x < r || y < r || x > MAP_SIZE - r || y > MAP_SIZE - r) return false;
+  if (x < r || y < r || x > mapSize - r || y > mapSize - r) return false;
   for (const o of obstacles) {
     if (o.t === 'wall') {
       const cx = clamp(x, o.x, o.x + o.w);
@@ -127,7 +127,11 @@ export function inHouse(houses: readonly House[], x: number, y: number, pad: num
  * @param obstacles - Map obstacles.
  * @param e - Body to resolve.
  */
-export function resolveCollision(obstacles: readonly Obstacle[], e: CircleBody): void {
+export function resolveCollision(
+  obstacles: readonly Obstacle[],
+  e: CircleBody,
+  mapSize: number,
+): void {
   for (const o of obstacles) {
     if (o.t === 'wall') {
       if (e.x + e.r < o.x || e.x - e.r > o.x + o.w || e.y + e.r < o.y || e.y - e.r > o.y + o.h)
@@ -167,8 +171,8 @@ export function resolveCollision(obstacles: readonly Obstacle[], e: CircleBody):
       }
     }
   }
-  e.x = clamp(e.x, e.r, MAP_SIZE - e.r);
-  e.y = clamp(e.y, e.r, MAP_SIZE - e.r);
+  e.x = clamp(e.x, e.r, mapSize - e.r);
+  e.y = clamp(e.y, e.r, mapSize - e.r);
 }
 
 /**

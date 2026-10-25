@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import { MAP_SIZE, TAU } from '../config/constants';
+import { TAU } from '../config/constants';
 import type { Camera } from '../core/camera';
 import type { World } from '../core/world';
 import type { GameMap } from '../world/types';
@@ -22,14 +22,17 @@ export const MINIMAP_MARGIN = 14;
  * @param map - The generated map.
  * @returns A {@link MINIMAP_SIZE}² canvas.
  */
-export function buildMinimapBase(map: Pick<GameMap, 'houses' | 'obstacles'>): HTMLCanvasElement {
+export function buildMinimapBase(
+  map: Pick<GameMap, 'houses' | 'obstacles'>,
+  mapSize: number,
+): HTMLCanvasElement {
   const S = MINIMAP_SIZE;
   const canvas = document.createElement('canvas');
   canvas.width = S;
   canvas.height = S;
   const m = canvas.getContext('2d');
   if (!m) return canvas;
-  const k = S / MAP_SIZE;
+  const k = S / mapSize;
   m.fillStyle = '#4c7a3e';
   m.fillRect(0, 0, S, S);
   for (const h of map.houses) {
@@ -71,7 +74,7 @@ export function drawMinimap(
   const S = MINIMAP_SIZE;
   const mx = cam.width - S - MINIMAP_MARGIN;
   const my = MINIMAP_MARGIN;
-  const k = S / MAP_SIZE;
+  const k = S / world.mapSize;
   ctx.drawImage(base, mx, my, S, S);
   ctx.save();
   ctx.beginPath();

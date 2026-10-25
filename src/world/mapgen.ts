@@ -4,22 +4,56 @@
  * @packageDocumentation
  */
 
-import { MAP_SIZE } from '../config/constants';
 import { pick, rand, randInt } from '../utils/random';
 import { circleFree, inHouse } from '../systems/collision';
 import { buildHouseWalls, housesTooClose } from './houses';
 import type { Decor, GameMap, House, Obstacle } from './types';
 
-/** Number of houses the generator tries to place. */
+/** Map side length the base counts below were tuned for (medium preset). */
+export const MAPGEN_REFERENCE_SIZE = 5000;
+
+/** Houses to place at {@link MAPGEN_REFERENCE_SIZE}. */
 export const HOUSE_COUNT = 10;
-/** Number of rocks the generator tries to place. */
+/** Rocks to place at {@link MAPGEN_REFERENCE_SIZE}. */
 export const ROCK_COUNT = 45;
-/** Number of trees the generator tries to place. */
+/** Trees to place at {@link MAPGEN_REFERENCE_SIZE}. */
 export const TREE_COUNT = 140;
-/** Number of decoration specks. */
+/** Decoration specks at {@link MAPGEN_REFERENCE_SIZE}. */
 export const DECOR_COUNT = 500;
-/** Minimum clearance between two houses. */
-const HOUSE_GAP = 160;
+/** Minimum house clearance at {@link MAPGEN_REFERENCE_SIZE}. */
+export const HOUSE_GAP = 160;
+
+/** Scaled map-generation targets for a given world size. */
+export interface MapGenCounts {
+  /** Houses to attempt. */
+  readonly houses: number;
+  /** Rocks to attempt. */
+  readonly rocks: number;
+  /** Trees to attempt. */
+  readonly trees: number;
+  /** Ground decor specks. */
+  readonly decor: number;
+  /** Minimum clearance between house footprints. */
+  readonly houseGap: number;
+}
+
+/**
+ * Obstacle and decor counts scaled with map area so density stays near the
+ * medium preset; house spacing scales with map side length.
+ *
+ * @param mapSize - World side length in pixels.
+ */
+export function mapGenCounts(mapSize: number): MapGenCounts {
+  const linear = mapSize / MAPGEN_REFERENCE_SIZE;
+  const area = linear * linear;
+  return {
+    houses: Math.max(1, Math.round(HOUSE_COUNT * area)),
+    rocks: Math.max(0, Math.round(ROCK_COUNT * area)),
+    trees: Math.max(0, Math.round(TREE_COUNT * area)),
+    decor: Math.max(0, Math.round(DECOR_COUNT * area)),
+    houseGap: Math.max(40, Math.round(HOUSE_GAP * linear)),
+  };
+}
 
 /** Colors used for ground decoration. */
 const DECOR_COLORS = [
@@ -31,19 +65,27 @@ const DECOR_COLORS = [
 ];
 
 /**
- * Places up to {@link HOUSE_COUNT} non-overlapping houses and their walls.
+ * Places up to `houseCount` non-overlapping houses and their walls.
  *
  * @param map - Map being built; houses and walls are appended to it.
+ * @param mapSize - World side length in pixels.
+ * @param houseCount - How many houses to attempt.
+ * @param houseGap - Minimum clearance between house footprints.
  */
-function placeHouses(map: GameMap): void {
-  for (let i = 0; i < HOUSE_COUNT; i++) {
+function placeHouses(
+  map: GameMap,
+  mapSize: number,
+  houseCount: number,
+  houseGap: number,
+): void {
+  for (let i = 0; i < houseCount; i++) {
     for (let tries = 0; tries < 80; tries++) {
       const w = randInt(220, 340);
       const h = randInt(200, 300);
-      const x = rand(150, MAP_SIZE - 150 - w);
-      const y = rand(150, MAP_SIZE - 150 - h);
+      const x = rand(150, mapSize - 150 - w);
+      const y = rand(150, mapSize - 150 - h);
       const candidate: House = { x, y, w, h };
-      if (map.houses.some((o) => housesTooClose(candidate, o, HOUSE_GAP))) continue;
+      if (map.houses.some((o) => housesTooClose(candidate, o, houseGap))) continue;
       map.obstacles.push(...buildHouseWalls(candidate));
       map.houses.push(candidate);
       break;
@@ -56,6 +98,7 @@ function placeHouses(map: GameMap): void {
  * away from other obstacles.
  *
  * @param map - Map being built.
+ * @param mapSize - World side length in pixels.
  * @param count - How many to attempt.
  * @param rmin - Minimum radius.
  * @param rmax - Maximum radius.
@@ -63,6 +106,7 @@ function placeHouses(map: GameMap): void {
  */
 function scatter(
   map: GameMap,
+  mapSize: number,
   count: number,
   rmin: number,
   rmax: number,
@@ -71,9 +115,13 @@ function scatter(
   for (let i = 0; i < count; i++) {
     for (let tries = 0; tries < 40; tries++) {
       const r = rand(rmin, rmax);
-      const x = rand(60, MAP_SIZE - 60);
-      const y = rand(60, MAP_SIZE - 60);
-      if (inHouse(map.houses, x, y, r + 50) || !circleFree(map.obstacles, x, y, r + 45)) continue;
+      const x = rand(60, mapSize - 60);
+      const y = rand(60, mapSize - 60);
+      if (
+        inHouse(map.houses, x, y, r + 50) ||
+        !circleFree(map.obstacles, x, y, r + 45, mapSize)
+      )
+        continue;
       const o: Obstacle =
         kind === 'tree'
           ? { t: 'tree', x, y, r, vr: r * 1.55, shade: rand(-12, 12) }
@@ -87,18 +135,20 @@ function scatter(
 /**
  * Generates a fresh random map.
  *
+ * @param mapSize - World width and height in pixels.
  * @returns Obstacles, houses and decoration for a new match.
  */
-export function generateMap(): GameMap {
+export function generateMap(mapSize: number): GameMap {
+  const counts = mapGenCounts(mapSize);
   const map: GameMap = { obstacles: [], houses: [], decor: [] };
-  placeHouses(map);
-  scatter(map, ROCK_COUNT, 24, 48, 'rock');
-  scatter(map, TREE_COUNT, 20, 28, 'tree');
+  placeHouses(map, mapSize, counts.houses, counts.houseGap);
+  scatter(map, mapSize, counts.rocks, 24, 48, 'rock');
+  scatter(map, mapSize, counts.trees, 20, 28, 'tree');
   const decor: Decor[] = map.decor;
-  for (let i = 0; i < DECOR_COUNT; i++) {
+  for (let i = 0; i < counts.decor; i++) {
     decor.push({
-      x: rand(0, MAP_SIZE),
-      y: rand(0, MAP_SIZE),
+      x: rand(0, mapSize),
+      y: rand(0, mapSize),
       s: rand(2, 4),
       c: pick(DECOR_COLORS),
     });

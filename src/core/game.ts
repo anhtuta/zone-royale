@@ -10,7 +10,10 @@ import { renderAttract, renderGame } from '../render/renderer';
 import { playerPickup } from '../systems/inventory';
 import { buildEndSummary, createMatch, type MatchOutcome } from '../systems/match';
 import { startReload, switchSlot } from '../systems/weapons';
+import type { MatchSettings } from '../config/matchSettings';
 import { buildMinimapBase } from '../ui/minimap';
+import { loadMatchSettings } from '../ui/matchSettingsStorage';
+import { matchSettingsBlurb, SettingsModal } from '../ui/settings';
 import { Screens } from '../ui/screens';
 import { otherSlot } from '../entities/entity';
 import { AudioEngine } from './audio';
@@ -57,6 +60,8 @@ export class Game {
   private world: World;
   /** Pre-rendered minimap for the current match. */
   private minimapBase: HTMLCanvasElement;
+  /** Map size and player count for the next / current match. */
+  private matchSettings: MatchSettings;
 
   /**
    * Creates the game, generates a backdrop match for the start screen and
@@ -68,10 +73,21 @@ export class Game {
     this.viewport = new Viewport(canvas);
     this.camera = new Camera(this.viewport.width, this.viewport.height);
     this.viewport.onResize((w, h) => this.camera.resize(w, h));
-    this.screens = new Screens(() => this.startMatch(), () => this.exitSpectate());
-    this.world = createMatch(this.camera, null);
-    this.world.phase = 'start';
-    this.minimapBase = buildMinimapBase(this.world);
+    this.matchSettings = loadMatchSettings();
+    this.screens = new Screens(
+      () => this.startMatch(),
+      () => this.goHome(),
+      () => this.exitSpectate(),
+    );
+    const settings = new SettingsModal();
+    settings.onSettingsSaved((s) => {
+      this.matchSettings = s;
+      this.refreshStartBlurb();
+      this.refreshBackdrop();
+    });
+    this.refreshStartBlurb();
+    this.world = this.createBackdropWorld();
+    this.minimapBase = buildMinimapBase(this.world, this.world.mapSize);
     this.input.attach(canvas, {
       onKeyDown: (k) => this.handleKey(k),
       onWheel: () => this.handleWheel(),
@@ -86,11 +102,40 @@ export class Game {
   /** Begins a new match (PLAY / PLAY AGAIN / Enter / Space). */
   startMatch(): void {
     this.audio.unlock();
+    this.matchSettings = loadMatchSettings();
     this.screens.hideAll();
     this.input.mouse.x = this.camera.width / 2 + 100;
     this.input.mouse.y = this.camera.height / 2;
-    this.world = createMatch(this.camera, this.audio);
-    this.minimapBase = buildMinimapBase(this.world);
+    this.world = createMatch(this.camera, this.audio, this.matchSettings);
+    this.minimapBase = buildMinimapBase(this.world, this.world.mapSize);
+  }
+
+  /** Start-screen attract mode world (not played). */
+  private createBackdropWorld(): World {
+    const w = createMatch(this.camera, null, this.matchSettings);
+    w.phase = 'start';
+    return w;
+  }
+
+  /** Regenerates the menu backdrop after settings change. */
+  private refreshBackdrop(): void {
+    if (this.world.phase !== 'start') return;
+    this.world = this.createBackdropWorld();
+    this.minimapBase = buildMinimapBase(this.world, this.world.mapSize);
+  }
+
+  /** Updates the start overlay subtitle from {@link matchSettings}. */
+  private refreshStartBlurb(): void {
+    this.screens.setStartBlurb(matchSettingsBlurb(this.matchSettings));
+  }
+
+  /** Leaves the end screen and returns to the menu (controls + settings). */
+  private goHome(): void {
+    this.matchSettings = loadMatchSettings();
+    this.refreshStartBlurb();
+    this.world = this.createBackdropWorld();
+    this.minimapBase = buildMinimapBase(this.world, this.world.mapSize);
+    this.screens.showStart();
   }
 
   /**

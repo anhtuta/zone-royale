@@ -4,12 +4,14 @@
  * @packageDocumentation
  */
 
-import { MAP_SIZE, TAU, ZONE_START_RADIUS, ZONE_TICK } from '../config/constants';
+import { TAU, ZONE_TICK } from '../config/constants';
+import { zoneStartRadius } from '../config/matchSettings';
 import {
+  buildZonePhases,
   FINAL_ZONE_DPS_MULTIPLIER,
   FIRST_PHASE_DRIFT,
   LATER_PHASE_DRIFT,
-  PHASES,
+  type ZonePhase,
 } from '../config/zone';
 import { clamp, dist, lerp } from '../utils/math';
 import { rand, random } from '../utils/random';
@@ -19,13 +21,17 @@ export type ZoneState = 'wait' | 'shrink' | 'final';
 
 /** The safe circle plus the circle it is shrinking towards. */
 export interface Zone {
+  /** Square map side length this zone belongs to. */
+  mapSize: number;
+  /** Wait/shrink schedule for this match. */
+  phases: readonly ZonePhase[];
   /** Current centre X. */
   x: number;
   /** Current centre Y. */
   y: number;
   /** Current radius. */
   r: number;
-  /** Index into {@link PHASES}. */
+  /** Index into {@link Zone.phases}. */
   phase: number;
   /** Current state. */
   state: ZoneState;
@@ -51,13 +57,18 @@ export type ZoneEvent = 'shrinkStarted' | 'phaseAdvanced' | 'closed';
 /**
  * Creates the initial zone covering the whole map and prepares phase 1.
  *
+ * @param mapSize - World width and height in pixels.
  * @returns A zone in the `wait` state of phase 0.
  */
-export function createZone(): Zone {
+export function createZone(mapSize: number): Zone {
+  const startR = zoneStartRadius(mapSize);
+  const phases = buildZonePhases(startR);
   const zone: Zone = {
-    x: MAP_SIZE / 2,
-    y: MAP_SIZE / 2,
-    r: ZONE_START_RADIUS,
+    mapSize,
+    phases,
+    x: mapSize / 2,
+    y: mapSize / 2,
+    r: startR,
     phase: 0,
     state: 'wait',
     timer: 0,
@@ -80,7 +91,7 @@ export function createZone(): Zone {
  * @param zone - Zone to mutate.
  */
 export function setupPhase(zone: Zone): void {
-  const P = PHASES[zone.phase];
+  const P = zone.phases[zone.phase];
   if (!P) return;
   zone.state = 'wait';
   zone.timer = P.wait;
@@ -88,9 +99,9 @@ export function setupPhase(zone: Zone): void {
     Math.max(0, zone.r - P.r) * (zone.phase === 0 ? FIRST_PHASE_DRIFT : LATER_PHASE_DRIFT);
   const a = rand(0, TAU);
   const d = Math.sqrt(random()) * maxOff;
-  const m = Math.min(P.r + 60, MAP_SIZE / 2);
-  zone.tx = clamp(zone.x + Math.cos(a) * d, m, MAP_SIZE - m);
-  zone.ty = clamp(zone.y + Math.sin(a) * d, m, MAP_SIZE - m);
+  const m = Math.min(P.r + 60, zone.mapSize / 2);
+  zone.tx = clamp(zone.x + Math.cos(a) * d, m, zone.mapSize - m);
+  zone.ty = clamp(zone.y + Math.sin(a) * d, m, zone.mapSize - m);
   zone.tr = P.r;
 }
 
@@ -106,7 +117,7 @@ export function setupPhase(zone: Zone): void {
 export function updateZone(zone: Zone, dt: number): ZoneEvent | null {
   if (zone.state === 'final') return null;
   zone.timer -= dt;
-  const P = PHASES[zone.phase];
+  const P = zone.phases[zone.phase];
   if (!P) return null;
   if (zone.state === 'wait') {
     if (zone.timer <= 0) {
@@ -126,7 +137,7 @@ export function updateZone(zone: Zone, dt: number): ZoneEvent | null {
       zone.x = zone.tx;
       zone.y = zone.ty;
       zone.r = zone.tr;
-      if (zone.phase < PHASES.length - 1) {
+      if (zone.phase < zone.phases.length - 1) {
         zone.phase++;
         setupPhase(zone);
         return 'phaseAdvanced';
@@ -145,7 +156,7 @@ export function updateZone(zone: Zone, dt: number): ZoneEvent | null {
  * @returns The phase's dps, ×1.5 once the zone has fully closed.
  */
 export function zoneDps(zone: Zone): number {
-  const P = PHASES[zone.phase] ?? PHASES[PHASES.length - 1];
+  const P = zone.phases[zone.phase] ?? zone.phases[zone.phases.length - 1];
   return (P ? P.dps : 0) * (zone.state === 'final' ? FINAL_ZONE_DPS_MULTIPLIER : 1);
 }
 
@@ -182,8 +193,9 @@ export function zoneTickDamage(holder: { zoneTick: number }, dt: number, dps: nu
 /**
  * Total length of a match's zone schedule (all waits and shrinks).
  *
+ * @param zone - Zone whose phase table to sum.
  * @returns Seconds from match start until the zone fully closes.
  */
-export function totalZoneDuration(): number {
-  return PHASES.reduce((s, p) => s + p.wait + p.shrink, 0);
+export function totalZoneDuration(zone: Zone): number {
+  return zone.phases.reduce((s, p) => s + p.wait + p.shrink, 0);
 }

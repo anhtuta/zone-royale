@@ -5,7 +5,8 @@ Common formulas and patterns used in top-down games like Zone Royale. Most logic
 systems apply them each frame with a delta time `dt`.
 
 **Related:** [01_INIT_PROJECT.md](01_INIT_PROJECT.md) (layer boundaries, `stepWorld()`),
-[03_MULTIPLAYER.md](03_MULTIPLAYER.md) (determinism, `PlayerControls`).
+[03_MULTIPLAYER.md](03_MULTIPLAYER.md) (determinism, `PlayerControls`),
+[05_MATCH_SETTINGS.md](05_MATCH_SETTINGS.md) (configurable map size and player count).
 
 **Note: World axes (not school Descartes):** The sim uses the same convention as **Canvas / the screen, origin top-left**:
 
@@ -19,11 +20,13 @@ systems apply them each frame with a delta time `dt`.
 There is no single “origin” module — this is wired in [`readControls()`](../src/core/input.ts)
 (`W` → `moveY -= 1`, `S` → `moveY += 1`) and applied in [`stepWorld()`](../src/core/simulation.ts)
 (`e.y += e.vy * dt`). Map corner **(0, 0)** is the **top-left** of the world; $y$ grows toward the
-bottom ([`MAP_SIZE`](../src/config/constants.ts) is the width and height).
+bottom (`World.mapSize` from match settings — see [05_MATCH_SETTINGS.md](05_MATCH_SETTINGS.md)).
 
 Vocab (thuật ngữ trong game math - verify this!!!):
 
 - Normalize: chuẩn hóa vector về độ dài 1. Việc chuẩn hoá giúp tránh trường hợp đi chéo bị nhanh hơn đi thẳng.
+  - Vector normalization is the process of scaling a vector so that its length (magnitude) becomes exactly 1, turning it into what is called a unit vector.
+  - Normalization strips away the size of a vector and preserves only its direction.
 - Magnitude: độ dài của vector.
 - Integration: tích phân vị trí theo thời gian???.
 - LERP: linear interpolation: nội suy tuyến tính giữa 2 giá trị???.
@@ -97,11 +100,10 @@ Plain `(x, y)` plus a small set of operations:
 | Scale to speed | `vx = directionX * SPEED`, same for `vy` | Turn “which way” into px/s |
 | Dot (optional) | $a_x b_x + a_y b_y$ | In front vs behind, “how much along…” |
 
-**Diagonal movement:** Without normalization, W+D is ~41% faster than W alone.
+**Diagonal movement:** Without normalization, W+D is ~41% faster than W alone. Zone Royale
+normalises in [`playerVelocity()`](../src/systems/player.ts) so diagonals stay at **245** px/s.
 
-- Nếu ko chuẩn hoá: di chuyển chéo (ấn W + D) sẽ nhanh hơn di chuyển theo hướng W hoặc D.
-
-**Example 1 (length):** Velocity `(173, 173)` → `hypot(173, 173) ≈ 245` (= full run speed after normalize + scale).
+**Example 1 (length):** **W+D** velocity `(173, -173)` → `hypot(173, -173) ≈ 245` (= full run speed after normalize + scale).
 
 ### Scale to speed (what `playerVelocity` really does)
 
@@ -144,7 +146,7 @@ Normalize picks a direction on the circle; scale sets how fast you travel along 
 
 | $m_x$ | $m_y$ | $m$ | Result |
 | ----- | ----- | --- | ------ |
-| 0 | 0 | `|| 1` guard | $(v_x, v_y) = (0, 0)$ |
+| 0 | 0 | `OR 1` guard | $(v_x, v_y) = (0, 0)$ |
 
 ---
 
@@ -190,8 +192,8 @@ would be **1.0**).
 Your velocity $v = (173, -173)$ (W+D). Unit direction $\hat{d} = (0.707, -0.707)$.
 Want “how much am I moving east?” → $\hat{e}_x \cdot v$ with east $\hat{e}_x = (1,0)$:
 
-$1 \cdot 173 + 0 \cdot (-173) = 173$ px/s of your **245** px/s is eastward; the rest is northward
-(negative $y$).
+$1 \cdot 173 + 0 \cdot (-173) = 173$ px/s of your **245** px/s is eastward; the rest is upward on screen
+($v_y = -173$, decreasing $y$).
 
 ---
 
@@ -356,11 +358,13 @@ $(1500 - 400,\; 1200 - 300) = (1100,\; 900)$. Camera at **(1000, 900)**, `dt = 0
 
 Optional extension: damage falloff `damage * clamp(1 - d / range, 0, 1)`.
 
-**Example (lead):** Bot shoots pistol (**bullet speed 1150**). Target **400** px away, moving up
-$v_y = 200$ px/s, bot `skill = 0.8`:
+**Example (lead):** Bot shoots pistol (**bullet speed 1150**). Target **400** px away, moving **up on screen**
+($v_y = -200$ px/s), bot `skill = 0.8`:
 
 - $t_{\mathrm{flight}} \approx (400 / 1150) \times 0.8 \approx 0.28$ s
-- Lead offset on Y: $200 \times 0.28 \approx 56$ px → aim at target position **+56** on Y.
+- Lead offset on Y: $v_y \times t_{\mathrm{flight}} = -200 \times 0.28 \approx -56$ px → aim at
+  **$y_{\mathrm{target}} - 56$** (56 px higher on screen than their current position; same as
+  `t.y + t.vy * lead` in [`systems/ai.ts`](../src/systems/ai.ts)).
 
 **Example (`combatRadial`):** Pistol `range = 750` → [`preferredRange`](../src/systems/ai.ts)
 $\min(375,\; 420) = 375$ px, band **±60**:
@@ -375,7 +379,7 @@ $\min(375,\; 420) = 375$ px, band **±60**:
 
 - $(1 - 0.5) \times 0.3 + 0.05 + 800/4000 = 0.15 + 0.05 + 0.2 = 0.4$ rad (~23°) extra jitter scale.
 
-**Example (moving spread):** Standing still → factor **1**. Running at **(173, 173)** → `hypot > 30` →
+**Example (moving spread):** Standing still → factor **1**. Running **W+D** at **(173, -173)** → `hypot > 30` →
 spread × **1.35** (pistol base spread 0.035 rad → effective ~0.047 rad).
 
 **Example (armor, not in table but common):** Hit for **50** damage, **30** armor left,
@@ -411,7 +415,7 @@ Tree at **x = 1900** → off-screen, skip draw.
 - **Gameplay RNG** — [`utils/random.ts`](../src/utils/random.ts) (seeded); avoid `Math.random()` in
   `systems/` for reproducible tests.
 
-**Example (`clamp`):** [`MAP_SIZE`](../src/config/constants.ts) **6000**, entity tries **x = 6050** with
+**Example (`clamp`):** `mapSize` **5000**, entity tries **x = 5050** with
 radius **18** → clamp to $[18,\; 5982]$ → **5982**.
 
 **Example (`min` for damage):** Armor absorb uses `min(remainingArmor, damage × 0.6)` so you never
@@ -430,7 +434,7 @@ absorb more than you have.
 Full 3D linear algebra or a physics engine is not required for this style of game — it is
 mostly trig, clamp, distance, and a handful of intersection tests kept in `utils/`.
 
-**Example (putting it together):** One frame at 60 FPS: read **W+D** → velocity **(173, 173)**;
+**Example (putting it together):** One frame at 60 FPS: read **W+D** → velocity **(173, -173)**;
 integrate position with `dt`; `resolveCollision` if inside a wall; check loot with $d^2 < 34^2$;
 aim with `atan2`; fire bullet with $v = 1150 \times (\cos\theta,\; \sin\theta)$; camera `lerp`
 toward player with $t \approx 0.17$.

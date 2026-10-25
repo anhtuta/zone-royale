@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { MAP_SIZE } from '../src/config/constants';
+import { DEFAULT_MATCH_SETTINGS } from '../src/config/matchSettings';
+
+const TEST_MAP_SIZE = DEFAULT_MATCH_SETTINGS.mapSize;
 import { segmentCircle, segmentRect } from '../src/utils/geometry';
 import {
   circleFree,
@@ -49,11 +51,11 @@ describe('map collision queries', () => {
   });
 
   it('circleFree rejects overlaps and map edges', () => {
-    expect(circleFree([rock], 300, 100, 10)).toBe(false);
-    expect(circleFree([rock], 400, 100, 10)).toBe(true);
-    expect(circleFree([wall], 110, 50, 5)).toBe(false);
-    expect(circleFree([], 5, 500, 10)).toBe(false);
-    expect(circleFree([], MAP_SIZE - 5, 500, 10)).toBe(false);
+    expect(circleFree([rock], 300, 100, 10, TEST_MAP_SIZE)).toBe(false);
+    expect(circleFree([rock], 400, 100, 10, TEST_MAP_SIZE)).toBe(true);
+    expect(circleFree([wall], 110, 50, 5, TEST_MAP_SIZE)).toBe(false);
+    expect(circleFree([], 5, 500, 10, TEST_MAP_SIZE)).toBe(false);
+    expect(circleFree([], TEST_MAP_SIZE - 5, 500, 10, TEST_MAP_SIZE)).toBe(false);
   });
 
   it('inHouse finds the containing house with padding', () => {
@@ -67,28 +69,28 @@ describe('map collision queries', () => {
 describe('collision resolution', () => {
   it('pushes a body out of a wall face', () => {
     const e = { x: 95, y: 100, r: 18 };
-    resolveCollision([wall], e);
+    resolveCollision([wall], e, TEST_MAP_SIZE);
     expect(e.x).toBeCloseTo(100 - 18);
     expect(e.y).toBe(100);
   });
 
   it('pushes a body whose centre is inside a wall out the nearest face', () => {
     const e = { x: 117, y: 100, r: 18 };
-    resolveCollision([wall], e);
+    resolveCollision([wall], e, TEST_MAP_SIZE);
     expect(e.x).toBe(120 + 18);
   });
 
   it('pushes a body out of a rock radially', () => {
     const e = { x: 330, y: 100, r: 18 };
-    resolveCollision([rock], e);
+    resolveCollision([rock], e, TEST_MAP_SIZE);
     expect(e.x).toBeCloseTo(300 + 30 + 18);
     expect(e.y).toBeCloseTo(100);
   });
 
   it('clamps bodies inside the map', () => {
-    const e = { x: -50, y: MAP_SIZE + 50, r: 18 };
-    resolveCollision([], e);
-    expect(e).toMatchObject({ x: 18, y: MAP_SIZE - 18 });
+    const e = { x: -50, y: TEST_MAP_SIZE + 50, r: 18 };
+    resolveCollision([], e, TEST_MAP_SIZE);
+    expect(e).toMatchObject({ x: 18, y: TEST_MAP_SIZE - 18 });
   });
 
   it('separateBodies pushes overlapping living bodies apart equally', () => {

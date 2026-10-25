@@ -1,3 +1,4 @@
+import { DEFAULT_MATCH_SETTINGS } from '../src/config/matchSettings';
 import { Camera } from '../src/core/camera';
 import type { SoundKind, SoundSink, World } from '../src/core/world';
 import { createEntity, type Entity } from '../src/entities/entity';
@@ -21,9 +22,11 @@ export function bot(x: number, y: number, name = 'Bot'): Entity {
  * zone covering the whole map. Extra entities can be appended to `entities`.
  */
 export function makeWorld(overrides: Partial<World> = {}): World {
-  const player = createEntity(true, 'You', '#42a5f5', 1500, 1500);
+  const mapSize = overrides.mapSize ?? DEFAULT_MATCH_SETTINGS.mapSize;
+  const player = createEntity(true, 'You', '#42a5f5', mapSize / 2, mapSize / 2);
   const world: World = {
     phase: 'playing',
+    mapSize,
     obstacles: [],
     houses: [],
     decor: [],
@@ -34,7 +37,7 @@ export function makeWorld(overrides: Partial<World> = {}): World {
     particles: [],
     floaters: [],
     killfeed: [],
-    zone: createZone(),
+    zone: createZone(mapSize),
     camera: new Camera(1280, 720),
     camTarget: player,
     spectating: false,
