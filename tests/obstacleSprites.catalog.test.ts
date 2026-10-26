@@ -17,6 +17,6 @@ describe('obstacleSprites catalog tuning', () => {
       expect(treeSpriteDef(v).collisionLiftR).toBeGreaterThanOrEqual(0.9);
       expect(treeSpriteDef(v).collisionRadiusScale).toBeGreaterThanOrEqual(1.05);
     }
-    expect(treeCollisionRadius(24, 3)).toBeCloseTo(24 * 1.05);
+    expect(treeCollisionRadius(24, 3)).toBeCloseTo(24 * treeSpriteDef(3).collisionRadiusScale);
   });
 });

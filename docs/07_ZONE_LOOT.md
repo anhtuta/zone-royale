@@ -151,10 +151,10 @@ survivor-scaled floors when placement succeeds; players see feed + toast when bo
 
 ### Phase 2 — Regression, sim smoke, tuning
 
-- [ ] `combat.test.ts`: elimination with zero reserve → no ammo loot; weapon drops keep
+- [x] `combat.test.ts`: elimination with zero reserve → no ammo loot; weapon drops keep
   `mag`.
-- [ ] Headless sim: drain ground ammo, advance zone, assert new boxes exist.
-- [ ] Tune `ZONE_LOOT_BASE_FLOOR` after playtests.
+- [x] Headless sim: drain ground ammo, advance zone, assert new boxes exist.
+- [x] Tune `ZONE_LOOT_BASE_FLOOR` after playtests.
 
 **Exit criteria:** No accidental elimination ammo drip; late-match dry scenario covered by
 tests; knobs documented in this file match shipped constants.

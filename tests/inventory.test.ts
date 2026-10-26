@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { MAX_ARMOR, MAX_HP } from '../src/config/constants';
 import type { LootItem } from '../src/entities/loot';
 import { lootColor, lootName } from '../src/entities/loot';
 import {
@@ -77,14 +78,14 @@ describe('applyLoot', () => {
     expect(w.loot).toHaveLength(0);
   });
 
-  it('health and armor are capped at 100', () => {
+  it('health and armor are capped at max', () => {
     const w = makeWorld();
-    w.player.hp = 80;
+    w.player.hp = MAX_HP - 20;
     applyLoot(w, w.player, { kind: 'health', amount: 40, x: 0, y: 0 });
-    expect(w.player.hp).toBe(100);
-    w.player.armor = 70;
+    expect(w.player.hp).toBe(MAX_HP);
+    w.player.armor = MAX_ARMOR - 30;
     applyLoot(w, w.player, { kind: 'armor', amount: 50, x: 0, y: 0 });
-    expect(w.player.armor).toBe(100);
+    expect(w.player.armor).toBe(MAX_ARMOR);
   });
 
   it('a bot only switches to a new weapon of at least equal tier', () => {

@@ -120,3 +120,21 @@ describe('simulation hook', () => {
     expect(countGroundAmmo(world.loot).light).toBe(ammoFloorForAlive(3, 'light'));
   });
 });
+
+describe('headless dry-match smoke', () => {
+  it('replenishes ground ammo after the first zone shrink via stepWorld', () => {
+    const world = makeWorld({ loot: [] });
+    expect(countGroundAmmo(world.loot).light).toBe(0);
+    let ammoOnGround = false;
+    for (let i = 0; i < 5000 && !ammoOnGround; i++) {
+      stepWorld(world, IDLE, 0.2);
+      ammoOnGround = world.loot.some((l) => l.kind === 'ammo');
+    }
+    expect(ammoOnGround).toBe(true);
+    const alive = world.entities.filter((e) => e.alive).length;
+    const counts = countGroundAmmo(world.loot);
+    for (const type of Object.keys(counts) as (keyof typeof counts)[]) {
+      expect(counts[type]).toBeGreaterThanOrEqual(ammoFloorForAlive(alive, type));
+    }
+  });
+});
