@@ -7,10 +7,10 @@
 import { DEFAULT_MATCH_SETTINGS } from './matchSettings';
 import type { AmmoType } from './weapons';
 
-/** Map size used to scale per-family minimum ground ammo (`5000` = medium preset). */
-export const REFERENCE_MAP_SIZE = DEFAULT_MATCH_SETTINGS.mapSize;
+/** Player count used to scale per-family minimum ground ammo (default match = 50). */
+export const REFERENCE_PLAYER_COUNT = DEFAULT_MATCH_SETTINGS.numPlayers;
 
-/** Minimum ammo boxes per family on the ground at {@link REFERENCE_MAP_SIZE}. */
+/** Minimum ammo boxes per family on the ground at {@link REFERENCE_PLAYER_COUNT} alive. */
 export const ZONE_LOOT_BASE_FLOOR: Readonly<Record<AmmoType, number>> = {
   light: 4,
   shells: 2,
@@ -34,13 +34,14 @@ export const PERIODIC_MAX_BOXES_PER_FAMILY = 1;
 export const ZONE_LOOT_SUPPLY_MESSAGE = 'Ammunition supply dropped in the safe zone';
 
 /**
- * Map-scaled minimum number of ground ammo boxes for one family.
+ * Minimum ground ammo boxes for one family, scaled by survivors and capped by alive count.
  *
- * @param mapSize - World side length in pixels.
+ * @param aliveCount - Living combatants (at least 1 for math when the match is active).
  * @param type - Ammo family.
- * @returns At least 1.
+ * @returns Between 1 and `aliveCount`.
  */
-export function ammoFloorForMap(mapSize: number, type: AmmoType): number {
-  const scaled = ZONE_LOOT_BASE_FLOOR[type] * mapSize / REFERENCE_MAP_SIZE;
-  return Math.max(1, Math.round(scaled));
+export function ammoFloorForAlive(aliveCount: number, type: AmmoType): number {
+  const alive = Math.max(1, aliveCount);
+  const scaled = ZONE_LOOT_BASE_FLOOR[type] * alive / REFERENCE_PLAYER_COUNT;
+  return Math.min(alive, Math.max(1, Math.round(scaled)));
 }

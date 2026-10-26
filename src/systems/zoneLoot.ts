@@ -7,11 +7,12 @@
 import { LOOT_CLEARANCE, TAU } from '../config/constants';
 import { AMMO_AMOUNT, AMMO_TYPES, type AmmoType } from '../config/weapons';
 import {
-  ammoFloorForMap,
+  ammoFloorForAlive,
   ZONE_LOOT_EDGE_MARGIN,
   ZONE_LOOT_PLACEMENT_TRIES,
   ZONE_LOOT_SUPPLY_MESSAGE,
 } from '../config/zoneLoot';
+import { countAlive } from './combat';
 import type { World } from '../core/world';
 import type { LootItem } from '../entities/loot';
 import { dist2 } from '../utils/math';
@@ -70,7 +71,7 @@ export interface FillZoneAmmoOptions {
 }
 
 /**
- * Spawns ammo boxes until each family meets its map-scaled floor (or placement fails).
+ * Spawns ammo boxes until each family meets its survivor-scaled floor (or placement fails).
  *
  * @param world - Match state.
  * @param options - Optional per-family spawn cap.
@@ -79,9 +80,10 @@ export interface FillZoneAmmoOptions {
 export function fillZoneAmmoToFloors(world: World, options: FillZoneAmmoOptions = {}): number {
   const maxPerFamily = options.maxPerFamily ?? Infinity;
   const counts = countGroundAmmo(world.loot);
+  const alive = countAlive(world.entities);
   let spawned = 0;
   for (const type of AMMO_TYPES) {
-    const floor = ammoFloorForMap(world.mapSize, type);
+    const floor = ammoFloorForAlive(alive, type);
     let deficit = Math.max(0, floor - counts[type]);
     let placedThisFamily = 0;
     while (deficit > 0 && placedThisFamily < maxPerFamily) {

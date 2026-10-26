@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_MATCH_SETTINGS } from '../src/config/matchSettings';
 import {
-  ammoFloorForMap,
+  ammoFloorForAlive,
+  REFERENCE_PLAYER_COUNT,
   ZONE_LOOT_BASE_FLOOR,
   ZONE_LOOT_SUPPLY_MESSAGE,
 } from '../src/config/zoneLoot';
@@ -17,9 +17,8 @@ import {
 } from '../src/systems/zoneLoot';
 import { updateZone } from '../src/systems/zone';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
-import { makeWorld } from './helpers';
+import { bot, makeWorld } from './helpers';
 
-const MAP_SIZE = DEFAULT_MATCH_SETTINGS.mapSize;
 const IDLE: PlayerControls = {
   moveX: 0,
   moveY: 0,
@@ -32,16 +31,21 @@ const IDLE: PlayerControls = {
 beforeEach(() => setRandomSource(createSeededRandom(90210)));
 afterEach(() => setRandomSource(Math.random));
 
-describe('ammoFloorForMap', () => {
-  it('matches base floors at the reference map size', () => {
+describe('ammoFloorForAlive', () => {
+  it('matches base floors at the reference alive count', () => {
     for (const type of Object.keys(ZONE_LOOT_BASE_FLOOR) as (keyof typeof ZONE_LOOT_BASE_FLOOR)[]) {
-      expect(ammoFloorForMap(MAP_SIZE, type)).toBe(ZONE_LOOT_BASE_FLOOR[type]);
+      expect(ammoFloorForAlive(REFERENCE_PLAYER_COUNT, type)).toBe(ZONE_LOOT_BASE_FLOOR[type]);
     }
   });
 
-  it('scales down on smaller maps but never below 1', () => {
-    expect(ammoFloorForMap(1000, 'light')).toBe(1);
-    expect(ammoFloorForMap(1000, 'medium')).toBe(1);
+  it('never exceeds alive count and never drops below 1', () => {
+    expect(ammoFloorForAlive(3, 'light')).toBe(1);
+    expect(ammoFloorForAlive(3, 'light')).toBeLessThanOrEqual(3);
+    expect(ammoFloorForAlive(2, 'medium')).toBeLessThanOrEqual(2);
+  });
+
+  it('scales up with more survivors', () => {
+    expect(ammoFloorForAlive(100, 'light')).toBeGreaterThan(ammoFloorForAlive(20, 'light'));
   });
 });
 
@@ -55,13 +59,14 @@ describe('zone ammo placement', () => {
     expect(isInsideZoneLootDisk(world, box.x, box.y)).toBe(true);
   });
 
-  it('fills each family up to the map-scaled floor', () => {
+  it('fills each family up to the survivor-scaled floor', () => {
     const world = makeWorld({ loot: [] });
     const spawned = fillZoneAmmoToFloors(world);
     expect(spawned).toBeGreaterThan(0);
+    const alive = world.entities.filter((e) => e.alive).length;
     const counts = countGroundAmmo(world.loot);
     for (const type of Object.keys(counts) as (keyof typeof counts)[]) {
-      expect(counts[type]).toBeGreaterThanOrEqual(ammoFloorForMap(MAP_SIZE, type));
+      expect(counts[type]).toBeGreaterThanOrEqual(ammoFloorForAlive(alive, type));
     }
   });
 });
@@ -101,9 +106,17 @@ describe('simulation hook', () => {
     updateZone(world.zone, PHASES[0]!.wait);
     updateZone(world.zone, PHASES[0]!.shrink - 0.001);
     stepWorld(world, IDLE, 0.01);
+    const alive = world.entities.filter((e) => e.alive).length;
     expect(countGroundAmmo(world.loot).light).toBeGreaterThanOrEqual(
-      ammoFloorForMap(MAP_SIZE, 'light'),
+      ammoFloorForAlive(alive, 'light'),
     );
     expect(world.killfeed.some((e) => e.sys === ZONE_LOOT_SUPPLY_MESSAGE)).toBe(true);
+  });
+
+  it('uses fewer boxes when few survivors remain', () => {
+    const world = makeWorld({ loot: [] });
+    world.entities.push(bot(100, 100, 'B2'), bot(200, 200, 'B3'));
+    fillZoneAmmoToFloors(world);
+    expect(countGroundAmmo(world.loot).light).toBe(ammoFloorForAlive(3, 'light'));
   });
 });

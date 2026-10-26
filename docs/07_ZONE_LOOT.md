@@ -51,7 +51,7 @@ do **not** show either message.
 | -------- | ------------ |
 | Ammo boxes (`kind: 'ammo'`) for all four families in `AMMO_TYPES` | Weapons, med kits, armor |
 | Placement inside current safe circle | Drops outside the zone |
-| Scaling minimum counts by **map size only** | Scaling by player count |
+| Scaling minimum counts by **alive players** (capped at survivor count) | Scaling by map size |
 | Periodic + phase-boundary guarantees | Drops when shrink **starts** |
 | Tests with seeded RNG | UI redesign beyond existing feed + toast |
 
@@ -63,14 +63,15 @@ Count only items on the ground: `world.loot` where `kind === 'ammo'`, grouped by
 For each family `t`:
 
 ```text
-floor(t) = max(1, round(baseFloor(t) * mapSize / REFERENCE_MAP_SIZE))
+floor(t) = min(alive, max(1, round(baseFloor(t) * alive / REFERENCE_PLAYER_COUNT)))
 ```
 
-- **`REFERENCE_MAP_SIZE`:** `5000` (medium preset; same reference as default match settings).
-- **`baseFloor(t)`:** config constants at reference map (suggested starting values below; tune in
+- **`alive`:** living combatants when the pulse runs (`countAlive(world.entities)`).
+- **`REFERENCE_PLAYER_COUNT`:** `50` (default match size from `matchSettings`).
+- **`baseFloor(t)`:** config constants at that reference alive count (tune in
   `config/zoneLoot.ts`).
 
-Suggested **`baseFloor`** at 5000×5000 (implementation may adjust after playtesting):
+Suggested **`baseFloor`** with **50** survivors (implementation may adjust after playtesting):
 
 | Family | `baseFloor` | Rationale |
 | ------ | ----------- | --------- |
@@ -145,15 +146,15 @@ Keep current behaviour in `systems/combat.ts`:
 
 New file **`src/config/zoneLoot.ts`** (preferred over bloating `constants.ts`):
 
-- `REFERENCE_MAP_SIZE`
+- `REFERENCE_PLAYER_COUNT`
 - `ZONE_LOOT_BASE_FLOOR: Record<AmmoType, number>`
 - `ZONE_LOOT_EDGE_MARGIN`
 - `PERIODIC_SUPPLY_INTERVAL_S`
 - `PERIODIC_MAX_BOXES_PER_FAMILY`
 - `ZONE_LOOT_PLACEMENT_TRIES`
-- Export **`ammoFloorForMap(mapSize, type)`** (pure)
+- Export **`ammoFloorForAlive(aliveCount, type)`** (pure)
 
-Match **`mapSize`** comes from `world.mapSize` (set in `createMatch()`).
+**`alive`** comes from `countAlive(world.entities)` at pulse time (shrinks as players die).
 
 ## Implementation phases
 
@@ -163,17 +164,17 @@ the next. The whole feature can still ship in one PR if you prefer—phases 2–
 
 ### Phase 1 — Zone pulse supply
 
-- [x] Add `config/zoneLoot.ts` (`ammoFloorForMap`, base floors, margin, placement tries).
+- [x] Add `config/zoneLoot.ts` (`ammoFloorForAlive`, base floors, margin, placement tries).
 - [x] Add `systems/zoneLoot.ts`: count ground ammo per family, spawn in safe disk
   (`circleFree`), build `LootItem` ammo boxes.
 - [x] Telegraph when `spawned > 0`: `pushSystemFeed` + `showMessage` (v1 copy above).
 - [x] Wire `core/simulation.ts` after `updateZone`: run supply on `phaseAdvanced` and
   `closed` only (not `shrinkStarted`).
-- [x] Tests: `ammoFloorForMap`, placement inside zone, `phaseAdvanced` fill, telegraph
+- [x] Tests: `ammoFloorForAlive`, placement inside zone, `phaseAdvanced` fill, telegraph
   on spawn vs no spawn.
 
 **Exit criteria:** After a shrink ends (or zone closes), ground ammo per family reaches
-map-scaled floors when placement succeeds; players see feed + toast when boxes appear.
+survivor-scaled floors when placement succeeds; players see feed + toast when boxes appear.
 
 ### Phase 2 — Periodic wait top-up
 
@@ -211,7 +212,7 @@ tests; knobs documented in this file match shipped constants.
 
 | Test | Assert |
 | ---- | ------ |
-| `ammoFloorForMap` | Scales with `mapSize`; minimum 1 per family |
+| `ammoFloorForAlive` | Scales with survivors; capped at `alive`; minimum 1 per family |
 | Placement | Seeded positions inside `zone.r - margin`; `circleFree` |
 | `phaseAdvanced` | Ground counts per family ≥ floor when obstacles sparse |
 | Telegraph | Spawning calls feed + message; zero spawn does not |
@@ -222,9 +223,9 @@ Headless sim smoke: drain ammo, advance zone to `phaseAdvanced`, assert new ammo
 
 ## Tuning notes
 
-- If large maps feel flooded, lower `baseFloor` or raise `PERIODIC_SUPPLY_INTERVAL_S`.
-- If small maps still dry up, `max(1, …)` already guarantees at least one box per family per pulse
-  when below floor.
+- If large lobbies feel flooded, lower `baseFloor` or raise `PERIODIC_SUPPLY_INTERVAL_S`.
+- With few survivors, `min(alive, …)` keeps floors from exceeding living players; `max(1, …)` still
+  guarantees at least one box per family when below floor and `alive ≥ 1`.
 - Bot cap (`BOT_AMMO_CAP`) can still pull ammo off the ground; floors measure **ground** only, which
   is intentional so supply pulses stay visible on the map.
 
