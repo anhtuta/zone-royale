@@ -175,7 +175,8 @@ describe('match setup', () => {
     setRandomSource(createSeededRandom(8));
     const houses = [{ x: 0, y: 0, w: 3000, h: 1500 }];
     const p = findSpawnPoint([], houses, [], 0, 5000);
-    expect(inHouse(houses, p.x, p.y, 30)).toBeNull();
+    expect(p).not.toBeNull();
+    expect(inHouse(houses, p!.x, p!.y, 30)).toBeNull();
   });
 
   it('rejects overcrowded small-map settings without overlapping spawns', () => {

@@ -10,7 +10,7 @@ import { renderAttract, renderGame } from '../render/renderer';
 import { playerPickup } from '../systems/inventory';
 import { buildEndSummary, createMatch, type MatchOutcome } from '../systems/match';
 import { startReload, switchSlot } from '../systems/weapons';
-import type { MatchSettings } from '../config/matchSettings';
+import { DEFAULT_MATCH_SETTINGS, type MatchSettings } from '../config/matchSettings';
 import { buildMinimapBase } from '../ui/minimap';
 import { loadMatchSettings } from '../ui/matchSettingsStorage';
 import { matchSettingsBlurb, SettingsModal } from '../ui/settings';
@@ -110,8 +110,15 @@ export class Game {
     this.screens.hideAll();
     this.input.mouse.x = this.camera.width / 2 + 100;
     this.input.mouse.y = this.camera.height / 2;
-    this.world = createMatch(this.camera, this.audio, this.matchSettings);
-    this.minimapBase = buildMinimapBase(this.world, this.world.mapSize);
+    try {
+      this.world = createMatch(this.camera, this.audio, this.matchSettings);
+      this.minimapBase = buildMinimapBase(this.world, this.world.mapSize);
+    } catch (err) {
+      console.error(err);
+      this.world = this.safeBackdropWorld();
+      this.minimapBase = buildMinimapBase(this.world, this.world.mapSize);
+      this.screens.showStart();
+    }
   }
 
   /** Start-screen attract mode world (not played). */
@@ -119,6 +126,17 @@ export class Game {
     const w = createMatch(this.camera, null, this.matchSettings);
     w.phase = 'start';
     return w;
+  }
+
+  /** Backdrop match for menus; falls back to default settings if spawn fails. */
+  private safeBackdropWorld(): World {
+    try {
+      return this.createBackdropWorld();
+    } catch {
+      const w = createMatch(this.camera, null, DEFAULT_MATCH_SETTINGS);
+      w.phase = 'start';
+      return w;
+    }
   }
 
   /** Regenerates the menu backdrop after settings change. */
