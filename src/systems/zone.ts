@@ -16,7 +16,14 @@ import {
 import { clamp, dist, lerp } from '../utils/math';
 import { rand, random } from '../utils/random';
 
-/** What the zone is doing right now. */
+/**
+ * What the zone is doing right now.
+ *
+ * - `wait` — safe circle is holding still; timer counts down until shrink.
+ * - `shrink` — centre and radius interpolate toward this phase's target circle.
+ * - `final` — all phases finished (`closed` from {@link updateZone}); circle no longer
+ *   moves (outside damage may still apply).
+ */
 export type ZoneState = 'wait' | 'shrink' | 'final';
 
 /** The safe circle plus the circle it is shrinking towards. */
@@ -51,7 +58,16 @@ export interface Zone {
   sr: number;
 }
 
-/** Events {@link updateZone} can report back to the caller. */
+/**
+ * Events {@link updateZone} can report back to the caller (at most one per step).
+ *
+ * - `shrinkStarted` — the wait before this phase ended; the safe circle began
+ *   shrinking toward `(tx, ty)` / `tr`.
+ * - `phaseAdvanced` — the shrink finished; `phase` incremented and a new wait
+ *   started (there are more phases). Not emitted on the last shrink.
+ * - `closed` — the last shrink finished; `state` is `final` and the zone no longer
+ *   moves.
+ */
 export type ZoneEvent = 'shrinkStarted' | 'phaseAdvanced' | 'closed';
 
 /**
