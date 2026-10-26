@@ -11,6 +11,16 @@ is **telegraphed** (system kill-feed line + centre HUD toast). Silent spawns are
 Elimination drops are unchanged except by explicit policy below: **no ammo boxes from kills when
 reserve is 0**; weapons still drop with whatever rounds remain in the magazine.
 
+Vocab:
+
+- Pulse: one run of the ammo supply logic at a specific moment.
+  - Pulse = supply tick / replenishment wave, not “amount of ammo per bullet” or “zone damage tick.”
+  - Phase pulse: after a shrink ends or when the zone fully closes.
+  - Periodic pulse: Every N seconds during a wait phase.
+- Top-up: add only what’s missing so ground ammo stays at (or moves toward) the configured minimum, not dumping a fixed extra bundle every time.
+  - Pulse = when the system runs (after shrink, on close, or on a timer).
+  - Top-up = what it does: refill the deficit to the floor, family by family.
+
 ## Player-facing behaviour
 
 | When | What happens |
@@ -153,13 +163,13 @@ the next. The whole feature can still ship in one PR if you prefer—phases 2–
 
 ### Phase 1 — Zone pulse supply
 
-- [ ] Add `config/zoneLoot.ts` (`ammoFloorForMap`, base floors, margin, placement tries).
-- [ ] Add `systems/zoneLoot.ts`: count ground ammo per family, spawn in safe disk
+- [x] Add `config/zoneLoot.ts` (`ammoFloorForMap`, base floors, margin, placement tries).
+- [x] Add `systems/zoneLoot.ts`: count ground ammo per family, spawn in safe disk
   (`circleFree`), build `LootItem` ammo boxes.
-- [ ] Telegraph when `spawned > 0`: `pushSystemFeed` + `showMessage` (v1 copy above).
-- [ ] Wire `core/simulation.ts` after `updateZone`: run supply on `phaseAdvanced` and
+- [x] Telegraph when `spawned > 0`: `pushSystemFeed` + `showMessage` (v1 copy above).
+- [x] Wire `core/simulation.ts` after `updateZone`: run supply on `phaseAdvanced` and
   `closed` only (not `shrinkStarted`).
-- [ ] Tests: `ammoFloorForMap`, placement inside zone, `phaseAdvanced` fill, telegraph
+- [x] Tests: `ammoFloorForMap`, placement inside zone, `phaseAdvanced` fill, telegraph
   on spawn vs no spawn.
 
 **Exit criteria:** After a shrink ends (or zone closes), ground ammo per family reaches
