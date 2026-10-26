@@ -24,3 +24,13 @@ function envBool(raw: string | undefined, defaultValue: boolean): boolean {
  * Set `VITE_USE_OBSTACLE_IMAGES` in `.env` (see `.env.example`).
  */
 export const USE_OBSTACLE_IMAGES = envBool(import.meta.env.VITE_USE_OBSTACLE_IMAGES, false);
+
+/**
+ * When `true`, draws gameplay collision outlines over obstacles (debug only).
+ *
+ * Set `VITE_DEBUG_OBSTACLE_COLLISION` in `.env` (see `.env.example`).
+ */
+export const DEBUG_OBSTACLE_COLLISION = envBool(
+  import.meta.env.VITE_DEBUG_OBSTACLE_COLLISION,
+  false,
+);

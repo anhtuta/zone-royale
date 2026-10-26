@@ -220,6 +220,7 @@ Use this as a default map before inventing a new folder:
 | New weapon or ammo type | `config/weapons.ts` | `systems/weapons.ts`, `render/entityRenderer.ts`, HUD labels | `weapons.test.ts`, `combat.test.ts` |
 | New loot / pickup | `entities/loot.ts` | `systems/inventory.ts`, `render/lootRenderer.ts` | `inventory.test.ts`, `loot.test.ts` |
 | New obstacle or map rule | `world/types.ts`, `world/mapgen.ts` | `systems/collision.ts` | `collision.test.ts`, `loot.test.ts` |
+| Obstacle sprites (rocks/trees) | `config/obstacleSprites.ts`, `render/*Renderer.ts` | `world/types.ts`, `mapgen.ts`, `VITE_USE_OBSTACLE_IMAGES` | see [06_OBSTACLE_SPRITES.md](06_OBSTACLE_SPRITES.md) |
 | New bot behaviour | `systems/ai.ts` | `entities/entity.ts` (`BotBrain` fields if needed) | `ai.test.ts` |
 | New visual-only effect | `entities/effects.ts` | `systems/effects.ts`, `render/*` | optional; no rule change → light test |
 | New screen or HUD widget | `ui/*` | `render/*` if canvas | `core.test.ts` if mapping logic |

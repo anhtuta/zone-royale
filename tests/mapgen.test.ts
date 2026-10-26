@@ -1,12 +1,23 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, afterEach } from 'vitest';
+import {
+  ROCK_SPRITES,
+  TREE_CANOPY_VR_MUL,
+  TREE_SPRITES,
+  treeSpriteDef,
+} from '../src/config/obstacleSprites';
+import { createSeededRandom, setRandomSource } from '../src/utils/random';
 import {
   DECOR_COUNT,
+  generateMap,
   HOUSE_COUNT,
   MAPGEN_REFERENCE_SIZE,
   mapGenCounts,
   ROCK_COUNT,
   TREE_COUNT,
 } from '../src/world/mapgen';
+import type { Obstacle } from '../src/world/types';
+
+afterEach(() => setRandomSource(Math.random));
 
 describe('mapGenCounts', () => {
   it('matches base constants at the reference map size', () => {
@@ -31,5 +42,78 @@ describe('mapGenCounts', () => {
 
   it('keeps at least one house on very small maps', () => {
     expect(mapGenCounts(1000).houses).toBeGreaterThanOrEqual(1);
+  });
+});
+
+function obstacleVariants(obstacles: readonly Obstacle[]): {
+  rocks: number[];
+  trees: number[];
+} {
+  const rocks: number[] = [];
+  const trees: number[] = [];
+  for (const o of obstacles) {
+    if (o.t === 'rock') rocks.push(o.variant);
+    else if (o.t === 'tree') trees.push(o.variant);
+  }
+  return { rocks, trees };
+}
+
+describe('generateMap', () => {
+  it('assigns in-range variants and repeats for the same seed', () => {
+    setRandomSource(createSeededRandom(4242));
+    const a = obstacleVariants(generateMap(800).obstacles);
+    setRandomSource(createSeededRandom(4242));
+    const b = obstacleVariants(generateMap(800).obstacles);
+    expect(a).toEqual(b);
+    expect(a.rocks.length).toBeGreaterThan(0);
+    expect(a.trees.length).toBeGreaterThan(0);
+    for (const v of a.rocks) {
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(ROCK_SPRITES.length);
+    }
+    for (const v of a.trees) {
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(TREE_SPRITES.length);
+    }
+  });
+
+  it('uses identical r for every rock of the same variant', () => {
+    setRandomSource(createSeededRandom(4242));
+    const rocks = generateMap(2000).obstacles.filter((o) => o.t === 'rock');
+    const byVariant = new Map<number, number>();
+    for (const rock of rocks) {
+      if (rock.t !== 'rock') continue;
+      const prev = byVariant.get(rock.variant);
+      if (prev !== undefined) expect(rock.r).toBe(prev);
+      else byVariant.set(rock.variant, rock.r);
+    }
+  });
+
+  it('uses identical r and vr for every tree of the same variant', () => {
+    setRandomSource(createSeededRandom(4242));
+    const trees = generateMap(2000).obstacles.filter((o) => o.t === 'tree');
+    const byVariant = new Map<number, { r: number; vr: number }>();
+    for (const tree of trees) {
+      if (tree.t !== 'tree') continue;
+      const prev = byVariant.get(tree.variant);
+      if (prev) {
+        expect(tree.r).toBe(prev.r);
+        expect(tree.vr).toBe(prev.vr);
+      } else {
+        byVariant.set(tree.variant, { r: tree.r, vr: tree.vr });
+      }
+    }
+  });
+
+  it('decouples tree vr from collision radius scale', () => {
+    setRandomSource(createSeededRandom(9001));
+    const trees = generateMap(1200).obstacles.filter((o) => o.t === 'tree');
+    expect(trees.length).toBeGreaterThan(0);
+    for (const tree of trees) {
+      if (tree.t !== 'tree') continue;
+      const scale = treeSpriteDef(tree.variant).collisionRadiusScale;
+      expect(tree.r / tree.vr).toBeCloseTo(scale / TREE_CANOPY_VR_MUL, 5);
+      expect(tree.vr / tree.r).not.toBeCloseTo(TREE_CANOPY_VR_MUL, 2);
+    }
   });
 });

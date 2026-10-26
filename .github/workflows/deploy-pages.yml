@@ -44,7 +44,8 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          VITE_USE_OBSTACLE_IMAGES: false
+          VITE_USE_OBSTACLE_IMAGES: true
+          VITE_DEBUG_OBSTACLE_COLLISION: false
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

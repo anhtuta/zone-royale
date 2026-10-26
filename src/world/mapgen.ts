@@ -4,10 +4,20 @@
  * @packageDocumentation
  */
 
+import {
+  ROCK_SPRITES,
+  rockCollisionRadius,
+  rockSpriteDef,
+  TREE_CANOPY_VR_MUL,
+  TREE_SPRITES,
+  treeCollisionRadius,
+  treeSpriteDef,
+} from '../config/obstacleSprites';
 import { pick, rand, randInt } from '../utils/random';
 import { circleFree, inHouse } from '../systems/collision';
+import { treeFootCollisionCenter, treeSpriteFoot } from './obstacleGeometry';
 import { buildHouseWalls, housesTooClose } from './houses';
-import type { Decor, GameMap, House, Obstacle } from './types';
+import type { Decor, GameMap, House } from './types';
 
 /** Map side length the base counts below were tuned for (medium preset). */
 export const MAPGEN_REFERENCE_SIZE = 5000;
@@ -100,33 +110,66 @@ function placeHouses(
  * @param map - Map being built.
  * @param mapSize - World side length in pixels.
  * @param count - How many to attempt.
- * @param rmin - Minimum radius.
- * @param rmax - Maximum radius.
+ * @param _rmin - Unused; per-variant size is {@link mapgenBaseR} in the catalog.
+ * @param _rmax - Unused; per-variant size is {@link mapgenBaseR} in the catalog.
  * @param kind - `'rock'` or `'tree'`.
  */
 function scatter(
   map: GameMap,
   mapSize: number,
   count: number,
-  rmin: number,
-  rmax: number,
+  _rmin: number,
+  _rmax: number,
   kind: 'rock' | 'tree',
 ): void {
+  const variantCount = kind === 'tree' ? TREE_SPRITES.length : ROCK_SPRITES.length;
   for (let i = 0; i < count; i++) {
     for (let tries = 0; tries < 40; tries++) {
-      const r = rand(rmin, rmax);
+      const variant = randInt(0, variantCount - 1);
+      const baseR =
+        kind === 'tree'
+          ? treeSpriteDef(variant).mapgenBaseR
+          : rockSpriteDef(variant).mapgenBaseR;
+      const r =
+        kind === 'tree'
+          ? treeCollisionRadius(baseR, variant)
+          : rockCollisionRadius(baseR, variant);
       const x = rand(60, mapSize - 60);
       const y = rand(60, mapSize - 60);
-      if (
-        inHouse(map.houses, x, y, r + 50) ||
-        !circleFree(map.obstacles, x, y, r + 45, mapSize)
-      )
-        continue;
-      const o: Obstacle =
-        kind === 'tree'
-          ? { t: 'tree', x, y, r, vr: r * 1.55, shade: rand(-12, 12) }
-          : { t: 'rock', x, y, r, shade: rand(-15, 15) };
-      map.obstacles.push(o);
+      if (kind === 'tree') {
+        const vr = baseR * TREE_CANOPY_VR_MUL;
+        const candidate = { t: 'tree' as const, x, y, r, vr, variant, shade: 0 };
+        const foot = treeSpriteFoot(candidate);
+        const { x: cx, y: cy } = treeFootCollisionCenter(foot.x, foot.y, r, variant);
+        if (
+          inHouse(map.houses, foot.x, foot.y, r + 50) ||
+          !circleFree(map.obstacles, cx, cy, r + 45, mapSize)
+        )
+          continue;
+        map.obstacles.push({
+          t: 'tree',
+          x,
+          y,
+          r,
+          vr,
+          variant,
+          shade: rand(-12, 12),
+        });
+      } else {
+        if (
+          inHouse(map.houses, x, y, r + 50) ||
+          !circleFree(map.obstacles, x, y, r + 45, mapSize)
+        )
+          continue;
+        map.obstacles.push({
+          t: 'rock',
+          x,
+          y,
+          r,
+          variant,
+          shade: rand(-15, 15),
+        });
+      }
       break;
     }
   }

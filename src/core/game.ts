@@ -62,6 +62,8 @@ export class Game {
   private minimapBase: HTMLCanvasElement;
   /** Map size and player count for the next / current match. */
   private matchSettings: MatchSettings;
+  /** Match settings popup. */
+  private readonly settingsModal: SettingsModal;
 
   /**
    * Creates the game, generates a backdrop match for the start screen and
@@ -79,8 +81,8 @@ export class Game {
       () => this.goHome(),
       () => this.exitSpectate(),
     );
-    const settings = new SettingsModal();
-    settings.onSettingsSaved((s) => {
+    this.settingsModal = new SettingsModal();
+    this.settingsModal.onSettingsSaved((s) => {
       this.matchSettings = s;
       this.refreshStartBlurb();
       this.refreshBackdrop();
@@ -101,8 +103,10 @@ export class Game {
 
   /** Begins a new match (PLAY / PLAY AGAIN / Enter / Space). */
   startMatch(): void {
+    if (this.settingsModal.isOpen()) return;
     this.audio.unlock();
     this.matchSettings = loadMatchSettings();
+    this.settingsModal.close();
     this.screens.hideAll();
     this.input.mouse.x = this.camera.width / 2 + 100;
     this.input.mouse.y = this.camera.height / 2;
@@ -211,6 +215,7 @@ export class Game {
       else if (k === 'q') switchSlot(p, otherSlot(p.slot));
     }
     if (
+      !this.settingsModal.isOpen() &&
       (w.phase === 'dead' || w.phase === 'won' || w.phase === 'start') &&
       (k === 'enter' || k === ' ')
     ) {

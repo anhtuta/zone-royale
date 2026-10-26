@@ -1,1 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#0d1117"/><circle cx="32" cy="32" r="22" fill="none" stroke="#ce93d8" stroke-width="5"/><circle cx="32" cy="32" r="9" fill="#42a5f5" stroke="#fff" stroke-width="3"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
+  <rect width="64" height="64" rx="12" fill="#0d1117"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- pistol, side view -->
+    <path
+      fill="#ffeb3b"
+      stroke="#f9a825"
+      stroke-width="1.5"
+      d="M18 28 L42 28 L42 34 L38 34 L38 36 L22 36 L20 34 L18 34 Z"
+    />
+    <rect x="40" y="27" width="14" height="6" rx="1" fill="#ffca28" stroke="#f9a825" stroke-width="1.5"/>
+    <rect x="52" y="26" width="4" height="8" rx="1" fill="#ffeb3b" stroke="#f9a825" stroke-width="1.5"/>
+    <path
+      fill="#ffc107"
+      stroke="#f57f17"
+      stroke-width="1.5"
+      d="M22 36 L18 48 L26 50 L30 38 Z"
+    />
+    <path
+      stroke="#f57f17"
+      stroke-width="2"
+      d="M24 37 Q27 41 30 37"
+    />
+    <rect x="26" y="25" width="5" height="4" rx="0.5" fill="#f9a825" stroke="none"/>
+  </g>
+</svg>

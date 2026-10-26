@@ -8,15 +8,17 @@
  * @packageDocumentation
  */
 
+import { DEBUG_OBSTACLE_COLLISION } from '../config/env';
 import { TAU } from '../config/constants';
 import type { Camera } from '../core/camera';
 import type { World } from '../core/world';
 import { lootName } from '../entities/loot';
-import { shade } from '../utils/color';
 import { dist2 } from '../utils/math';
 import type { House } from '../world/types';
 import { drawEntity } from './entityRenderer';
 import { drawLoot } from './lootRenderer';
+import { drawObstacleCollisionDebug } from './obstacleCollisionDebug';
+import { drawRock, rockInView } from './rockRenderer';
 import { drawTree, treeSpriteInView } from './treeRenderer';
 
 /** Options for {@link drawWorld}. */
@@ -169,25 +171,11 @@ export function drawWorld(
   for (const it of world.loot) if (cam.inView(it.x, it.y, 30)) drawLoot(ctx, it, world.gameTime);
   if (showPlayer) drawLootLabels(ctx, world);
   for (const o of world.obstacles) {
-    if (o.t !== 'rock' || !cam.inView(o.x, o.y, o.r)) continue;
-    ctx.fillStyle = 'rgba(0,0,0,.25)';
-    ctx.beginPath();
-    ctx.arc(o.x + 4, o.y + 6, o.r, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = shade('#8a8f94', o.shade);
-    ctx.strokeStyle = '#4a4f54';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, o.r, 0, TAU);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,.18)';
-    ctx.beginPath();
-    ctx.arc(o.x - o.r * 0.3, o.y - o.r * 0.3, o.r * 0.45, 0, TAU);
-    ctx.fill();
+    if (o.t !== 'rock' || !rockInView(cam, o)) continue;
+    drawRock(ctx, o);
   }
   for (const o of world.obstacles) {
-    if (o.t !== 'tree' || !cam.inView(o.x, o.y, o.vr)) continue;
+    if (o.t !== 'tree' || !treeSpriteInView(cam, o)) continue;
     drawTree(ctx, o, 'shadow');
   }
   ctx.lineCap = 'round';
@@ -215,6 +203,8 @@ export function drawWorld(
     ctx.strokeRect(o.x, o.y, o.w, o.h);
   }
   for (const o of world.obstacles) {
+    // only draws the sprite layer if the tree's art might intersect the camera.
+    // If that box doesn’t overlap the viewport, the tree is culled — drawTree is skipped.
     if (o.t !== 'tree' || !treeSpriteInView(cam, o)) continue;
     drawTree(ctx, o, 'sprite');
   }
@@ -237,4 +227,7 @@ export function drawWorld(
     ctx.fillText(f.text, f.x, f.y);
   }
   ctx.globalAlpha = 1;
+  if (DEBUG_OBSTACLE_COLLISION) {
+    drawObstacleCollisionDebug(ctx, world.obstacles, cam);
+  }
 }

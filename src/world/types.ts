@@ -22,28 +22,37 @@ export interface WallObstacle {
 export interface RockObstacle {
   /** Discriminator. */
   readonly t: 'rock';
-  /** Centre X. */
+  /** Centre X of the collision circle. */
   readonly x: number;
-  /** Centre Y. */
+  /** Centre Y of the collision circle. */
   readonly y: number;
   /** Collision radius. */
   readonly r: number;
+  /** Sprite variant index (`config/obstacleSprites.ts`), chosen once in mapgen. */
+  readonly variant: number;
   /** Per-rock brightness offset for visual variety. */
   readonly shade: number;
 }
 
+/*
+- r = how wide is the trunk for rules? It's used for movement, bullets, line-of-sight, loot clearance, minimap/debug.
+- vr = how big does this tree look on screen? It's used for drawing and culling only.
+Trees split the two because the design is a small solid trunk and a much larger canopy drawn on top of entities for cover.
+*/
 /** A tree: a small solid trunk with a larger canopy drawn above entities. */
 export interface TreeObstacle {
   /** Discriminator. */
   readonly t: 'tree';
-  /** Centre X. */
+  /** Foot X (bottom-centre of the sprite on the ground). */
   readonly x: number;
-  /** Centre Y. */
+  /** Foot Y (bottom-centre of the sprite on the ground). */
   readonly y: number;
   /** Trunk (collision) radius. */
   readonly r: number;
   /** Canopy (visual) radius. */
   readonly vr: number;
+  /** Sprite variant index (`config/obstacleSprites.ts`), chosen once in mapgen. */
+  readonly variant: number;
   /** Per-tree brightness offset for visual variety. */
   readonly shade: number;
 }

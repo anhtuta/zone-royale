@@ -6,6 +6,7 @@
 
 import {
   MAP_SIZE_OPTIONS,
+  maxPlayersForMap,
   PLAYER_COUNT_OPTIONS,
   type MatchSettings,
 } from '../config/matchSettings';
@@ -39,6 +40,7 @@ export class SettingsModal {
       o.textContent = String(n) + ' players';
       this.playersSelect.appendChild(o);
     }
+    this.mapSelect.addEventListener('change', () => this.syncPlayerOptionsForMap());
     byId<HTMLButtonElement>('settingsOpenBtn').addEventListener('click', () => this.open());
     byId<HTMLButtonElement>('settingsCancelBtn').addEventListener('click', () => this.close());
     byId<HTMLButtonElement>('settingsSaveBtn').addEventListener('click', () => this.save());
@@ -60,13 +62,44 @@ export class SettingsModal {
   open(): void {
     const s = loadMatchSettings();
     this.mapSelect.value = String(s.mapSize);
+    this.syncPlayerOptionsForMap();
     this.playersSelect.value = String(s.numPlayers);
+    if (!this.playersSelect.value) {
+      this.playersSelect.value = this.playersSelect.options[0]?.value ?? '';
+    }
     this.root.classList.remove('hidden');
+  }
+
+  /** Disables player counts that exceed spawn capacity for the selected map. */
+  private syncPlayerOptionsForMap(): void {
+    const mapSize = Number(this.mapSelect.value);
+    const cap = maxPlayersForMap(mapSize);
+    let selectedStillValid = false;
+    for (const o of this.playersSelect.options) {
+      const n = Number(o.value);
+      const ok = n <= cap;
+      o.disabled = !ok;
+      if (ok && o.value === this.playersSelect.value) selectedStillValid = true;
+    }
+    if (!selectedStillValid) {
+      for (let i = this.playersSelect.options.length - 1; i >= 0; i--) {
+        const o = this.playersSelect.options[i]!;
+        if (!o.disabled) {
+          this.playersSelect.value = o.value;
+          break;
+        }
+      }
+    }
   }
 
   /** Closes without saving. */
   close(): void {
     this.root.classList.add('hidden');
+  }
+
+  /** Whether the settings overlay is visible (blocks menu shortcuts). */
+  isOpen(): boolean {
+    return !this.root.classList.contains('hidden');
   }
 
   /** Persists the form and notifies listeners. */

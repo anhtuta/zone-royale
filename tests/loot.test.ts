@@ -44,7 +44,7 @@ describe('loot tables', () => {
   it('places paired ammo on the weapon when the offset spot is blocked', () => {
     const rolls = [0.1, 0.8, 0];
     setRandomSource(() => rolls.shift() ?? 0);
-    const obstacles = [{ t: 'rock' as const, x: 530, y: 500, r: 30, shade: 0 }];
+    const obstacles = [{ t: 'rock' as const, x: 530, y: 500, r: 30, variant: 0, shade: 0 }];
     const items = rollLoot(500, 500, obstacles, MAP_SIZE);
     expect(items[1]).toMatchObject({ kind: 'ammo', x: 500, y: 500 });
   });
