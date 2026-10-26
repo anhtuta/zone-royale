@@ -101,7 +101,7 @@ zone-royale/
 | `combat.ts`      | `splitDamage()` (armor), `applyDamage()`, `eliminate()` (placement, drops, kill feed)   |
 | `inventory.ts`   | Pickup rules: slot choice, `applyLoot()`, `playerPickup()`, `botWants()`                |
 | `lootSpawner.ts` | Loot tables and initial distribution in houses and the open                             |
-| `zoneLoot.ts`    | Safe-zone ammo supply (phase + periodic); see [07_ZONE_LOOT.md](07_ZONE_LOOT.md)         |
+| `zoneLoot.ts`    | Safe-zone ammo supply on zone pulses; see [07_ZONE_LOOT.md](07_ZONE_LOOT.md)              |
 | `zone.ts`        | `Zone` state, phase setup, shrink interpolation, dps, tick damage                       |
 | `ai.ts`          | `updateBot()` plus exported decision helpers (targeting, range keeping, safety, wander) |
 | `player.ts`      | `updatePlayer()` – applies `PlayerControls` (move, aim, fire, ammo auto-pickup)         |

@@ -4,22 +4,18 @@ Late matches can run out of ground ammunition: initial loot is finite, bots hoar
 eliminations do not create ammo boxes when the victim had **zero reserve**. Survivors may be unable
 to fight until the zone kills them.
 
-This feature **replenishes ammo only** inside the current safe circle, on a schedule tied to the
-zone and a periodic top-up during wait phases. Every replenishment pulse that actually spawns loot
-is **telegraphed** (system kill-feed line + centre HUD toast). Silent spawns are not allowed.
+This feature **replenishes ammo only** inside the current safe circle when a **zone phase pulse**
+fires (`phaseAdvanced` or `closed`). Every pulse that actually spawns loot is **telegraphed**
+(system kill-feed line + centre HUD toast). Silent spawns are not allowed.
 
 Elimination drops are unchanged except by explicit policy below: **no ammo boxes from kills when
 reserve is 0**; weapons still drop with whatever rounds remain in the magazine.
 
 Vocab:
 
-- Pulse: one run of the ammo supply logic at a specific moment.
-  - Pulse = supply tick / replenishment wave, not “amount of ammo per bullet” or “zone damage tick.”
+- **Pulse** — one run of the ammo supply logic (after a shrink ends or when the zone fully closes).
   - Phase pulse: after a shrink ends or when the zone fully closes.
-  - Periodic pulse: Every N seconds during a wait phase.
-- Top-up: add only what’s missing so ground ammo stays at (or moves toward) the configured minimum, not dumping a fixed extra bundle every time.
-  - Pulse = when the system runs (after shrink, on close, or on a timer).
-  - Top-up = what it does: refill the deficit to the floor, family by family.
+- **Top-up** — add only what’s missing so ground ammo reaches the configured **floor** per family, not a fixed extra bundle every time.
 
 ## Player-facing behaviour
 
@@ -27,7 +23,6 @@ Vocab:
 | ---- | ------------ |
 | End of a zone shrink (`phaseAdvanced`) | If any ammo family is below its minimum on the ground, spawn boxes inside the safe zone until floors are met (or placement fails). Telegraph if anything spawned. |
 | Zone fully closed (`closed`) | Same floor check once for endgame (last safe circle). Telegraph if anything spawned. |
-| During a phase **wait** (zone not shrinking) | On a fixed timer, run a smaller top-up per family if below the same floors. Telegraph if anything spawned. |
 | Start of shrink (`shrinkStarted`) | **No** supply drop (only the existing “zone is closing in” feed). |
 
 Ammo boxes use the same pickup rules as map loot (player auto-pickup for ammo, bots use
@@ -52,7 +47,7 @@ do **not** show either message.
 | Ammo boxes (`kind: 'ammo'`) for all four families in `AMMO_TYPES` | Weapons, med kits, armor |
 | Placement inside current safe circle | Drops outside the zone |
 | Scaling minimum counts by **alive players** (capped at survivor count) | Scaling by map size |
-| Periodic + phase-boundary guarantees | Drops when shrink **starts** |
+| Supply on `phaseAdvanced` and `closed` | Drops when shrink **starts**; timer-based top-up between shrinks |
 | Tests with seeded RNG | UI redesign beyond existing feed + toast |
 
 ## Minimum loot (per ammo family)
@@ -71,66 +66,46 @@ floor(t) = min(alive, max(1, round(baseFloor(t) * alive / REFERENCE_PLAYER_COUNT
 - **`baseFloor(t)`:** config constants at that reference alive count (tune in
   `config/zoneLoot.ts`).
 
-Suggested **`baseFloor`** with **50** survivors (implementation may adjust after playtesting):
+**`baseFloor`** with **50** survivors:
 
 | Family | `baseFloor` | Rationale |
 | ------ | ----------- | --------- |
-| `light` | 4 | Pistol / SMG; most common |
-| `medium` | 3 | Rifle |
-| `shells` | 2 | Shotgun |
-| `heavy` | 2 | Sniper |
+| `light` | 8 | Pistol / SMG; most common |
+| `medium` | 6 | Rifle |
+| `shells` | 4 | Shotgun |
+| `heavy` | 4 | Sniper |
 
 Each spawned box uses existing **`AMMO_AMOUNT[type]`** from `config/weapons.ts` (not a new stack
 size).
 
-### Phase pulse vs periodic top-up
+### Zone phase pulse
 
-**Phase pulse** (`phaseAdvanced`, and `closed`):
+On **`phaseAdvanced`** and **`closed`**:
 
 - For each family, `deficit = max(0, floor(t) - countOnGround(t))`.
 - Spawn up to `deficit` boxes for that family (one box per successful placement).
 
-**Periodic top-up** (only while `zone.state === 'wait'` and not `final`):
-
-- Accumulate time on the world (e.g. `world.zoneLootTimer` or dedicated field on `World`).
-- Every **`PERIODIC_SUPPLY_INTERVAL_S`** (config at reference map; suggest **90s**, not scaled by
-  map size unless playtests say otherwise), run the **same deficit fill** as above, but cap each
-  family per tick with **`PERIODIC_MAX_BOXES_PER_FAMILY`** (suggest **1**) so phase boundaries stay
-  the main catch-up and periodic only nudges stalemates.
-
-After a phase pulse, reset the periodic accumulator to **0** (optional but avoids double-pulse the
-same frame as `phaseAdvanced`).
-
 ## Placement
 
-Implement in `systems/` (extend `lootSpawner.ts` or add `zoneLoot.ts`):
+Implement in `systems/zoneLoot.ts`:
 
 1. Sample a point uniformly in the disk: centre `(zone.x, zone.y)`, radius `zone.r - margin`.
-2. **`margin`:** config constant (suggest **80px**), clamped so `zone.r > margin`.
+2. **`margin`:** `ZONE_LOOT_EDGE_MARGIN` (**80px**), clamped so `zone.r > margin`.
 3. Reuse **`circleFree(obstacles, x, y, LOOT_CLEARANCE, mapSize)`** from `systems/collision.ts`.
 4. Up to **25** tries per box; on failure skip that box (do not place inside geometry).
 
-Ammo type for a box is fixed by whichever family is being refilled (not a random `pick()`), except
-you may use the same weighted table only if you later add “random family” pulses (not in v1).
-
 ## Triggers and simulation hook
 
-Call from **`core/simulation.ts`** immediately after **`updateZone(world.zone, dt)`** (same place as
-the existing shrink-started feed):
+Call from **`core/simulation.ts`** immediately after **`updateZone(world.zone, dt)`**:
 
 ```text
 event = updateZone(...)
 if event === 'shrinkStarted' → pushSystemFeed (existing)
-else → maybeZoneAmmoSupply(world, { reason: event | 'periodic' })
+else if event === 'phaseAdvanced' | 'closed' → handleZoneAmmoSupplyEvent(world, event)
 ```
 
-**`maybeZoneAmmoSupply`** (owner: new or `lootSpawner`):
-
-1. If `reason === 'periodic'`: only proceed when `zone.state === 'wait'` and interval elapsed;
-   respect per-tick caps.
-2. If `reason === 'phaseAdvanced' | 'closed'`: full floor fill per family.
-3. If any loot was pushed to `world.loot`, call **`pushSystemFeed`** + **`showMessage`** with the
-   v1 copy above.
+**`handleZoneAmmoSupplyEvent`**: full floor fill per family; if any box spawned,
+**`pushSystemFeed`** + **`showMessage`** with the v1 copy above.
 
 Do not spawn from **`eliminate()`** for this feature.
 
@@ -144,14 +119,13 @@ Keep current behaviour in `systems/combat.ts`:
 
 ## Configuration
 
-New file **`src/config/zoneLoot.ts`** (preferred over bloating `constants.ts`):
+**`src/config/zoneLoot.ts`:**
 
 - `REFERENCE_PLAYER_COUNT`
 - `ZONE_LOOT_BASE_FLOOR: Record<AmmoType, number>`
 - `ZONE_LOOT_EDGE_MARGIN`
-- `PERIODIC_SUPPLY_INTERVAL_S`
-- `PERIODIC_MAX_BOXES_PER_FAMILY`
 - `ZONE_LOOT_PLACEMENT_TRIES`
+- `ZONE_LOOT_SUPPLY_MESSAGE`
 - Export **`ammoFloorForAlive(aliveCount, type)`** (pure)
 
 **`alive`** comes from `countAlive(world.entities)` at pulse time (shrinks as players die).
@@ -159,8 +133,7 @@ New file **`src/config/zoneLoot.ts`** (preferred over bloating `constants.ts`):
 ## Implementation phases
 
 Work through in order; each phase should pass `pnpm typecheck && pnpm test` before
-the next. The whole feature can still ship in one PR if you prefer—phases 2–3 reuse
-`fillDeficit()` and placement from phase 1.
+the next.
 
 ### Phase 1 — Zone pulse supply
 
@@ -176,39 +149,27 @@ the next. The whole feature can still ship in one PR if you prefer—phases 2–
 **Exit criteria:** After a shrink ends (or zone closes), ground ammo per family reaches
 survivor-scaled floors when placement succeeds; players see feed + toast when boxes appear.
 
-### Phase 2 — Periodic wait top-up
-
-- [ ] Add `world.zoneLootTimer` (init in `createMatch()`).
-- [ ] During `zone.state === 'wait'` (not `final`), tick timer; every
-  `PERIODIC_SUPPLY_INTERVAL_S` run deficit fill with `PERIODIC_MAX_BOXES_PER_FAMILY` cap.
-- [ ] Reset timer after a zone pulse (`phaseAdvanced` / `closed` supply run).
-- [ ] Tests: periodic only in `wait`, respects per-family cap, telegraph unchanged.
-
-**Exit criteria:** Long waits between shrinks can add ammo without waiting for the next
-`phaseAdvanced`; phase boundaries remain the main catch-up.
-
-### Phase 3 — Regression, sim smoke, tuning
+### Phase 2 — Regression, sim smoke, tuning
 
 - [ ] `combat.test.ts`: elimination with zero reserve → no ammo loot; weapon drops keep
   `mag`.
 - [ ] Headless sim: drain ground ammo, advance zone, assert new boxes exist.
-- [ ] Tune `ZONE_LOOT_BASE_FLOOR` / `PERIODIC_SUPPLY_INTERVAL_S` after playtests.
+- [ ] Tune `ZONE_LOOT_BASE_FLOOR` after playtests.
 
 **Exit criteria:** No accidental elimination ammo drip; late-match dry scenario covered by
 tests; knobs documented in this file match shipped constants.
 
-## Code map (planned)
+## Code map
 
 | Area | Responsibility |
 | ---- | -------------- |
-| `config/zoneLoot.ts` | Floors, intervals, margins; map scaling helper |
-| `systems/zoneLoot.ts` (or `lootSpawner.ts`) | Count ground ammo, spawn in zone, telegraph |
-| `core/world.ts` | Optional: `zoneLootTimer` (seconds since last periodic tick) |
-| `core/simulation.ts` | Wire zone events + periodic step |
+| `config/zoneLoot.ts` | Floors, margins, message copy; `ammoFloorForAlive` |
+| `systems/zoneLoot.ts` | Count ground ammo, spawn in zone, telegraph |
+| `core/simulation.ts` | Call supply on `phaseAdvanced` / `closed` |
 | `systems/combat.ts` | No change except regression tests for elimination drops |
 | `systems/feedback.ts` | Reuse `pushSystemFeed` + `showMessage` |
 
-## Tests (planned)
+## Tests
 
 | Test | Assert |
 | ---- | ------ |
@@ -216,14 +177,13 @@ tests; knobs documented in this file match shipped constants.
 | Placement | Seeded positions inside `zone.r - margin`; `circleFree` |
 | `phaseAdvanced` | Ground counts per family ≥ floor when obstacles sparse |
 | Telegraph | Spawning calls feed + message; zero spawn does not |
-| Periodic | Only in `wait`; respects cap per family |
 | `combat.test.ts` | Elimination with zero reserve → no ammo loot; weapon mag unchanged |
 
 Headless sim smoke: drain ammo, advance zone to `phaseAdvanced`, assert new ammo exists.
 
 ## Tuning notes
 
-- If large lobbies feel flooded, lower `baseFloor` or raise `PERIODIC_SUPPLY_INTERVAL_S`.
+- If large lobbies feel flooded, lower `ZONE_LOOT_BASE_FLOOR`.
 - With few survivors, `min(alive, …)` keeps floors from exceeding living players; `max(1, …)` still
   guarantees at least one box per family when below floor and `alive ≥ 1`.
 - Bot cap (`BOT_AMMO_CAP`) can still pull ammo off the ground; floors measure **ground** only, which
@@ -233,4 +193,4 @@ Headless sim smoke: drain ammo, advance zone to `phaseAdvanced`, assert new ammo
 
 - Zone phases and events: `src/systems/zone.ts`, `src/config/zone.ts`
 - Initial loot: `src/systems/lootSpawner.ts`
-- Match map size: [05_MATCH_SETTINGS.md](05_MATCH_SETTINGS.md)
+- Match settings: [05_MATCH_SETTINGS.md](05_MATCH_SETTINGS.md)
