@@ -89,10 +89,13 @@ On **`phaseAdvanced`** and **`closed`**:
 
 Implement in `systems/zoneLoot.ts`:
 
-1. Sample a point uniformly in the disk: centre `(zone.x, zone.y)`, radius `zone.r - margin`.
-2. **`margin`:** `ZONE_LOOT_EDGE_MARGIN` (**80px**), clamped so `zone.r > margin`.
-3. Reuse **`circleFree(obstacles, x, y, LOOT_CLEARANCE, mapSize)`** from `systems/collision.ts`.
-4. Up to **25** tries per box; on failure skip that box (do not place inside geometry).
+1. Sample a point uniformly in the disk: centre `(zone.x, zone.y)`, radius `placementR - margin`.
+2. **`placementR`:** current `zone.r` for `phaseAdvanced`; for **`closed`**, the last
+   positive phase end radius from the schedule (`zoneLootClosedPlacementRadius`) because
+   `zone.r` is **0** when the pulse runs.
+3. **`margin`:** `ZONE_LOOT_EDGE_MARGIN` (**80px**); sampling needs `placementR > margin`.
+4. Reuse **`circleFree(obstacles, x, y, LOOT_CLEARANCE, mapSize)`** from `systems/collision.ts`.
+5. Up to **25** tries per box; on failure skip that box (do not place inside geometry).
 
 ## Triggers and simulation hook
 
@@ -124,6 +127,7 @@ Keep current behaviour in `systems/combat.ts`:
 - `REFERENCE_PLAYER_COUNT`
 - `ZONE_LOOT_BASE_FLOOR: Record<AmmoType, number>`
 - `ZONE_LOOT_EDGE_MARGIN`
+- `zoneLootClosedPlacementRadius` (endgame disk when `zone.r === 0`)
 - `ZONE_LOOT_PLACEMENT_TRIES`
 - `ZONE_LOOT_SUPPLY_MESSAGE`
 - Export **`ammoFloorForAlive(aliveCount, type)`** (pure)
