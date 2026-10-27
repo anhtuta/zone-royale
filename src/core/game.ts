@@ -84,6 +84,7 @@ export class Game {
     this.settingsModal = new SettingsModal();
     this.settingsModal.onSettingsSaved((s) => {
       this.matchSettings = s;
+      this.screens.setStartError(null);
       this.refreshStartBlurb();
       this.refreshBackdrop();
     });
@@ -113,10 +114,13 @@ export class Game {
     try {
       this.world = createMatch(this.camera, this.audio, this.matchSettings);
       this.minimapBase = buildMinimapBase(this.world, this.world.mapSize);
+      this.screens.setStartError(null);
     } catch (err) {
       console.error(err);
-      this.world = this.safeBackdropWorld();
+      const { world, recoveredWithDefaults } = this.safeBackdropWorld();
+      this.world = world;
       this.minimapBase = buildMinimapBase(this.world, this.world.mapSize);
+      this.screens.setStartError(matchStartFailureMessage(recoveredWithDefaults));
       this.screens.showStart();
     }
   }
@@ -129,13 +133,13 @@ export class Game {
   }
 
   /** Backdrop match for menus; falls back to default settings if spawn fails. */
-  private safeBackdropWorld(): World {
+  private safeBackdropWorld(): { world: World; recoveredWithDefaults: boolean } {
     try {
-      return this.createBackdropWorld();
+      return { world: this.createBackdropWorld(), recoveredWithDefaults: false };
     } catch {
       const w = createMatch(this.camera, null, DEFAULT_MATCH_SETTINGS);
       w.phase = 'start';
-      return w;
+      return { world: w, recoveredWithDefaults: true };
     }
   }
 
@@ -274,4 +278,19 @@ export class Game {
       update: (dt: number) => game.update(dt),
     };
   }
+}
+
+/** Start-screen copy when {@link Game.startMatch} cannot create a world. */
+function matchStartFailureMessage(recoveredWithDefaults: boolean): string {
+  if (recoveredWithDefaults) {
+    return (
+      'Could not start a match with your current settings. ' +
+      'The menu is using the default map and player count. ' +
+      'Open Settings and try a smaller lobby or a larger map.'
+    );
+  }
+  return (
+    'Could not start a match. Press Play to try again, or open Settings ' +
+    'for a smaller player count or larger map.'
+  );
 }
