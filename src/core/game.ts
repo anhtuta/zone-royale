@@ -103,7 +103,7 @@ export class Game {
 
   /** Starts the animation loop. */
   run(): void {
-    startLoop((dt, now) => this.frame(dt, now));
+    startLoop((dt, frameInterval, now) => this.frame(dt, frameInterval, now));
   }
 
   /** Begins a new match (PLAY / PLAY AGAIN / Enter / Space). */
@@ -181,11 +181,12 @@ export class Game {
   /**
    * One animation frame: simulate while playing, then render.
    *
-   * @param dt - Step in seconds.
+   * @param dt - Simulation step in seconds (capped).
+   * @param frameInterval - Uncapped seconds since the previous frame (for FPS).
    * @param now - Frame timestamp in ms.
    */
-  private frame(dt: number, now: number): void {
-    this.smoothedFps = nextSmoothedFps(this.smoothedFps, dt);
+  private frame(dt: number, frameInterval: number, now: number): void {
+    this.smoothedFps = nextSmoothedFps(this.smoothedFps, frameInterval);
     if (this.world.phase === 'playing') {
       this.update(dt);
       this.syncSpectateUi();

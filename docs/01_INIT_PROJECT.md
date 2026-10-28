@@ -276,7 +276,7 @@ sequenceDiagram
   participant G as Game
   participant S as stepWorld()
   participant R as renderer
-  RAF->>G: frame(dt ≤ 0.05 s)
+  RAF->>G: frame(dt ≤ 0.05 s, frameInterval uncapped)
   alt phase == playing
     G->>G: input.controls(camera)
     G->>S: stepWorld(world, controls, dt)

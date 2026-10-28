@@ -11,7 +11,7 @@ export const FPS_SMOOTHING = 0.9;
  * Exponential moving average of frames per second.
  *
  * @param prev - Previous smoothed value.
- * @param dt - Frame step in seconds.
+ * @param dt - Frame step in seconds (use the uncapped rAF interval, not simulation `dt`).
  * @returns Updated FPS estimate.
  */
 export function nextSmoothedFps(prev: number, dt: number): number {

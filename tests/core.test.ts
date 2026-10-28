@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MAX_FRAME_DT, PLAYER_SPEED } from '../src/config/constants';
 import { Camera } from '../src/core/camera';
 import { readControls } from '../src/core/input';
-import { frameDelta } from '../src/core/loop';
+import { frameDelta, rawFrameDelta } from '../src/core/loop';
 import { IDLE_CONTROLS, playerVelocity, updatePlayer } from '../src/systems/player';
 import { soundVolume } from '../src/systems/sound';
 import { formatKillFeed } from '../src/ui/killFeed';
@@ -54,6 +54,7 @@ describe('input and loop', () => {
   it('frameDelta is clamped to avoid huge steps', () => {
     expect(frameDelta(1016, 1000)).toBeCloseTo(0.016);
     expect(frameDelta(5000, 1000)).toBe(MAX_FRAME_DT);
+    expect(rawFrameDelta(5000, 1000)).toBe(4);
   });
 });
 
@@ -109,6 +110,9 @@ describe('frame stats', () => {
     expect(at60).toBeLessThan(61);
     const faster = nextSmoothedFps(60, 1 / 120);
     expect(faster).toBeGreaterThan(60);
+    const at10 = nextSmoothedFps(60, 0.1);
+    expect(at10).toBeLessThan(60);
+    expect(at10).toBeGreaterThan(9);
   });
 });
 
