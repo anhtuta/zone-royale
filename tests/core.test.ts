@@ -7,6 +7,7 @@ import { IDLE_CONTROLS, playerVelocity, updatePlayer } from '../src/systems/play
 import { soundVolume } from '../src/systems/sound';
 import { formatKillFeed } from '../src/ui/killFeed';
 import { zonePhaseText, zoneStatusText } from '../src/ui/hud';
+import { nextSmoothedFps } from '../src/utils/frameStats';
 import { makeWorld } from './helpers';
 
 describe('camera', () => {
@@ -98,6 +99,16 @@ describe('sound attenuation', () => {
     expect(soundVolume(0)).toBeCloseTo(1);
     expect(soundVolume(600)).toBeLessThan(soundVolume(100));
     expect(soundVolume(1300)).toBe(0);
+  });
+});
+
+describe('frame stats', () => {
+  it('smooths FPS from frame delta', () => {
+    const at60 = nextSmoothedFps(60, 1 / 60);
+    expect(at60).toBeGreaterThan(59);
+    expect(at60).toBeLessThan(61);
+    const faster = nextSmoothedFps(60, 1 / 120);
+    expect(faster).toBeGreaterThan(60);
   });
 });
 

@@ -77,7 +77,7 @@ zone-royale/
 | `world.ts`      | The `World` interface: all mutable match state in one object; `SoundSink` abstraction    |
 | `simulation.ts` | `stepWorld()` – runs every system in a fixed order for one step (no DOM)                 |
 | `game.ts`       | `Game` class – owns the world, input, audio, screens; state transitions; `window.__game` |
-| `loop.ts`       | `requestAnimationFrame` loop with a clamped delta (max 50 ms)                            |
+| `loop.ts`       | `requestAnimationFrame` loop with a clamped delta (max 50 ms); see [08_HUD_FRAME_STATS.md](08_HUD_FRAME_STATS.md) for FPS |
 | `input.ts`      | Keyboard/mouse tracking and `readControls()` → `PlayerControls`                          |
 | `camera.ts`     | `Camera` – follow, culling (`inView`), screen↔world conversion                           |
 | `canvas.ts`     | `Viewport` – full-window, high-DPI canvas sizing                                         |
@@ -118,7 +118,8 @@ zone-royale/
 `worldRenderer.ts` (layered world drawing), `entityRenderer.ts`, `lootRenderer.ts`, `draw.ts`
 (rounded rects, panels, colors).
 
-**`src/ui`** – `hud.ts` (counters, zone banner, vitals, weapon slots, prompts, vignettes, crosshair),
+**`src/ui`** – `hud.ts` (counters, zone banner, vitals, weapon slots, prompts, vignettes, crosshair,
+FPS and match time — see [08_HUD_FRAME_STATS.md](08_HUD_FRAME_STATS.md)),
 `minimap.ts`, `killFeed.ts`, `screens.ts` (HTML start/end overlays).
 
 **`src/utils`** – `math.ts` (clamp, lerp, distances, angle wrap, time format), `random.ts`
@@ -225,7 +226,7 @@ Use this as a default map before inventing a new folder:
 | Obstacle sprites (rocks/trees) | `config/obstacleSprites.ts`, `render/*Renderer.ts` | `world/types.ts`, `mapgen.ts`, `VITE_USE_OBSTACLE_IMAGES` | see [06_OBSTACLE_SPRITES.md](06_OBSTACLE_SPRITES.md) |
 | New bot behaviour | `systems/ai.ts` | `entities/entity.ts` (`BotBrain` fields if needed) | `ai.test.ts` |
 | New visual-only effect | `entities/effects.ts` | `systems/effects.ts`, `render/*` | optional; no rule change → light test |
-| New screen or HUD widget | `ui/*` | `render/*` if canvas | `core.test.ts` if mapping logic |
+| New screen or HUD widget | `ui/*` | `render/*` if canvas | `core.test.ts` if mapping logic; FPS/time: [08_HUD_FRAME_STATS.md](08_HUD_FRAME_STATS.md) |
 | New match rule (modes, respawn) | `systems/match.ts` | `core/game.ts` phase wiring, `ui/screens.ts` | `match.test.ts` |
 
 If a feature does not fit the table, **add a short subsection here or a new `docs/NN_TOPIC.md`**

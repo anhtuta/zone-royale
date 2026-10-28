@@ -20,6 +20,8 @@ import { AudioEngine } from './audio';
 import { Camera } from './camera';
 import { Viewport } from './canvas';
 import { Input } from './input';
+import type { FrameOverlayStats } from '../ui/hud';
+import { nextSmoothedFps } from '../utils/frameStats';
 import { startLoop } from './loop';
 import { stepWorld } from './simulation';
 import type { World } from './world';
@@ -64,6 +66,8 @@ export class Game {
   private matchSettings: MatchSettings;
   /** Match settings popup. */
   private readonly settingsModal: SettingsModal;
+  /** Smoothed FPS for the HUD overlay. */
+  private smoothedFps = 60;
 
   /**
    * Creates the game, generates a backdrop match for the start screen and
@@ -181,14 +185,19 @@ export class Game {
    * @param now - Frame timestamp in ms.
    */
   private frame(dt: number, now: number): void {
+    this.smoothedFps = nextSmoothedFps(this.smoothedFps, dt);
     if (this.world.phase === 'playing') {
       this.update(dt);
       this.syncSpectateUi();
     } else {
       this.screens.hideSpectateBar();
     }
-    if (this.world.phase === 'start') renderAttract(this.viewport, this.world, now);
-    else renderGame(this.viewport, this.world, this.minimapBase, this.input.mouse);
+    const frameStats: FrameOverlayStats = {
+      fps: this.smoothedFps,
+      ...(this.world.phase !== 'start' ? { matchSec: this.world.gameTime } : {}),
+    };
+    if (this.world.phase === 'start') renderAttract(this.viewport, this.world, now, frameStats);
+    else renderGame(this.viewport, this.world, this.minimapBase, this.input.mouse, frameStats);
     this.input.endFrame();
   }
 
