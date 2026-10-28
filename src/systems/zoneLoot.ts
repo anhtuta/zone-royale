@@ -8,7 +8,6 @@ import { LOOT_CLEARANCE, TAU } from '../config/constants';
 import { AMMO_AMOUNT, AMMO_TYPES, type AmmoType } from '../config/weapons';
 import {
   ammoFloorForAlive,
-  ZONE_LOOT_EDGE_MARGIN,
   ZONE_LOOT_PLACEMENT_TRIES,
   ZONE_LOOT_SUPPLY_MESSAGE,
   zoneLootClosedPlacementRadius,
@@ -23,19 +22,16 @@ import { pushSystemFeed, showMessage } from './feedback';
 import type { Zone, ZoneEvent } from './zone';
 
 /**
- * Usable sampling radius for a supply pulse (inset from the placement circle).
+ * Sampling radius for a supply pulse (full safe circle, no minimum size).
  *
  * @param zone - Current safe zone.
  * @param event - Zone pulse; `closed` uses the endgame disk at `zone.r === 0`.
  */
 export function zoneLootUsableRadius(zone: Zone, event?: ZoneEvent): number {
-  const margin = ZONE_LOOT_EDGE_MARGIN;
-  const placementR =
-    event === 'closed'
-      ? zoneLootClosedPlacementRadius(zone.phases.map((p) => p.r))
-      : zone.r;
-  const usable = placementR - margin;
-  return usable > 0 ? usable : 0;
+  if (event === 'closed') {
+    return zoneLootClosedPlacementRadius(zone.phases.map((p) => p.r));
+  }
+  return Math.max(0, zone.r);
 }
 
 /**
@@ -131,6 +127,7 @@ export function handleZoneAmmoSupplyEvent(world: World, event: ZoneEvent): void 
   if (event !== 'phaseAdvanced' && event !== 'closed') return;
   const spawned = fillZoneAmmoToFloors(world, { zoneEvent: event });
   if (spawned <= 0) return;
+  console.log('Ammo supply spawned', spawned);
   pushSystemFeed(world, ZONE_LOOT_SUPPLY_MESSAGE);
   showMessage(world, ZONE_LOOT_SUPPLY_MESSAGE);
 }

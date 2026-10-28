@@ -3,7 +3,6 @@ import {
   ammoFloorForAlive,
   REFERENCE_PLAYER_COUNT,
   ZONE_LOOT_BASE_FLOOR,
-  ZONE_LOOT_EDGE_MARGIN,
   ZONE_LOOT_SUPPLY_MESSAGE,
   zoneLootClosedPlacementRadius,
 } from '../src/config/zoneLoot';
@@ -61,6 +60,13 @@ describe('zone ammo placement', () => {
     const box = world.loot[0]!;
     expect(box.kind).toBe('ammo');
     expect(isInsideZoneLootDisk(world, box.x, box.y)).toBe(true);
+  });
+
+  it('places boxes when the safe zone is smaller than the old edge margin', () => {
+    const world = makeWorld({ loot: [] });
+    world.zone.r = 40;
+    expect(zoneLootUsableRadius(world.zone, 'phaseAdvanced')).toBe(40);
+    expect(trySpawnAmmoInZone(world, 'light', 'phaseAdvanced')).toBe(true);
   });
 
   it('fills each family up to the survivor-scaled floor', () => {
@@ -128,12 +134,12 @@ describe('zoneLootClosedPlacementRadius', () => {
     expect(zoneLootClosedPlacementRadius([0, 0])).toBe(0);
   });
 
-  it('matches endgame usable disk inset', () => {
+  it('matches endgame placement disk at full radius', () => {
     const zone = createZone(DEFAULT_MATCH_SETTINGS.mapSize);
     zone.state = 'final';
     zone.r = 0;
     const endR = zoneLootClosedPlacementRadius(zone.phases.map((p) => p.r));
-    expect(zoneLootUsableRadius(zone, 'closed')).toBe(endR - ZONE_LOOT_EDGE_MARGIN);
+    expect(zoneLootUsableRadius(zone, 'closed')).toBe(endR);
   });
 });
 

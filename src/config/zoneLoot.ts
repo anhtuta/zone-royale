@@ -18,9 +18,6 @@ export const ZONE_LOOT_BASE_FLOOR: Readonly<Record<AmmoType, number>> = {
   heavy: 4,
 };
 
-/** Inset from the safe-zone edge when sampling supply drop positions. */
-export const ZONE_LOOT_EDGE_MARGIN = 80;
-
 /**
  * When the zone closes (`zone.r === 0`), supply uses the last positive end radius
  * from the phase table (the final playable safe circle before collapse).

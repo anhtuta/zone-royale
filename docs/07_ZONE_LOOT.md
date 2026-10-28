@@ -57,7 +57,7 @@ Count only items on the ground: `world.loot` where `kind === 'ammo'`, grouped by
 
 For each family `t`:
 
-```text
+```js
 floor(t) = min(alive, max(1, round(baseFloor(t) * alive / REFERENCE_PLAYER_COUNT)))
 ```
 
@@ -89,19 +89,19 @@ On **`phaseAdvanced`** and **`closed`**:
 
 Implement in `systems/zoneLoot.ts`:
 
-1. Sample a point uniformly in the disk: centre `(zone.x, zone.y)`, radius `placementR - margin`.
+1. Sample a point uniformly in the disk: centre `(zone.x, zone.y)`, radius **`placementR`**
+   (full safe circle, including tiny late-game radii).
 2. **`placementR`:** current `zone.r` for `phaseAdvanced`; for **`closed`**, the last
    positive phase end radius from the schedule (`zoneLootClosedPlacementRadius`) because
    `zone.r` is **0** when the pulse runs.
-3. **`margin`:** `ZONE_LOOT_EDGE_MARGIN` (**80px**); sampling needs `placementR > margin`.
-4. Reuse **`circleFree(obstacles, x, y, LOOT_CLEARANCE, mapSize)`** from `systems/collision.ts`.
-5. Up to **25** tries per box; on failure skip that box (do not place inside geometry).
+3. Reuse **`circleFree(obstacles, x, y, LOOT_CLEARANCE, mapSize)`** from `systems/collision.ts`.
+4. Up to **25** tries per box; on failure skip that box (do not place inside geometry).
 
 ## Triggers and simulation hook
 
 Call from **`core/simulation.ts`** immediately after **`updateZone(world.zone, dt)`**:
 
-```text
+```js
 event = updateZone(...)
 if event === 'shrinkStarted' → pushSystemFeed (existing)
 else if event === 'phaseAdvanced' | 'closed' → handleZoneAmmoSupplyEvent(world, event)
@@ -120,20 +120,6 @@ Keep current behaviour in `systems/combat.ts`:
 - Drop **ammo boxes** only when `e.ammo[t] > 0`.
 - **No** “drip” or bonus ammo on kill when reserve is zero.
 
-## Configuration
-
-**`src/config/zoneLoot.ts`:**
-
-- `REFERENCE_PLAYER_COUNT`
-- `ZONE_LOOT_BASE_FLOOR: Record<AmmoType, number>`
-- `ZONE_LOOT_EDGE_MARGIN`
-- `zoneLootClosedPlacementRadius` (endgame disk when `zone.r === 0`)
-- `ZONE_LOOT_PLACEMENT_TRIES`
-- `ZONE_LOOT_SUPPLY_MESSAGE`
-- Export **`ammoFloorForAlive(aliveCount, type)`** (pure)
-
-**`alive`** comes from `countAlive(world.entities)` at pulse time (shrinks as players die).
-
 ## Implementation phases
 
 Work through in order; each phase should pass `pnpm typecheck && pnpm test` before
@@ -141,7 +127,7 @@ the next.
 
 ### Phase 1 — Zone pulse supply
 
-- [x] Add `config/zoneLoot.ts` (`ammoFloorForAlive`, base floors, margin, placement tries).
+- [x] Add `config/zoneLoot.ts` (`ammoFloorForAlive`, base floors, placement tries).
 - [x] Add `systems/zoneLoot.ts`: count ground ammo per family, spawn in safe disk
   (`circleFree`), build `LootItem` ammo boxes.
 - [x] Telegraph when `spawned > 0`: `pushSystemFeed` + `showMessage` (v1 copy above).
@@ -162,28 +148,6 @@ survivor-scaled floors when placement succeeds; players see feed + toast when bo
 
 **Exit criteria:** No accidental elimination ammo drip; late-match dry scenario covered by
 tests; knobs documented in this file match shipped constants.
-
-## Code map
-
-| Area | Responsibility |
-| ---- | -------------- |
-| `config/zoneLoot.ts` | Floors, margins, message copy; `ammoFloorForAlive` |
-| `systems/zoneLoot.ts` | Count ground ammo, spawn in zone, telegraph |
-| `core/simulation.ts` | Call supply on `phaseAdvanced` / `closed` |
-| `systems/combat.ts` | No change except regression tests for elimination drops |
-| `systems/feedback.ts` | Reuse `pushSystemFeed` + `showMessage` |
-
-## Tests
-
-| Test | Assert |
-| ---- | ------ |
-| `ammoFloorForAlive` | Scales with survivors; capped at `alive`; minimum 1 per family |
-| Placement | Seeded positions inside `zone.r - margin`; `circleFree` |
-| `phaseAdvanced` | Ground counts per family ≥ floor when obstacles sparse |
-| Telegraph | Spawning calls feed + message; zero spawn does not |
-| `combat.test.ts` | Elimination with zero reserve → no ammo loot; weapon mag unchanged |
-
-Headless sim smoke: drain ammo, advance zone to `phaseAdvanced`, assert new ammo exists.
 
 ## Tuning notes
 
