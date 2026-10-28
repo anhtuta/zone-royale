@@ -101,6 +101,7 @@ zone-royale/
 | `combat.ts`      | `splitDamage()` (armor), `applyDamage()`, `eliminate()` (placement, drops, kill feed)   |
 | `inventory.ts`   | Pickup rules: slot choice, `applyLoot()`, `playerPickup()`, `botWants()`                |
 | `lootSpawner.ts` | Loot tables and initial distribution in houses and the open                             |
+| `zoneLoot.ts`    | Safe-zone ammo supply on zone pulses; see [07_ZONE_LOOT.md](07_ZONE_LOOT.md)              |
 | `zone.ts`        | `Zone` state, phase setup, shrink interpolation, dps, tick damage                       |
 | `ai.ts`          | `updateBot()` plus exported decision helpers (targeting, range keeping, safety, wander) |
 | `player.ts`      | `updatePlayer()` – applies `PlayerControls` (move, aim, fire, ammo auto-pickup)         |
@@ -219,6 +220,7 @@ Use this as a default map before inventing a new folder:
 | Tuning (damage, speed, zone phases) | `config/*` | system that reads it | extend existing `*.test.ts` |
 | New weapon or ammo type | `config/weapons.ts` | `systems/weapons.ts`, `render/entityRenderer.ts`, HUD labels | `weapons.test.ts`, `combat.test.ts` |
 | New loot / pickup | `entities/loot.ts` | `systems/inventory.ts`, `render/lootRenderer.ts` | `inventory.test.ts`, `loot.test.ts` |
+| Zone ammo supply | [07_ZONE_LOOT.md](07_ZONE_LOOT.md), `config/zoneLoot.ts` | `systems/zoneLoot.ts`, `core/simulation.ts` | `zoneLoot.test.ts` |
 | New obstacle or map rule | `world/types.ts`, `world/mapgen.ts` | `systems/collision.ts` | `collision.test.ts`, `loot.test.ts` |
 | Obstacle sprites (rocks/trees) | `config/obstacleSprites.ts`, `render/*Renderer.ts` | `world/types.ts`, `mapgen.ts`, `VITE_USE_OBSTACLE_IMAGES` | see [06_OBSTACLE_SPRITES.md](06_OBSTACLE_SPRITES.md) |
 | New bot behaviour | `systems/ai.ts` | `entities/entity.ts` (`BotBrain` fields if needed) | `ai.test.ts` |

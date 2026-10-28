@@ -34,6 +34,15 @@ export const BOT_SPAWN_SPACING = 420;
 /** Spawn clearance radius checked against obstacles and houses. */
 const SPAWN_CLEARANCE = 30;
 
+/** Random samples per attempt to find a spawn point. */
+const SPAWN_FIND_TRIES = 5000;
+
+/** Sample batches at a given separation before lowering spacing. */
+const SPAWN_FIND_ROUNDS = 6;
+
+/** Separation multiplier when sample batches fail (never below body separation). */
+const SPAWN_SEP_BACKOFF = 0.85;
+
 /**
  * Bot spawn spacing for a map and headcount: prefers {@link BOT_SPAWN_SPACING}
  * but shrinks on small or crowded maps so placement can succeed.
@@ -59,7 +68,7 @@ export type MatchOutcome = 'won' | 'dead';
  * @param houses - House footprints.
  * @param entities - Already spawned entities.
  * @param minDist - Required spacing from other entities.
- * @returns A free spawn point.
+ * @returns A free spawn point, or `null` if sampling exhausts.
  */
 export function findSpawnPoint(
   obstacles: readonly Obstacle[],
@@ -67,10 +76,10 @@ export function findSpawnPoint(
   entities: readonly Entity[],
   minDist: number,
   mapSize: number,
-): { x: number; y: number } {
+): { x: number; y: number } | null {
   const sep = Math.max(minDist, minBodySpawnSeparation());
   const margin = SPAWN_EDGE_MARGIN;
-  for (let tries = 0; tries < 5000; tries++) {
+  for (let tries = 0; tries < SPAWN_FIND_TRIES; tries++) {
     const x = rand(margin, mapSize - margin);
     const y = rand(margin, mapSize - margin);
     if (inHouse(houses, x, y, SPAWN_CLEARANCE) || !circleFree(obstacles, x, y, SPAWN_CLEARANCE, mapSize))
@@ -78,9 +87,34 @@ export function findSpawnPoint(
     if (entities.some((e) => dist2(e.x, e.y, x, y) < sep * sep)) continue;
     return { x, y };
   }
-  throw new Error(
-    'findSpawnPoint: no spawn with separation ' + sep + ' on map ' + mapSize,
-  );
+  return null;
+}
+
+/**
+ * Places one combatant: retries sampling, then lowers spacing down to body
+ * separation so crowded maps can still start.
+ */
+function spawnCombatant(
+  obstacles: readonly Obstacle[],
+  houses: readonly House[],
+  entities: readonly Entity[],
+  preferredMinDist: number,
+  mapSize: number,
+): { x: number; y: number } {
+  const floor = minBodySpawnSeparation();
+  let sep = Math.max(preferredMinDist, floor);
+  while (true) {
+    for (let round = 0; round < SPAWN_FIND_ROUNDS; round++) {
+      const p = findSpawnPoint(obstacles, houses, entities, sep, mapSize);
+      if (p) return p;
+    }
+    if (sep <= floor) {
+      throw new Error(
+        'spawnCombatant: no spawn with separation ' + floor + ' on map ' + mapSize,
+      );
+    }
+    sep = Math.max(floor, sep * SPAWN_SEP_BACKOFF);
+  }
 }
 
 /**
@@ -104,12 +138,12 @@ export function createMatch(
   const map = generateMap(mapSize);
   const loot = spawnInitialLoot(map.houses, map.obstacles, mapSize);
   const entities: Entity[] = [];
-  let p = findSpawnPoint(map.obstacles, map.houses, entities, 0, mapSize);
+  let p = spawnCombatant(map.obstacles, map.houses, entities, 0, mapSize);
   const player = createEntity(true, 'You', PLAYER_COLOR, p.x, p.y);
   entities.push(player);
   const names = shuffled(BOT_NAMES);
   for (let i = 0; i < botCount; i++) {
-    p = findSpawnPoint(map.obstacles, map.houses, entities, botSpacing, mapSize);
+    p = spawnCombatant(map.obstacles, map.houses, entities, botSpacing, mapSize);
     entities.push(
       createEntity(
         false,

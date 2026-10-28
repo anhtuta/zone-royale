@@ -1,0 +1,10 @@
+---
+description: Ask clarifying questions before planning or coding
+alwaysApply: true
+---
+
+# Clarify first
+
+Before planning or implementing, ask **open questions** about goals, constraints, and tradeoffs when anything is ambiguous or underspecified.
+
+Skip only when the request is fully clear (scope, acceptance criteria, and affected areas are obvious from context).

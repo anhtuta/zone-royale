@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { MAX_HP } from '../src/config/constants';
 import { applyDamage, countAlive, eliminate, splitDamage } from '../src/systems/combat';
 import { pushSystemFeed } from '../src/systems/feedback';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
@@ -29,7 +30,7 @@ describe('applyDamage', () => {
     w.entities.push(b);
     b.armor = 50;
     applyDamage(w, b, 20, w.player, 'Pistol');
-    expect(b.hp).toBe(92);
+    expect(b.hp).toBe(MAX_HP - 8);
     expect(b.armor).toBe(38);
     expect(w.player.damage).toBe(8);
     expect(w.floaters[0]?.text).toBe('8');
@@ -51,8 +52,9 @@ describe('applyDamage', () => {
     const w = makeWorld();
     const b = bot(1600, 1500);
     b.alive = false;
+    const hpBefore = b.hp;
     applyDamage(w, b, 50, w.player, 'Pistol');
-    expect(b.hp).toBe(100);
+    expect(b.hp).toBe(hpBefore);
   });
 });
 
@@ -63,7 +65,7 @@ describe('eliminations', () => {
     const b = bot(1700, 1500, 'B');
     w.entities.push(a, b);
     w.gameTime = 42;
-    applyDamage(w, a, 200, w.player, 'Sniper');
+    applyDamage(w, a, MAX_HP, w.player, 'Sniper');
     expect(a.alive).toBe(false);
     expect(a.hp).toBe(0);
     expect(a.place).toBe(3);
@@ -94,11 +96,28 @@ describe('eliminations', () => {
     expect(w.loot.filter((l) => l.kind === 'ammo')).toHaveLength(2);
   });
 
+  it('drops weapons with mag ammo but no ammo boxes when reserve is zero', () => {
+    const w = makeWorld();
+    const a = bot(1600, 1500);
+    w.entities.push(a);
+    a.weapons[0] = { type: 'pistol', mag: 5 };
+    a.weapons[1] = null;
+    a.ammo.light = 0;
+    a.ammo.shells = 0;
+    a.ammo.medium = 0;
+    a.ammo.heavy = 0;
+    eliminate(w, a, w.player, 'Pistol');
+    expect(w.loot.filter((l) => l.kind === 'ammo')).toHaveLength(0);
+    expect(w.loot.find((l) => l.kind === 'weapon' && l.type === 'pistol')).toMatchObject({
+      mag: 5,
+    });
+  });
+
   it('zone kills are reported without a killer', () => {
     const w = makeWorld();
     const a = bot(1600, 1500, 'Zed');
     w.entities.push(a);
-    applyDamage(w, a, 150, null, null);
+    applyDamage(w, a, MAX_HP, null, null);
     expect(w.killfeed.at(-1)).toMatchObject({ killer: null, victim: 'Zed' });
   });
 
