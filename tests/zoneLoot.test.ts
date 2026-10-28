@@ -3,9 +3,12 @@ import {
   ammoFloorForAlive,
   REFERENCE_PLAYER_COUNT,
   ZONE_LOOT_BASE_FLOOR,
+  ZONE_LOOT_EDGE_MARGIN,
   ZONE_LOOT_SUPPLY_MESSAGE,
+  zoneLootClosedPlacementRadius,
 } from '../src/config/zoneLoot';
 import { PHASES } from '../src/config/zone';
+import { DEFAULT_MATCH_SETTINGS, zoneStartRadius } from '../src/config/matchSettings';
 import { stepWorld } from '../src/core/simulation';
 import type { PlayerControls } from '../src/systems/player';
 import {
@@ -14,8 +17,9 @@ import {
   handleZoneAmmoSupplyEvent,
   isInsideZoneLootDisk,
   trySpawnAmmoInZone,
+  zoneLootUsableRadius,
 } from '../src/systems/zoneLoot';
-import { updateZone } from '../src/systems/zone';
+import { createZone, updateZone } from '../src/systems/zone';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
 import { bot, makeWorld } from './helpers';
 
@@ -97,6 +101,39 @@ describe('handleZoneAmmoSupplyEvent', () => {
     const world = makeWorld({ loot: [] });
     handleZoneAmmoSupplyEvent(world, 'shrinkStarted');
     expect(world.loot).toHaveLength(0);
+  });
+
+  it('spawns on closed even when zone radius is zero', () => {
+    const world = makeWorld({ loot: [] });
+    world.zone.state = 'final';
+    world.zone.r = 0;
+    expect(zoneLootUsableRadius(world.zone, 'phaseAdvanced')).toBe(0);
+    const closedR = zoneLootUsableRadius(world.zone, 'closed');
+    expect(closedR).toBeGreaterThan(0);
+    handleZoneAmmoSupplyEvent(world, 'closed');
+    expect(world.loot.length).toBeGreaterThan(0);
+    for (const item of world.loot) {
+      if (item.kind !== 'ammo') continue;
+      expect(isInsideZoneLootDisk(world, item.x, item.y, 'closed')).toBe(true);
+    }
+    expect(world.killfeed.some((e) => e.sys === ZONE_LOOT_SUPPLY_MESSAGE)).toBe(true);
+  });
+});
+
+describe('zoneLootClosedPlacementRadius', () => {
+  it('uses the last positive phase end radius before collapse', () => {
+    const startR = zoneStartRadius(DEFAULT_MATCH_SETTINGS.mapSize);
+    const phases = PHASES.map((p) => p.r);
+    expect(zoneLootClosedPlacementRadius(phases)).toBe(Math.round(startR * 0.04));
+    expect(zoneLootClosedPlacementRadius([0, 0])).toBe(0);
+  });
+
+  it('matches endgame usable disk inset', () => {
+    const zone = createZone(DEFAULT_MATCH_SETTINGS.mapSize);
+    zone.state = 'final';
+    zone.r = 0;
+    const endR = zoneLootClosedPlacementRadius(zone.phases.map((p) => p.r));
+    expect(zoneLootUsableRadius(zone, 'closed')).toBe(endR - ZONE_LOOT_EDGE_MARGIN);
   });
 });
 

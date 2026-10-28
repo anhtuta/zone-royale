@@ -27,6 +27,8 @@ export class Screens {
   private readonly end = byId('endScreen');
   /** Button shown while spectating after elimination. */
   private readonly spectateBar = byId('spectateBar');
+  /** Shown when a match fails to start (spawn / setup). */
+  private readonly startError = byId('startError');
 
   /**
    * Wires the PLAY and PLAY AGAIN buttons.
@@ -45,6 +47,21 @@ export class Screens {
   /** Updates the start screen subtitle (HTML from `matchSettingsBlurb`). */
   setStartBlurb(html: string): void {
     byId('startSub').innerHTML = html;
+  }
+
+  /**
+   * Shows or clears a user-visible error on the start screen.
+   *
+   * @param message - Plain text to display, or `null` to hide.
+   */
+  setStartError(message: string | null): void {
+    if (message) {
+      this.startError.textContent = message;
+      this.startError.classList.remove('hidden');
+    } else {
+      this.startError.textContent = '';
+      this.startError.classList.add('hidden');
+    }
   }
 
   /** Hides both overlays (a match is starting). */

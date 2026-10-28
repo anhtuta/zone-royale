@@ -81,7 +81,8 @@ Speed along the path is still $\|v\| = 245$ px/s; only the sign of $v_y$ reflect
 
 **Example 2 (`MAX_FRAME_DT`):** If the tab was frozen for 2 s, raw `dt` would be 2.0; the game caps it
 at **0.05** s ([`MAX_FRAME_DT`](../src/config/constants.ts)), so one step moves at most
-$245 \times 0.05 = 12.25$ px instead of 490 px.
+$245 \times 0.05 = 12.25$ px instead of 490 px. The HUD FPS counter uses the **uncapped**
+frame interval instead; see [08_HUD_FRAME_STATS.md](08_HUD_FRAME_STATS.md).
 
 **Example 3 (smooth turn):** Bot faces **0 rad** (east), wants **π/2** (south). `angleDelta(0, π/2) ≈ 1.57`.
 With `dt = 0.0167` and `k = 8`: `min(1, 0.0167 × 8) ≈ 0.133`, so

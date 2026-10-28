@@ -18,6 +18,41 @@ import { formatTime } from '../utils/math';
 import { drawKillFeed } from './killFeed';
 import { drawMinimap, MINIMAP_MARGIN } from './minimap';
 
+/** FPS and optional match clock passed into the HUD each frame. */
+export interface FrameOverlayStats {
+  /** Smoothed frames per second. */
+  fps: number;
+  /** Match elapsed seconds (`world.gameTime`); omitted on the menu before play. */
+  matchSec?: number;
+}
+
+/**
+ * Draws FPS and match elapsed time (bottom-right).
+ *
+ * @param ctx - Drawing context (screen space).
+ * @param vw - Viewport width.
+ * @param vh - Viewport height.
+ * @param stats - Values for this frame.
+ */
+export function drawFrameStats(
+  ctx: CanvasRenderingContext2D,
+  vw: number,
+  vh: number,
+  stats: FrameOverlayStats,
+): void {
+  const fps = Math.round(stats.fps);
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.font = '600 12px system-ui,sans-serif';
+  ctx.fillStyle = '#9fb3d1';
+  let y = vh - 14;
+  if (stats.matchSec !== undefined) {
+    ctx.fillText(formatTime(stats.matchSec), vw - 14, y);
+    y -= 16;
+  }
+  ctx.fillText(fps + ' FPS', vw - 14, y);
+}
+
 /**
  * Text of the zone banner at the top of the screen.
  *
@@ -263,6 +298,7 @@ function drawCrosshair(ctx: CanvasRenderingContext2D, world: World, mouse: Mouse
  * @param cam - Camera (viewport size and minimap rectangle).
  * @param minimapBase - Pre-rendered minimap.
  * @param mouse - Mouse state (crosshair position).
+ * @param frameStats - Optional FPS and match clock.
  */
 export function drawHUD(
   ctx: CanvasRenderingContext2D,
@@ -270,6 +306,7 @@ export function drawHUD(
   cam: Camera,
   minimapBase: CanvasImageSource,
   mouse: MouseState,
+  frameStats?: FrameOverlayStats,
 ): void {
   const vw = cam.width;
   const vh = cam.height;
@@ -282,6 +319,7 @@ export function drawHUD(
     ctx.font = '800 26px system-ui,sans-serif';
     ctx.fillStyle = '#ef5350';
     ctx.fillText('You were eliminated', vw / 2, vh / 2 - 80);
+    if (frameStats) drawFrameStats(ctx, vw, vh, frameStats);
     return;
   }
   drawVitals(ctx, world, vh);
@@ -319,5 +357,6 @@ export function drawHUD(
   }
   if (p.hp < 30) vignette(ctx, vw, vh, 0.35, 'rgba(200,0,0,.35)', 'rgba(200,0,0,0)');
   drawCrosshair(ctx, world, mouse);
+  if (frameStats) drawFrameStats(ctx, vw, vh, frameStats);
   ctx.textBaseline = 'alphabetic';
 }

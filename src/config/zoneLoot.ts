@@ -21,6 +21,23 @@ export const ZONE_LOOT_BASE_FLOOR: Readonly<Record<AmmoType, number>> = {
 /** Inset from the safe-zone edge when sampling supply drop positions. */
 export const ZONE_LOOT_EDGE_MARGIN = 80;
 
+/**
+ * When the zone closes (`zone.r === 0`), supply uses the last positive end radius
+ * from the phase table (the final playable safe circle before collapse).
+ *
+ * @param phaseEndRadii - `Zone.phases[].r` for the match.
+ * @returns That radius in pixels, or `0` if none is positive.
+ */
+export function zoneLootClosedPlacementRadius(
+  phaseEndRadii: readonly number[],
+): number {
+  for (let i = phaseEndRadii.length - 1; i >= 0; i--) {
+    const r = phaseEndRadii[i]!;
+    if (r > 0) return r;
+  }
+  return 0;
+}
+
 /** Placement attempts per box before skipping that box. */
 export const ZONE_LOOT_PLACEMENT_TRIES = 25;
 

@@ -20,6 +20,8 @@ import { AudioEngine } from './audio';
 import { Camera } from './camera';
 import { Viewport } from './canvas';
 import { Input } from './input';
+import type { FrameOverlayStats } from '../ui/hud';
+import { nextSmoothedFps } from '../utils/frameStats';
 import { startLoop } from './loop';
 import { stepWorld } from './simulation';
 import type { World } from './world';
@@ -64,6 +66,8 @@ export class Game {
   private matchSettings: MatchSettings;
   /** Match settings popup. */
   private readonly settingsModal: SettingsModal;
+  /** Smoothed FPS for the HUD overlay. */
+  private smoothedFps = 60;
 
   /**
    * Creates the game, generates a backdrop match for the start screen and
@@ -84,6 +88,7 @@ export class Game {
     this.settingsModal = new SettingsModal();
     this.settingsModal.onSettingsSaved((s) => {
       this.matchSettings = s;
+      this.screens.setStartError(null);
       this.refreshStartBlurb();
       this.refreshBackdrop();
     });
@@ -98,7 +103,7 @@ export class Game {
 
   /** Starts the animation loop. */
   run(): void {
-    startLoop((dt, now) => this.frame(dt, now));
+    startLoop((dt, frameInterval, now) => this.frame(dt, frameInterval, now));
   }
 
   /** Begins a new match (PLAY / PLAY AGAIN / Enter / Space). */
@@ -113,10 +118,13 @@ export class Game {
     try {
       this.world = createMatch(this.camera, this.audio, this.matchSettings);
       this.minimapBase = buildMinimapBase(this.world, this.world.mapSize);
+      this.screens.setStartError(null);
     } catch (err) {
       console.error(err);
-      this.world = this.safeBackdropWorld();
+      const { world, recoveredWithDefaults } = this.safeBackdropWorld();
+      this.world = world;
       this.minimapBase = buildMinimapBase(this.world, this.world.mapSize);
+      this.screens.setStartError(matchStartFailureMessage(recoveredWithDefaults));
       this.screens.showStart();
     }
   }
@@ -129,13 +137,13 @@ export class Game {
   }
 
   /** Backdrop match for menus; falls back to default settings if spawn fails. */
-  private safeBackdropWorld(): World {
+  private safeBackdropWorld(): { world: World; recoveredWithDefaults: boolean } {
     try {
-      return this.createBackdropWorld();
+      return { world: this.createBackdropWorld(), recoveredWithDefaults: false };
     } catch {
       const w = createMatch(this.camera, null, DEFAULT_MATCH_SETTINGS);
       w.phase = 'start';
-      return w;
+      return { world: w, recoveredWithDefaults: true };
     }
   }
 
@@ -173,18 +181,24 @@ export class Game {
   /**
    * One animation frame: simulate while playing, then render.
    *
-   * @param dt - Step in seconds.
+   * @param dt - Simulation step in seconds (capped).
+   * @param frameInterval - Uncapped seconds since the previous frame (for FPS).
    * @param now - Frame timestamp in ms.
    */
-  private frame(dt: number, now: number): void {
+  private frame(dt: number, frameInterval: number, now: number): void {
+    this.smoothedFps = nextSmoothedFps(this.smoothedFps, frameInterval);
     if (this.world.phase === 'playing') {
       this.update(dt);
       this.syncSpectateUi();
     } else {
       this.screens.hideSpectateBar();
     }
-    if (this.world.phase === 'start') renderAttract(this.viewport, this.world, now);
-    else renderGame(this.viewport, this.world, this.minimapBase, this.input.mouse);
+    const frameStats: FrameOverlayStats = {
+      fps: this.smoothedFps,
+      ...(this.world.phase !== 'start' ? { matchSec: this.world.gameTime } : {}),
+    };
+    if (this.world.phase === 'start') renderAttract(this.viewport, this.world, now, frameStats);
+    else renderGame(this.viewport, this.world, this.minimapBase, this.input.mouse, frameStats);
     this.input.endFrame();
   }
 
@@ -274,4 +288,19 @@ export class Game {
       update: (dt: number) => game.update(dt),
     };
   }
+}
+
+/** Start-screen copy when {@link Game.startMatch} cannot create a world. */
+function matchStartFailureMessage(recoveredWithDefaults: boolean): string {
+  if (recoveredWithDefaults) {
+    return (
+      'Could not start a match with your current settings. ' +
+      'The menu is using the default map and player count. ' +
+      'Open Settings and try a smaller lobby or a larger map.'
+    );
+  }
+  return (
+    'Could not start a match. Press Play to try again, or open Settings ' +
+    'for a smaller player count or larger map.'
+  );
 }

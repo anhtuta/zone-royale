@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { MAX_FRAME_DT, PLAYER_SPEED } from '../src/config/constants';
 import { Camera } from '../src/core/camera';
 import { readControls } from '../src/core/input';
-import { frameDelta } from '../src/core/loop';
+import { frameDelta, rawFrameDelta } from '../src/core/loop';
 import { IDLE_CONTROLS, playerVelocity, updatePlayer } from '../src/systems/player';
 import { soundVolume } from '../src/systems/sound';
 import { formatKillFeed } from '../src/ui/killFeed';
 import { zonePhaseText, zoneStatusText } from '../src/ui/hud';
+import { nextSmoothedFps } from '../src/utils/frameStats';
 import { makeWorld } from './helpers';
 
 describe('camera', () => {
@@ -53,6 +54,7 @@ describe('input and loop', () => {
   it('frameDelta is clamped to avoid huge steps', () => {
     expect(frameDelta(1016, 1000)).toBeCloseTo(0.016);
     expect(frameDelta(5000, 1000)).toBe(MAX_FRAME_DT);
+    expect(rawFrameDelta(5000, 1000)).toBe(4);
   });
 });
 
@@ -98,6 +100,19 @@ describe('sound attenuation', () => {
     expect(soundVolume(0)).toBeCloseTo(1);
     expect(soundVolume(600)).toBeLessThan(soundVolume(100));
     expect(soundVolume(1300)).toBe(0);
+  });
+});
+
+describe('frame stats', () => {
+  it('smooths FPS from frame delta', () => {
+    const at60 = nextSmoothedFps(60, 1 / 60);
+    expect(at60).toBeGreaterThan(59);
+    expect(at60).toBeLessThan(61);
+    const faster = nextSmoothedFps(60, 1 / 120);
+    expect(faster).toBeGreaterThan(60);
+    const at10 = nextSmoothedFps(60, 0.1);
+    expect(at10).toBeLessThan(60);
+    expect(at10).toBeGreaterThan(9);
   });
 });
 

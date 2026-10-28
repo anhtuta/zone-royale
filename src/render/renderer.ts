@@ -8,7 +8,7 @@
 import type { Viewport } from '../core/canvas';
 import type { MouseState } from '../core/input';
 import type { World } from '../core/world';
-import { drawHUD } from '../ui/hud';
+import { drawFrameStats, drawHUD, type FrameOverlayStats } from '../ui/hud';
 import { rand } from '../utils/random';
 import { drawWorld } from './worldRenderer';
 
@@ -18,8 +18,14 @@ import { drawWorld } from './worldRenderer';
  * @param vp - Viewport.
  * @param world - The backdrop world.
  * @param now - Timestamp in ms (drives the pan).
+ * @param frameStats - Optional FPS (match clock omitted on menu).
  */
-export function renderAttract(vp: Viewport, world: World, now: number): void {
+export function renderAttract(
+  vp: Viewport,
+  world: World,
+  now: number,
+  frameStats?: FrameOverlayStats,
+): void {
   const ctx = vp.ctx;
   const cam = world.camera;
   const mapSize = world.mapSize;
@@ -27,6 +33,8 @@ export function renderAttract(vp: Viewport, world: World, now: number): void {
   cam.y = mapSize / 2 - cam.height / 2 + Math.cos(now / 7000) * 500;
   ctx.setTransform(vp.dpr, 0, 0, vp.dpr, -Math.round(cam.x) * vp.dpr, -Math.round(cam.y) * vp.dpr);
   drawWorld(ctx, world, cam, { hidePlayer: true });
+  ctx.setTransform(vp.dpr, 0, 0, vp.dpr, 0, 0);
+  if (frameStats) drawFrameStats(ctx, vp.width, vp.height, frameStats);
 }
 
 /**
@@ -37,12 +45,14 @@ export function renderAttract(vp: Viewport, world: World, now: number): void {
  * @param world - The game world.
  * @param minimapBase - Pre-rendered minimap.
  * @param mouse - Mouse state for the crosshair.
+ * @param frameStats - Optional FPS and match clock.
  */
 export function renderGame(
   vp: Viewport,
   world: World,
   minimapBase: CanvasImageSource,
   mouse: MouseState,
+  frameStats?: FrameOverlayStats,
 ): void {
   const ctx = vp.ctx;
   const cam = world.camera;
@@ -60,5 +70,5 @@ export function renderGame(
   cam.x = savedX;
   cam.y = savedY;
   ctx.setTransform(vp.dpr, 0, 0, vp.dpr, 0, 0);
-  drawHUD(ctx, world, cam, minimapBase, mouse);
+  drawHUD(ctx, world, cam, minimapBase, mouse, frameStats);
 }
