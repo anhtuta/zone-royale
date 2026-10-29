@@ -43,9 +43,9 @@ Trees split the two because the design is a small solid trunk and a much larger 
 export interface TreeObstacle {
   /** Discriminator. */
   readonly t: 'tree';
-  /** Foot X (bottom-centre of the sprite on the ground). */
+  /** Centre X of the trunk collision circle (same convention as {@link RockObstacle}). */
   readonly x: number;
-  /** Foot Y (bottom-centre of the sprite on the ground). */
+  /** Centre Y of the trunk collision circle. */
   readonly y: number;
   /** Trunk (collision) radius. */
   readonly r: number;

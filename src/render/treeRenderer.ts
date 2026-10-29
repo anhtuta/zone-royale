@@ -11,6 +11,7 @@ import { TAU } from '../config/constants';
 import { shade } from '../utils/color';
 import { drawSoftGroundShadow } from './draw';
 import type { TreeObstacle } from '../world/types';
+import { treeSpriteFoot } from '../world/obstacleGeometry';
 import { getTreeImage, loadObstacleSprites } from './obstacleSprites';
 
 /** Width/height fallback until the image finishes loading. */
@@ -42,9 +43,9 @@ export function loadTreeSprite(): Promise<void> {
 }
 
 /**
- * Sprite draw rect with bottom-centre anchor at the tree foot (`tree.x`, `tree.y`).
+ * Sprite draw rect with bottom-centre anchor at {@link treeSpriteFoot}.
  *
- * @param tree - Tree obstacle (foot position).
+ * @param tree - Tree obstacle (collision centre at `tree.x`, `tree.y`).
  * @param aspect - Bitmap width / height.
  * @returns Axis-aligned draw rect in world space.
  */
@@ -55,8 +56,7 @@ export function treeSpriteDrawRect(
   const def = treeSpriteDef(tree.variant);
   const h = tree.vr * def.heightMul;
   const w = h * aspect;
-  const footX = tree.x + def.drawOffsetX;
-  const footY = tree.y + def.drawOffsetY;
+  const { x: footX, y: footY } = treeSpriteFoot(tree);
   return { left: footX - w / 2, top: footY - h, w, h };
 }
 
@@ -86,12 +86,13 @@ export function treeSpriteBounds(tree: TreeObstacle): TreeSpriteBounds {
  */
 export function treeSpriteInView(cam: Camera, tree: TreeObstacle): boolean {
   const b = treeSpriteBounds(tree);
+  const foot = treeSpriteFoot(tree);
   const shadowPad = tree.vr * 0.5;
   return cam.inViewAabb(
     b.left,
     b.top,
     b.right,
-    Math.max(b.bottom, tree.y + shadowPad),
+    Math.max(b.bottom, foot.y + shadowPad),
   );
 }
 
@@ -114,7 +115,8 @@ function treeImageDrawRect(
  * @returns Bounds that cover procedural clumps and trunk.
  */
 function treeCanvasSpriteBounds(tree: TreeObstacle): TreeSpriteBounds {
-  const { x, y, r, vr } = tree;
+  const { r, vr } = tree;
+  const { x, y } = treeSpriteFoot(tree);
   const edge = 1.12;
   const halfW = vr * 0.64 + vr * 0.62 * edge;
   const top = y - vr * 0.62 - vr * 0.78 * edge;
@@ -126,7 +128,7 @@ function treeCanvasSpriteBounds(tree: TreeObstacle): TreeSpriteBounds {
  * Draws a ground shadow (call before entities) or the full tree (call after entities).
  *
  * @param ctx - Drawing context in world space.
- * @param tree - Tree obstacle data (`x`, `y` = foot).
+ * @param tree - Tree obstacle (`tree.x`, `tree.y` = collision centre).
  * @param layer - `'shadow'` under gameplay; `'sprite'` on top for cover.
  */
 export function drawTree(
@@ -136,8 +138,7 @@ export function drawTree(
 ): void {
   const { vr } = tree;
   const def = treeSpriteDef(tree.variant);
-  const footX = tree.x + def.drawOffsetX;
-  const footY = tree.y + def.drawOffsetY;
+  const { x: footX, y: footY } = treeSpriteFoot(tree);
 
   if (layer === 'shadow') {
     drawSoftGroundShadow(
@@ -166,7 +167,8 @@ export function drawTree(
  * @param tree - Tree obstacle.
  */
 function drawTreeCanvas(ctx: CanvasRenderingContext2D, tree: TreeObstacle): void {
-  const { x, y, r, vr, shade: sh } = tree;
+  const { r, vr, shade: sh } = tree;
+  const { x, y } = treeSpriteFoot(tree);
   const hi = shade('#d4f171', sh);
   const mid = shade('#6bc443', sh);
   const lo = shade('#2a6b24', sh);

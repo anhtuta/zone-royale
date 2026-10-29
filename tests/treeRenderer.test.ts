@@ -7,7 +7,7 @@ describe('treeSpriteDrawRect', () => {
   it('anchors sprite bottom at the foot with per-variant heightMul', () => {
     const r = 24;
     const vr = r * 1.55;
-    const tree = { t: 'tree' as const, x: 120, y: 400, r, vr, variant: 3, shade: 0 };
+    const tree = { t: 'tree' as const, x: 120, y: 300, r, vr, variant: 3, shade: 0 };
     const def = treeSpriteDef(3);
     const aspect = 0.8;
     const foot = treeSpriteFoot(tree);
@@ -20,13 +20,14 @@ describe('treeSpriteDrawRect', () => {
 });
 
 describe('treeSpriteBounds', () => {
-  it('procedural bounds extend below side clumps (foot at y)', () => {
+  it('procedural bounds extend below side clumps (foot at sprite foot)', () => {
     const r = 24;
     const vr = r * 1.55;
-    const y = 1000;
-    const b = treeSpriteBounds({ t: 'tree', x: 500, y, r, vr, variant: 0, shade: 0 });
-    const sideClumpBottom = y + vr * 0.592;
+    const tree = { t: 'tree' as const, x: 500, y: 800, r, vr, variant: 0, shade: 0 };
+    const foot = treeSpriteFoot(tree);
+    const b = treeSpriteBounds(tree);
+    const sideClumpBottom = foot.y + vr * 0.592;
     expect(b.bottom).toBeGreaterThanOrEqual(sideClumpBottom);
-    expect(b.bottom).toBeGreaterThan(y + r * 0.48);
+    expect(b.bottom).toBeGreaterThan(foot.y + r * 0.48);
   });
 });

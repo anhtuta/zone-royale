@@ -4,7 +4,9 @@ import {
   circleObstacleCollision,
   rockCollisionCenter,
   treeCollisionCenter,
+  treeCollisionLiftPx,
   treeFootCollisionCenter,
+  treeModelFoot,
   treeSpriteFoot,
 } from '../src/world/obstacleGeometry';
 
@@ -17,18 +19,25 @@ describe('normalizeVariantIndex', () => {
 });
 
 describe('treeCollisionCenter', () => {
-  it('uses collisionLiftR from the variant catalog', () => {
+  it('uses stored x/y as the gameplay circle centre', () => {
     const tree = { t: 'tree' as const, x: 100, y: 200, r: 20, vr: 31, variant: 3, shade: 0 };
-    const liftR = treeSpriteDef(3).collisionLiftR;
-    const foot = treeSpriteFoot(tree);
-    expect(liftR).toBeGreaterThan(0);
-    expect(treeCollisionCenter(tree)).toEqual({ x: foot.x, y: foot.y - liftR * 20 });
-    expect(treeFootCollisionCenter(foot.x, foot.y, 20, 3)).toEqual(treeCollisionCenter(tree));
-    expect(circleObstacleCollision(tree)).toMatchObject({
-      x: foot.x,
-      y: foot.y - liftR * 20,
-      r: 20,
+    expect(treeCollisionCenter(tree)).toEqual({ x: 100, y: 200 });
+    expect(circleObstacleCollision(tree)).toMatchObject({ x: 100, y: 200, r: 20 });
+  });
+
+  it('derives model foot and sprite foot from lift and visual drawOffset', () => {
+    const tree = { t: 'tree' as const, x: 100, y: 200, r: 20, vr: 31, variant: 3, shade: 0 };
+    const lift = treeCollisionLiftPx(tree);
+    const def = treeSpriteDef(3);
+    expect(lift).toBe(def.collisionLiftR * 20);
+    expect(treeModelFoot(tree)).toEqual({ x: 100, y: 200 + lift });
+    expect(treeSpriteFoot(tree)).toEqual({
+      x: 100 + def.drawOffsetX,
+      y: 200 + lift + def.drawOffsetY,
     });
+    expect(treeFootCollisionCenter(treeModelFoot(tree).x, treeModelFoot(tree).y, 20, 3)).toEqual(
+      treeCollisionCenter(tree),
+    );
   });
 });
 
