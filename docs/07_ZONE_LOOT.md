@@ -58,22 +58,24 @@ Count only items on the ground: `world.loot` where `kind === 'ammo'`, grouped by
 For each family `t`:
 
 ```js
-floor(t) = min(alive, max(1, round(baseFloor(t) * alive / REFERENCE_PLAYER_COUNT)))
+floor(t) = min(alive, max(1, round(baseFloor(t) * alive / ZONE_LOOT_FLOOR_ALIVE_DIVISOR)))
 ```
 
 - **`alive`:** living combatants when the pulse runs (`countAlive(world.entities)`).
-- **`REFERENCE_PLAYER_COUNT`:** `50` (default match size from `matchSettings`).
-- **`baseFloor(t)`:** config constants at that reference alive count (tune in
-  `config/zoneLoot.ts`).
+- **`ZONE_LOOT_FLOOR_ALIVE_DIVISOR`:** `10` — scales floors with survivors; lower → more boxes (not tied to lobby settings).
+- **`baseFloor(t)`:** config constants in `config/zoneLoot.ts`.
 
-**`baseFloor`** with **50** survivors:
+**Example floors @ 100 alive** (divisor **10**; each value is **boxes on the ground**, not rounds inside boxes):
 
-| Family | `baseFloor` | Rationale |
-| ------ | ----------- | --------- |
-| `light` | 8 | Pistol / SMG; most common |
-| `medium` | 6 | Rifle |
-| `shells` | 4 | Shotgun |
-| `heavy` | 4 | Sniper |
+| Family | `baseFloor` | Floor @ 100 alive |
+| ------ | ----------- | ----------------- |
+| `light` | 8 | 80 |
+| `medium` | 6 | 60 |
+| `shells` | 4 | 40 |
+| `heavy` | 4 | 40 |
+
+After a pulse tops up to these counts, **later pulses spawn nothing** until pickups or eliminations
+reduce ground counts below the floor again (see **Top-up** above).
 
 Each spawned box uses existing **`AMMO_AMOUNT[type]`** from `config/weapons.ts` (not a new stack
 size).

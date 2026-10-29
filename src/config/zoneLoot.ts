@@ -4,13 +4,15 @@
  * @packageDocumentation
  */
 
-import { DEFAULT_MATCH_SETTINGS } from './matchSettings';
 import type { AmmoType } from './weapons';
 
-/** Player count used to scale per-family minimum ground ammo (default match = 50). */
-export const REFERENCE_PLAYER_COUNT = DEFAULT_MATCH_SETTINGS.numPlayers;
+/**
+ * Scales {@link ZONE_LOOT_BASE_FLOOR} with survivor count: `base * alive / divisor`.
+ * Lower divisor → more ground ammo per pulse (tuning knob, not tied to lobby size).
+ */
+export const ZONE_LOOT_FLOOR_ALIVE_DIVISOR = 10;
 
-/** Minimum ammo boxes per family on the ground at {@link REFERENCE_PLAYER_COUNT} alive. */
+/** Per-family floor numerator before survivor scaling (see {@link ammoFloorForAlive}). */
 export const ZONE_LOOT_BASE_FLOOR: Readonly<Record<AmmoType, number>> = {
   light: 8,
   shells: 4,
@@ -50,6 +52,7 @@ export const ZONE_LOOT_SUPPLY_MESSAGE = 'Ammunition supply dropped in the safe z
  */
 export function ammoFloorForAlive(aliveCount: number, type: AmmoType): number {
   const alive = Math.max(1, aliveCount);
-  const scaled = ZONE_LOOT_BASE_FLOOR[type] * alive / REFERENCE_PLAYER_COUNT;
+  const scaled =
+    (ZONE_LOOT_BASE_FLOOR[type] * alive) / ZONE_LOOT_FLOOR_ALIVE_DIVISOR;
   return Math.min(alive, Math.max(1, Math.round(scaled)));
 }

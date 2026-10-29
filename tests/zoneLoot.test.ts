@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   ammoFloorForAlive,
-  REFERENCE_PLAYER_COUNT,
   ZONE_LOOT_BASE_FLOOR,
+  ZONE_LOOT_FLOOR_ALIVE_DIVISOR,
   ZONE_LOOT_SUPPLY_MESSAGE,
   zoneLootClosedPlacementRadius,
 } from '../src/config/zoneLoot';
@@ -35,15 +35,24 @@ beforeEach(() => setRandomSource(createSeededRandom(90210)));
 afterEach(() => setRandomSource(Math.random));
 
 describe('ammoFloorForAlive', () => {
-  it('matches base floors at the reference alive count', () => {
+  it('scales with alive count using the floor divisor', () => {
+    const alive = 20;
     for (const type of Object.keys(ZONE_LOOT_BASE_FLOOR) as (keyof typeof ZONE_LOOT_BASE_FLOOR)[]) {
-      expect(ammoFloorForAlive(REFERENCE_PLAYER_COUNT, type)).toBe(ZONE_LOOT_BASE_FLOOR[type]);
+      const expected = Math.min(
+        alive,
+        Math.max(
+          1,
+          Math.round((ZONE_LOOT_BASE_FLOOR[type] * alive) / ZONE_LOOT_FLOOR_ALIVE_DIVISOR),
+        ),
+      );
+      expect(ammoFloorForAlive(alive, type)).toBe(expected);
     }
   });
 
   it('never exceeds alive count and never drops below 1', () => {
-    expect(ammoFloorForAlive(3, 'light')).toBe(1);
+    expect(ammoFloorForAlive(3, 'light')).toBe(2);
     expect(ammoFloorForAlive(3, 'light')).toBeLessThanOrEqual(3);
+    expect(ammoFloorForAlive(2, 'medium')).toBe(1);
     expect(ammoFloorForAlive(2, 'medium')).toBeLessThanOrEqual(2);
   });
 
