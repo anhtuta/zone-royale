@@ -107,7 +107,8 @@ subtle global tint later.
 
 - `USE_OBSTACLE_IMAGES` from `VITE_USE_OBSTACLE_IMAGES` (default `false` in
   [`.env.example`](../.env.example)).
-- `VITE_DEBUG_OBSTACLE_COLLISION` — pink collision rings for tuning (see Phase 6).
+- `VITE_DEBUG_OBSTACLE_COLLISION` — pink collision rings, yellow **map anchor** cross at
+  `(x, y)`, and (trees) teal foot cross + line when `drawOffset` moves the foot (see Phase 6).
 - When false: no image loads required; `loadObstacleSprites()` resolves immediately.
 - When true: preload all rock + tree variants at boot (parallel `Promise.all`).
 
