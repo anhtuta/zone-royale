@@ -190,8 +190,8 @@ export const TREE_SPRITES: readonly TreeSpriteDef[] = [
   treeLayout('bb_grove', bbGroveUrl, {
     heightMul: 3.05,
     drawOffsetY: -8,
-    collisionLiftR: 1.3,
-    collisionRadiusScale: 1.7,
+    collisionLiftR: 1.1,
+    collisionRadiusScale: 2,
     shadowOffsetX: 0,
     shadowOffsetY: -19,
     shadowRadiusXMul: 1.3,
