@@ -41,6 +41,9 @@ export const MAX_HP = 100;
 /** Maximum armor of a combatant. */
 export const MAX_ARMOR = 100;
 
+/** Number of weapons a combatant can carry at once. */
+export const WEAPON_SLOT_COUNT = 3;
+
 /** Fraction of incoming (non-zone) damage that armor absorbs while it lasts. */
 export const ARMOR_ABSORB = 0.6;
 

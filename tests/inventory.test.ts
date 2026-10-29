@@ -38,7 +38,11 @@ describe('chooseWeaponSlot', () => {
 
   it('the player replaces the selected weapon when full', () => {
     const { player: p } = makeWorld();
-    p.weapons[1] = { type: 'smg', mag: 30 };
+    p.weapons = [
+      { type: 'pistol', mag: 12 },
+      { type: 'smg', mag: 30 },
+      { type: 'rifle', mag: 30 },
+    ];
     p.slot = 1;
     expect(chooseWeaponSlot(p)).toEqual({ slot: 1, replaced: { type: 'smg', mag: 30 } });
   });
@@ -48,8 +52,9 @@ describe('chooseWeaponSlot', () => {
     b.weapons = [
       { type: 'sniper', mag: 5 },
       { type: 'smg', mag: 30 },
+      { type: 'pistol', mag: 12 },
     ];
-    expect(chooseWeaponSlot(b).slot).toBe(1);
+    expect(chooseWeaponSlot(b).slot).toBe(2);
   });
 });
 
@@ -61,12 +66,28 @@ describe('applyLoot', () => {
     const item: LootItem = { kind: 'weapon', type: 'shotgun', mag: 5, x: p.x, y: p.y };
     w.loot.push(item);
     applyLoot(w, p, item);
-    expect(p.weapons[0]).toEqual({ type: 'shotgun', mag: 5 });
-    expect(p.slot).toBe(0);
-    expect(w.loot).toHaveLength(1);
-    expect(w.loot[0]).toMatchObject({ kind: 'weapon', type: 'pistol', mag: 12 });
+    expect(p.weapons[2]).toEqual({ type: 'shotgun', mag: 5 });
+    expect(p.slot).toBe(2);
+    expect(w.loot).toHaveLength(0);
     expect(item.gone).toBe(true);
     expect(w.message.text).toBe('Picked up Shotgun');
+  });
+
+  it('drops the displaced weapon when every slot is full', () => {
+    const w = makeWorld();
+    const p = w.player;
+    p.weapons = [
+      { type: 'pistol', mag: 12 },
+      { type: 'smg', mag: 10 },
+      { type: 'rifle', mag: 30 },
+    ];
+    p.slot = 0;
+    const item: LootItem = { kind: 'weapon', type: 'sniper', mag: 5, x: p.x, y: p.y };
+    w.loot.push(item);
+    applyLoot(w, p, item);
+    expect(p.weapons[0]).toEqual({ type: 'sniper', mag: 5 });
+    expect(w.loot).toHaveLength(1);
+    expect(w.loot[0]).toMatchObject({ kind: 'weapon', type: 'pistol', mag: 12 });
   });
 
   it('ammo adds to the reserve', () => {
@@ -91,13 +112,13 @@ describe('applyLoot', () => {
   it('a bot only switches to a new weapon of at least equal tier', () => {
     const w = makeWorld();
     const b = bot(0, 0);
-    b.weapons = [{ type: 'rifle', mag: 30 }, null];
+    b.weapons = [{ type: 'rifle', mag: 30 }, null, null];
     applyLoot(w, b, { kind: 'weapon', type: 'pistol', mag: 12, x: 0, y: 0 });
     expect(b.weapons[1]?.type).toBe('pistol');
     expect(b.slot).toBe(0);
     applyLoot(w, b, { kind: 'weapon', type: 'sniper', mag: 5, x: 0, y: 0 });
-    expect(b.weapons[1]?.type).toBe('sniper');
-    expect(b.slot).toBe(1);
+    expect(b.weapons[2]?.type).toBe('sniper');
+    expect(b.slot).toBe(2);
   });
 });
 
@@ -163,12 +184,14 @@ describe('botWants', () => {
     b.weapons = [
       { type: 'pistol', mag: 12 },
       { type: 'rifle', mag: 30 },
+      { type: 'smg', mag: 30 },
     ];
-    expect(botWants(b, { kind: 'weapon', type: 'smg', mag: 30, x: 0, y: 0 })).toBe(true);
+    expect(botWants(b, { kind: 'weapon', type: 'sniper', mag: 5, x: 0, y: 0 })).toBe(true);
     expect(botWants(b, { kind: 'weapon', type: 'rifle', mag: 30, x: 0, y: 0 })).toBe(false);
     b.weapons = [
       { type: 'shotgun', mag: 5 },
       { type: 'rifle', mag: 30 },
+      { type: 'smg', mag: 30 },
     ];
     expect(botWants(b, { kind: 'weapon', type: 'smg', mag: 30, x: 0, y: 0 })).toBe(false);
     expect(botWants(b, { kind: 'weapon', type: 'sniper', mag: 5, x: 0, y: 0 })).toBe(true);

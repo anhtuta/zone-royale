@@ -4,10 +4,12 @@
  * @packageDocumentation
  */
 
+import { WEAPON_SLOT_COUNT } from '../config/constants';
 import { AMMO_NAMES, WEAPONS } from '../config/weapons';
 import type { World } from '../core/world';
 import type { Bullet } from '../entities/bullet';
 import type { Entity, SlotIndex } from '../entities/entity';
+import { nextWeaponSlot } from '../entities/entity';
 import { rand, random } from '../utils/random';
 import { showMessage } from './feedback';
 import { emitWeaponShot } from './sound';
@@ -45,6 +47,22 @@ export function switchSlot(e: Entity, slot: SlotIndex): void {
   e.slot = slot;
   e.reloading = 0;
   e.cool = Math.max(e.cool, SWITCH_DELAY);
+}
+
+/**
+ * Selects the next occupied weapon slot (wraps at {@link WEAPON_SLOT_COUNT}).
+ *
+ * @param e - The entity.
+ */
+export function cycleWeaponSlot(e: Entity): void {
+  let s = e.slot;
+  for (let i = 0; i < WEAPON_SLOT_COUNT; i++) {
+    s = nextWeaponSlot(s);
+    if (e.weapons[s]) {
+      switchSlot(e, s);
+      return;
+    }
+  }
 }
 
 /**

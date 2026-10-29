@@ -45,7 +45,7 @@ describe('weapon definitions', () => {
   it('everyone starts with a full pistol and 24 light rounds', () => {
     const w = makeWorld();
     expect(w.player.weapons[0]).toEqual({ type: 'pistol', mag: 12 });
-    expect(w.player.weapons[1]).toBeNull();
+    expect(w.player.weapons.slice(1)).toEqual([null, null]);
     expect(w.player.ammo).toEqual(STARTING_AMMO);
   });
 });

@@ -15,10 +15,10 @@
  * @packageDocumentation
  */
 
-import { BOT_PICK_RANGE, BOT_SIGHT, BOT_SPEED, TAU } from '../config/constants';
+import { BOT_PICK_RANGE, BOT_SIGHT, BOT_SPEED, TAU, WEAPON_SLOT_COUNT } from '../config/constants';
 import { WEAPONS, type WeaponStats } from '../config/weapons';
 import type { World } from '../core/world';
-import { otherSlot, type BotBrain, type Entity } from '../entities/entity';
+import { nextWeaponSlot, type BotBrain, type Entity, type SlotIndex } from '../entities/entity';
 import { angleDelta, clamp, dist, dist2 } from '../utils/math';
 import { rand, random } from '../utils/random';
 import type { Obstacle } from '../world/types';
@@ -342,7 +342,16 @@ export function updateBot(world: World, b: Entity, dt: number): void {
   if (!ai) return;
   const zone = world.zone;
   tickTimers(ai, dt);
-  if (!hasAmmoFor(b, b.slot) && hasAmmoFor(b, otherSlot(b.slot))) switchSlot(b, otherSlot(b.slot));
+  if (!hasAmmoFor(b, b.slot)) {
+    let s: SlotIndex = b.slot;
+    for (let i = 0; i < WEAPON_SLOT_COUNT; i++) {
+      s = nextWeaponSlot(s);
+      if (hasAmmoFor(b, s)) {
+        switchSlot(b, s);
+        break;
+      }
+    }
+  }
   const cw = b.weapons[b.slot];
   const armed = hasAmmoFor(b, b.slot);
   if (cw && cw.mag === 0 && b.reloading <= 0) startReload(b);

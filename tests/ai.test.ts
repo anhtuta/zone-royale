@@ -127,6 +127,8 @@ describe('updateBot', () => {
     b.weapons = [
       { type: 'pistol', mag: 0 },
       { type: 'smg', mag: 30 },
+      null,
+      null,
     ];
     b.ammo.light = 0;
     updateBot(w, b, 1 / 60);
@@ -149,7 +151,7 @@ describe('updateBot', () => {
     const w = makeWorld();
     const b = bot(w.player.x + 200, w.player.y + 100);
     w.entities.push(b);
-    b.weapons = [{ type: 'pistol', mag: 0 }, null];
+    b.weapons = [{ type: 'pistol', mag: 0 }, null, null];
     b.ammo.light = 0;
     updateBot(w, b, 1 / 60);
     expect(b.ai!.target).toBe(w.player);
