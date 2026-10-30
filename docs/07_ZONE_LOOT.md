@@ -8,7 +8,7 @@ This feature **replenishes ammo and weapons** inside the current safe circle whe
 pulse** fires (`phaseAdvanced` or `closed`). Every pulse that actually spawns loot is
 **telegraphed** (system kill-feed line + centre HUD toast). Silent spawns are not allowed.
 
-**Shipped today:** ammo floors (Phases 1–2). **Planned:** weapon floors (Phase 3 below).
+**Shipped:** ammo and weapon floors on zone pulses (Phases 1–3).
 
 Elimination drops are unchanged except by explicit policy below: **no ammo boxes from kills when
 reserve is 0**; weapons still drop with whatever rounds remain in the magazine.
@@ -101,12 +101,12 @@ On **`phaseAdvanced`** and **`closed`**:
 Count items on the ground: `world.loot` where `kind === 'weapon'` (all types combined).
 
 ```js
-weaponFloor(alive) = min(alive, max(1, round(ZONE_LOOT_WEAPON_BASE_FLOOR * alive / ZONE_LOOT_FLOOR_ALIVE_DIVISOR)))
+weaponFloor(alive) = min(alive, max(1, round(ZONE_LOOT_WEAPON_BASE_FLOOR * alive / ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR)))
 ```
 
-- **`ZONE_LOOT_WEAPON_BASE_FLOOR`:** config constant in `config/zoneLoot.ts` (start at **2**; tune
-  after playtests — weapons are scarcer than ammo boxes).
-- Reuse **`ZONE_LOOT_FLOOR_ALIVE_DIVISOR`** (`10`) so scaling matches ammo.
+- **`ZONE_LOOT_WEAPON_BASE_FLOOR`:** `2` in `config/zoneLoot.ts` (weapons are scarcer than ammo boxes).
+- **`ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR`:** `10` — scales weapon floors with survivors; lower → more
+  guns (independent of ammo divisor).
 
 **Example @ 100 alive** (base **2**, divisor **10**): floor **20** weapons on the ground.
 
@@ -196,13 +196,14 @@ tests; knobs documented in this file match shipped constants.
 
 ### Phase 3 — Zone pulse weapon supply
 
-- [ ] Add `ZONE_LOOT_WEAPON_BASE_FLOOR` and `weaponFloorForAlive()` in `config/zoneLoot.ts`.
-- [ ] Add `countGroundWeapons()`, `trySpawnWeaponInZone()` (full mag + paired ammo), and
+- [x] Add `ZONE_LOOT_WEAPON_BASE_FLOOR`, `ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR`, and
+  `weaponFloorForAlive()` in `config/zoneLoot.ts`.
+- [x] Add `countGroundWeapons()`, `trySpawnWeaponInZone()` (full mag + paired ammo), and
   `fillZoneWeaponsToFloor()` in `systems/zoneLoot.ts` (reuse `zoneLootUsableRadius`,
   `ZONE_LOOT_PLACEMENT_TRIES`, `circleFree`).
-- [ ] Extend pulse handler: run ammo fill then weapon fill; telegraph once when
+- [x] Extend pulse handler: run ammo fill then weapon fill; telegraph once when
   `spawnedAmmo + spawnedWeapons > 0`; set `ZONE_LOOT_SUPPLY_MESSAGE` to v2 copy.
-- [ ] Tests: `weaponFloorForAlive`, weapon placement inside zone disk, `phaseAdvanced` /
+- [x] Tests: `weaponFloorForAlive`, weapon placement inside zone disk, `phaseAdvanced` /
   `closed` weapon top-up, telegraph when weapons spawn (and when only weapons spawn with ammo
   already at floor).
 
@@ -213,7 +214,8 @@ weapon loot; players see feed + toast when any supply item appears.
 ## Tuning notes
 
 - If large lobbies feel flooded, lower `ZONE_LOOT_BASE_FLOOR` and/or
-  `ZONE_LOOT_WEAPON_BASE_FLOOR`.
+  `ZONE_LOOT_WEAPON_BASE_FLOOR`, or raise `ZONE_LOOT_FLOOR_ALIVE_DIVISOR` /
+  `ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR`.
 - With few survivors, `min(alive, …)` keeps floors from exceeding living players; `max(1, …)` still
   guarantees at least one box per family when below floor and `alive ≥ 1`.
 - Bot cap (`BOT_AMMO_CAP`) can still pull ammo off the ground; floors measure **ground** only, which

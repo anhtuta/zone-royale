@@ -17,7 +17,7 @@ import { pushSystemFeed } from '../systems/feedback';
 import { checkMatchEnd, resolveSpectateTarget, type MatchOutcome } from '../systems/match';
 import { updatePlayer, type PlayerControls } from '../systems/player';
 import { tickWeaponTimers } from '../systems/weapons';
-import { handleZoneAmmoSupplyEvent } from '../systems/zoneLoot';
+import { handleZoneSupplyEvent } from '../systems/zoneLoot';
 import { isOutsideZone, updateZone, zoneDps, zoneTickDamage } from '../systems/zone';
 import type { World } from './world';
 
@@ -49,7 +49,7 @@ export function stepWorld(world: World, controls: PlayerControls, dt: number): M
   world.sfxBudget = SFX_PER_STEP;
   const zoneEvent = updateZone(world.zone, dt);
   if (zoneEvent === 'shrinkStarted') pushSystemFeed(world, 'The zone is closing in!');
-  else if (zoneEvent) handleZoneAmmoSupplyEvent(world, zoneEvent);
+  else if (zoneEvent) handleZoneSupplyEvent(world, zoneEvent);
   if (world.player.alive) updatePlayer(world, controls);
   for (const e of world.entities) {
     if (!e.alive) continue;
