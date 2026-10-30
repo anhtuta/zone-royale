@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import { LOOT_CLEARANCE, TAU } from '../config/constants';
+import { BOT_LOOT_ZONE_INSET, LOOT_CLEARANCE, TAU } from '../config/constants';
 import { AMMO_AMOUNT, AMMO_TYPES, WEAPONS, type AmmoType } from '../config/weapons';
 import {
   ammoFloorForAlive,
@@ -27,16 +27,39 @@ import type { Zone, ZoneEvent } from './zone';
 const WEAPON_PAIRED_AMMO_OFFSET = 30;
 
 /**
- * Sampling radius for a supply pulse (full safe circle, no minimum size).
+ * Outer safe-circle radius for a supply pulse (full zone disk before bot inset).
  *
  * @param zone - Current safe zone.
  * @param event - Zone pulse; `closed` uses the endgame disk at `zone.r === 0`.
  */
-export function zoneLootUsableRadius(zone: Zone, event?: ZoneEvent): number {
+export function zoneLootOuterRadius(zone: Zone, event?: ZoneEvent): number {
   if (event === 'closed') {
     return zoneLootClosedPlacementRadius(zone.phases.map((p) => p.r));
   }
   return Math.max(0, zone.r);
+}
+
+/**
+ * Radius for uniform supply placement: inside the safe circle minus {@link BOT_LOOT_ZONE_INSET}
+ * so bots can path to spawned loot ({@link updateBot}).
+ */
+export function zoneLootPlacementRadius(zone: Zone, event?: ZoneEvent): number {
+  return Math.max(0, zoneLootOuterRadius(zone, event) - BOT_LOOT_ZONE_INSET);
+}
+
+/**
+ * Max distance from the zone centre for loot a bot will path toward ({@link updateBot}).
+ * Matches {@link zoneLootPlacementRadius} for the current playable safe disk.
+ */
+export function zoneLootBotSeekRadius(zone: Zone): number {
+  if (zone.r > 0) return zoneLootPlacementRadius(zone);
+  if (zone.state === 'final') return zoneLootPlacementRadius(zone, 'closed');
+  return 0;
+}
+
+/** @deprecated Use {@link zoneLootPlacementRadius} for spawn checks; {@link zoneLootOuterRadius} for full disk. */
+export function zoneLootUsableRadius(zone: Zone, event?: ZoneEvent): number {
+  return zoneLootPlacementRadius(zone, event);
 }
 
 /**
@@ -79,7 +102,7 @@ export function trySpawnAmmoInZone(
   event?: ZoneEvent,
 ): boolean {
   const zone = world.zone;
-  const usableR = zoneLootUsableRadius(zone, event);
+  const usableR = zoneLootPlacementRadius(zone, event);
   if (usableR <= 0) return false;
   for (let i = 0; i < ZONE_LOOT_PLACEMENT_TRIES; i++) {
     const a = rand(0, TAU);
@@ -107,7 +130,7 @@ export function trySpawnAmmoInZone(
  */
 export function trySpawnWeaponInZone(world: World, event?: ZoneEvent): boolean {
   const zone = world.zone;
-  const usableR = zoneLootUsableRadius(zone, event);
+  const usableR = zoneLootPlacementRadius(zone, event);
   if (usableR <= 0) return false;
   for (let i = 0; i < ZONE_LOOT_PLACEMENT_TRIES; i++) {
     const a = rand(0, TAU);
@@ -247,7 +270,7 @@ export function isInsideZoneLootDisk(
   const zone = world.zone;
   const pulse =
     event ?? (zone.state === 'final' && zone.r <= 0 ? ('closed' as const) : undefined);
-  const usableR = zoneLootUsableRadius(zone, pulse);
+  const usableR = zoneLootPlacementRadius(zone, pulse);
   if (usableR <= 0) return false;
   return dist2(x, y, zone.x, zone.y) <= usableR * usableR;
 }

@@ -134,8 +134,9 @@ the next ammo pulse’s ground counts (no double telegraph).
 Implement in `systems/zoneLoot.ts`:
 
 1. Sample a point uniformly in the disk: centre `(zone.x, zone.y)`, radius **`placementR`**
-   (full safe circle, including tiny late-game radii).
-2. **`placementR`:** current `zone.r` for `phaseAdvanced`; for **`closed`**, the last
+   (`zoneLootPlacementRadius`: outer safe circle minus **`BOT_LOOT_ZONE_INSET`** (`20`), matching
+   bot loot seeking in `systems/ai.ts`).
+2. **`placementR` outer edge:** current `zone.r` for `phaseAdvanced`; for **`closed`**, the last
    positive phase end radius from the schedule (`zoneLootClosedPlacementRadius`) because
    `zone.r` is **0** when the pulse runs.
 3. Reuse **`circleFree(obstacles, x, y, LOOT_CLEARANCE, mapSize)`** from `systems/collision.ts`.

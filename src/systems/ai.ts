@@ -24,6 +24,7 @@ import { rand, random } from '../utils/random';
 import type { Obstacle } from '../world/types';
 import { lineOfSight } from './collision';
 import { applyLoot, botWants, nearestLoot } from './inventory';
+import { zoneLootBotSeekRadius } from './zoneLoot';
 import { hasAmmoFor, startReload, switchSlot, tryShoot } from './weapons';
 import type { Zone } from './zone';
 
@@ -373,7 +374,9 @@ export function updateBot(world: World, b: Entity, dt: number): void {
       b.x,
       b.y,
       750,
-      (it) => botWants(b, it) && dist(it.x, it.y, zone.x, zone.y) < zone.r - 20,
+      (it) =>
+        botWants(b, it) &&
+        dist(it.x, it.y, zone.x, zone.y) < zoneLootBotSeekRadius(zone),
     );
   }
 

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { BOT_LOOT_ZONE_INSET } from '../src/config/constants';
 import {
   ammoFloorForAlive,
   weaponFloorForAlive,
@@ -23,8 +24,11 @@ import {
   isInsideZoneLootDisk,
   trySpawnAmmoInZone,
   trySpawnWeaponInZone,
-  zoneLootUsableRadius,
+  zoneLootBotSeekRadius,
+  zoneLootOuterRadius,
+  zoneLootPlacementRadius,
 } from '../src/systems/zoneLoot';
+import { dist } from '../src/utils/math';
 import { createZone, updateZone } from '../src/systems/zone';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
 import { bot, makeWorld } from './helpers';
@@ -88,6 +92,28 @@ describe('ammoFloorForAlive', () => {
   });
 });
 
+describe('zone loot placement radius', () => {
+  it('insets the outer safe disk by BOT_LOOT_ZONE_INSET for spawns', () => {
+    const world = makeWorld({ loot: [] });
+    world.zone.r = 40;
+    expect(zoneLootOuterRadius(world.zone, 'phaseAdvanced')).toBe(40);
+    expect(zoneLootPlacementRadius(world.zone, 'phaseAdvanced')).toBe(
+      40 - BOT_LOOT_ZONE_INSET,
+    );
+    expect(trySpawnAmmoInZone(world, 'light', 'phaseAdvanced')).toBe(true);
+  });
+
+  it('spawned supply is inside the bot loot seek disk', () => {
+    const world = makeWorld({ loot: [] });
+    handleZoneSupplyEvent(world, 'phaseAdvanced');
+    const seekR = zoneLootBotSeekRadius(world.zone);
+    expect(seekR).toBeGreaterThan(0);
+    for (const item of world.loot) {
+      expect(dist(item.x, item.y, world.zone.x, world.zone.y)).toBeLessThan(seekR);
+    }
+  });
+});
+
 describe('zone ammo placement', () => {
   it('places boxes inside the safe disk on open ground', () => {
     const world = makeWorld();
@@ -101,7 +127,7 @@ describe('zone ammo placement', () => {
   it('places boxes when the safe zone is smaller than the old edge margin', () => {
     const world = makeWorld({ loot: [] });
     world.zone.r = 40;
-    expect(zoneLootUsableRadius(world.zone, 'phaseAdvanced')).toBe(40);
+    expect(zoneLootPlacementRadius(world.zone, 'phaseAdvanced')).toBe(20);
     expect(trySpawnAmmoInZone(world, 'light', 'phaseAdvanced')).toBe(true);
   });
 
@@ -174,9 +200,12 @@ describe('handleZoneSupplyEvent', () => {
     const world = makeWorld({ loot: [] });
     world.zone.state = 'final';
     world.zone.r = 0;
-    expect(zoneLootUsableRadius(world.zone, 'phaseAdvanced')).toBe(0);
-    const closedR = zoneLootUsableRadius(world.zone, 'closed');
-    expect(closedR).toBeGreaterThan(0);
+    expect(zoneLootOuterRadius(world.zone, 'phaseAdvanced')).toBe(0);
+    const closedOuter = zoneLootOuterRadius(world.zone, 'closed');
+    expect(closedOuter).toBeGreaterThan(0);
+    expect(zoneLootPlacementRadius(world.zone, 'closed')).toBe(
+      closedOuter - BOT_LOOT_ZONE_INSET,
+    );
     handleZoneSupplyEvent(world, 'closed');
     expect(world.loot.length).toBeGreaterThan(0);
     for (const item of world.loot) {
@@ -218,7 +247,8 @@ describe('zoneLootClosedPlacementRadius', () => {
     zone.state = 'final';
     zone.r = 0;
     const endR = zoneLootClosedPlacementRadius(zone.phases.map((p) => p.r));
-    expect(zoneLootUsableRadius(zone, 'closed')).toBe(endR);
+    expect(zoneLootOuterRadius(zone, 'closed')).toBe(endR);
+    expect(zoneLootPlacementRadius(zone, 'closed')).toBe(endR - BOT_LOOT_ZONE_INSET);
   });
 });
 
