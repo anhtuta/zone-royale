@@ -4,6 +4,9 @@ Match scale used to be fixed globals (`MAP_SIZE`, `NUM_BOTS` in `constants.ts`).
 now choose map size and total player count from the start screen before each match. Choices
 are saved in the browser and drive map generation, spawning, the safe zone, and rendering.
 
+Planned: configurable max HP and zone pacing presets (Normal / Extended / Marathon) —
+see [10_MAX_HP_MODE.md](10_MAX_HP_MODE.md).
+
 ## Player-facing flow
 
 1. **Start screen** — subtitle shows the current **player count** and **map** preset (highlighted;
