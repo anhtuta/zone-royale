@@ -32,6 +32,12 @@ export const AMMO_AUTO_PICK_RANGE = 34;
 /** Radius within which a bot collects loot it wants. */
 export const BOT_PICK_RANGE = 30;
 
+/**
+ * Bots only seek loot strictly inside `zone.r - BOT_LOOT_ZONE_INSET` from the zone centre
+ * (see `systems/ai.ts`). Zone supply placement uses the same inset so floor counts are reachable.
+ */
+export const BOT_LOOT_ZONE_INSET = 20;
+
 /** Collision radius of every combatant. */
 export const ENTITY_RADIUS = 18;
 
