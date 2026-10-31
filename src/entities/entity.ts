@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import { ENTITY_RADIUS, MAX_HP, TAU } from '../config/constants';
+import { ENTITY_RADIUS, MAX_HP, TAU, WEAPON_SLOT_COUNT } from '../config/constants';
 import { STARTING_AMMO, WEAPONS, type AmmoType, type WeaponType } from '../config/weapons';
 import { rand } from '../utils/random';
 import type { LootItem } from './loot';
@@ -17,11 +17,16 @@ export interface WeaponInstance {
   mag: number;
 }
 
-/** The two inventory slots. `null` means the slot is empty. */
-export type WeaponSlots = [WeaponInstance | null, WeaponInstance | null];
+/** Weapon inventory; length is {@link WEAPON_SLOT_COUNT}. `null` means empty. */
+export type WeaponSlots = (WeaponInstance | null)[];
 
-/** Index of an inventory slot. */
-export type SlotIndex = 0 | 1;
+/** Index of an inventory slot (0 .. {@link WEAPON_SLOT_COUNT} - 1). */
+export type SlotIndex = number;
+
+/** Creates an empty weapon inventory. */
+export function emptyWeaponSlots(): WeaponSlots {
+  return Array.from({ length: WEAPON_SLOT_COUNT }, () => null);
+}
 
 /** Per-bot AI memory. See `systems/ai.ts` for how each field is used. */
 export interface BotBrain {
@@ -89,7 +94,7 @@ export interface Entity {
   hp: number;
   /** Armor, 0..100. */
   armor: number;
-  /** Two weapon slots. */
+  /** Weapon inventory ({@link WEAPON_SLOT_COUNT} slots). */
   weapons: WeaponSlots;
   /** Selected slot. */
   slot: SlotIndex;
@@ -180,7 +185,11 @@ export function createEntity(
     angle,
     hp: MAX_HP,
     armor: 0,
-    weapons: [{ type: 'pistol', mag: WEAPONS.pistol.mag }, null],
+    weapons: (() => {
+      const slots = emptyWeaponSlots();
+      slots[0] = { type: 'pistol', mag: WEAPONS.pistol.mag };
+      return slots;
+    })(),
     slot: 0,
     ammo: { ...STARTING_AMMO },
     cool: 0,
@@ -208,11 +217,10 @@ export function activeWeapon(e: Entity): WeaponInstance | null {
 }
 
 /**
- * Returns the index of the slot that is not selected.
+ * Returns the next slot index, wrapping at {@link WEAPON_SLOT_COUNT}.
  *
- * @param slot - A slot index.
- * @returns The other slot.
+ * @param slot - Current slot.
  */
-export function otherSlot(slot: SlotIndex): SlotIndex {
-  return slot === 0 ? 1 : 0;
+export function nextWeaponSlot(slot: SlotIndex): SlotIndex {
+  return ((slot + 1) % WEAPON_SLOT_COUNT) as SlotIndex;
 }

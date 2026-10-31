@@ -4,12 +4,13 @@
  * @packageDocumentation
  */
 
-import { PICK_RANGE } from '../config/constants';
+import { PICK_RANGE, WEAPON_SLOT_COUNT } from '../config/constants';
 import { AMMO_COLORS, AMMO_NAMES, WEAPONS } from '../config/weapons';
 import type { Camera } from '../core/camera';
 import type { MouseState } from '../core/input';
 import type { World } from '../core/world';
 import { lootName } from '../entities/loot';
+import type { SlotIndex } from '../entities/entity';
 import { healthColor, panel, roundRect } from '../render/draw';
 import { countAlive } from '../systems/combat';
 import { nearestLoot } from '../systems/inventory';
@@ -147,7 +148,7 @@ function drawVitals(ctx: CanvasRenderingContext2D, world: World, vh: number): vo
 }
 
 /**
- * Draws the two weapon slots (bottom centre) and the reload / ammo hint.
+ * Draws weapon slots (bottom centre) and the reload / ammo hint.
  *
  * @param ctx - Drawing context.
  * @param world - The game world.
@@ -161,13 +162,14 @@ function drawWeaponSlots(
   vh: number,
 ): void {
   const p = world.player;
-  const sw = 170;
-  const sh = 62;
-  const gap = 10;
-  const sx = vw / 2 - sw - gap / 2;
+  const sw = 120;
+  const sh = 58;
+  const gap = 8;
+  const totalW = WEAPON_SLOT_COUNT * sw + (WEAPON_SLOT_COUNT - 1) * gap;
+  const sx = vw / 2 - totalW / 2;
   const sy = vh - sh - 16;
-  for (let s = 0; s < 2; s++) {
-    const w = p.weapons[s as 0 | 1];
+  for (let s = 0; s < WEAPON_SLOT_COUNT; s++) {
+    const w = p.weapons[s as SlotIndex];
     const x = sx + s * (sw + gap);
     const sel = s === p.slot;
     panel(ctx, x, sy, sw, sh);

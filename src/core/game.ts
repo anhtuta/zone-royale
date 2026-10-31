@@ -9,13 +9,13 @@
 import { renderAttract, renderGame } from '../render/renderer';
 import { playerPickup } from '../systems/inventory';
 import { buildEndSummary, createMatch, type MatchOutcome } from '../systems/match';
-import { startReload, switchSlot } from '../systems/weapons';
+import { startReload, switchSlot, cycleWeaponSlot } from '../systems/weapons';
+import { WEAPON_SLOT_COUNT } from '../config/constants';
 import { DEFAULT_MATCH_SETTINGS, type MatchSettings } from '../config/matchSettings';
 import { buildMinimapBase } from '../ui/minimap';
 import { loadMatchSettings } from '../ui/matchSettingsStorage';
 import { matchSettingsBlurb, SettingsModal } from '../ui/settings';
 import { Screens } from '../ui/screens';
-import { otherSlot } from '../entities/entity';
 import { AudioEngine } from './audio';
 import { Camera } from './camera';
 import { Viewport } from './canvas';
@@ -229,8 +229,8 @@ export class Game {
   }
 
   /**
-   * Handles discrete key presses: R reload, E pick up (or exit spectate), 1/2/Q
-   * switch weapon, Enter/Space start a match from the start or end screen.
+   * Handles discrete key presses: R reload, E pick up (or exit spectate), 1–N/Q
+   * switch weapon (N = {@link WEAPON_SLOT_COUNT}), Enter/Space start a match.
    *
    * @param k - Lower-cased key.
    */
@@ -242,9 +242,10 @@ export class Game {
     } else if (w.phase === 'playing' && p.alive) {
       if (k === 'r') startReload(p);
       else if (k === 'e') playerPickup(w);
-      else if (k === '1') switchSlot(p, 0);
-      else if (k === '2') switchSlot(p, 1);
-      else if (k === 'q') switchSlot(p, otherSlot(p.slot));
+      else if (k >= '1' && k <= '9') {
+        const n = Number(k);
+        if (n >= 1 && n <= WEAPON_SLOT_COUNT) switchSlot(p, n - 1);
+      } else if (k === 'q') cycleWeaponSlot(p);
     }
     if (
       !this.settingsModal.isOpen() &&
@@ -255,10 +256,10 @@ export class Game {
     }
   }
 
-  /** Mouse wheel toggles between the two weapon slots. */
+  /** Mouse wheel cycles to the next occupied weapon slot. */
   private handleWheel(): void {
     const p = this.world.player;
-    if (this.world.phase === 'playing' && p.alive) switchSlot(p, otherSlot(p.slot));
+    if (this.world.phase === 'playing' && p.alive) cycleWeaponSlot(p);
   }
 
   /**

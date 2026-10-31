@@ -1,24 +1,34 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { BOT_LOOT_ZONE_INSET } from '../src/config/constants';
 import {
   ammoFloorForAlive,
-  REFERENCE_PLAYER_COUNT,
+  weaponFloorForAlive,
   ZONE_LOOT_BASE_FLOOR,
-  ZONE_LOOT_EDGE_MARGIN,
+  ZONE_LOOT_FLOOR_ALIVE_DIVISOR,
   ZONE_LOOT_SUPPLY_MESSAGE,
+  ZONE_LOOT_WEAPON_BASE_FLOOR,
+  ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR,
   zoneLootClosedPlacementRadius,
 } from '../src/config/zoneLoot';
+import { WEAPONS } from '../src/config/weapons';
 import { PHASES } from '../src/config/zone';
 import { DEFAULT_MATCH_SETTINGS, zoneStartRadius } from '../src/config/matchSettings';
 import { stepWorld } from '../src/core/simulation';
 import type { PlayerControls } from '../src/systems/player';
 import {
   countGroundAmmo,
+  countGroundWeapons,
   fillZoneAmmoToFloors,
-  handleZoneAmmoSupplyEvent,
+  fillZoneWeaponsToFloor,
+  handleZoneSupplyEvent,
   isInsideZoneLootDisk,
   trySpawnAmmoInZone,
-  zoneLootUsableRadius,
+  trySpawnWeaponInZone,
+  zoneLootBotSeekRadius,
+  zoneLootOuterRadius,
+  zoneLootPlacementRadius,
 } from '../src/systems/zoneLoot';
+import { dist } from '../src/utils/math';
 import { createZone, updateZone } from '../src/systems/zone';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
 import { bot, makeWorld } from './helpers';
@@ -35,21 +45,72 @@ const IDLE: PlayerControls = {
 beforeEach(() => setRandomSource(createSeededRandom(90210)));
 afterEach(() => setRandomSource(Math.random));
 
+describe('weaponFloorForAlive', () => {
+  it('scales with alive count using the weapon floor divisor', () => {
+    const alive = 20;
+    const expected = Math.min(
+      alive,
+      Math.max(
+        1,
+        Math.round((ZONE_LOOT_WEAPON_BASE_FLOOR * alive) / ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR),
+      ),
+    );
+    expect(weaponFloorForAlive(alive)).toBe(expected);
+  });
+
+  it('never exceeds alive count and never drops below 1', () => {
+    expect(weaponFloorForAlive(3)).toBe(1);
+    expect(weaponFloorForAlive(100)).toBe(20);
+    expect(weaponFloorForAlive(100)).toBeLessThanOrEqual(100);
+  });
+});
+
 describe('ammoFloorForAlive', () => {
-  it('matches base floors at the reference alive count', () => {
+  it('scales with alive count using the floor divisor', () => {
+    const alive = 20;
     for (const type of Object.keys(ZONE_LOOT_BASE_FLOOR) as (keyof typeof ZONE_LOOT_BASE_FLOOR)[]) {
-      expect(ammoFloorForAlive(REFERENCE_PLAYER_COUNT, type)).toBe(ZONE_LOOT_BASE_FLOOR[type]);
+      const expected = Math.min(
+        alive,
+        Math.max(
+          1,
+          Math.round((ZONE_LOOT_BASE_FLOOR[type] * alive) / ZONE_LOOT_FLOOR_ALIVE_DIVISOR),
+        ),
+      );
+      expect(ammoFloorForAlive(alive, type)).toBe(expected);
     }
   });
 
   it('never exceeds alive count and never drops below 1', () => {
-    expect(ammoFloorForAlive(3, 'light')).toBe(1);
+    expect(ammoFloorForAlive(3, 'light')).toBe(2);
     expect(ammoFloorForAlive(3, 'light')).toBeLessThanOrEqual(3);
+    expect(ammoFloorForAlive(2, 'medium')).toBe(1);
     expect(ammoFloorForAlive(2, 'medium')).toBeLessThanOrEqual(2);
   });
 
   it('scales up with more survivors', () => {
     expect(ammoFloorForAlive(100, 'light')).toBeGreaterThan(ammoFloorForAlive(20, 'light'));
+  });
+});
+
+describe('zone loot placement radius', () => {
+  it('insets the outer safe disk by BOT_LOOT_ZONE_INSET for spawns', () => {
+    const world = makeWorld({ loot: [] });
+    world.zone.r = 40;
+    expect(zoneLootOuterRadius(world.zone, 'phaseAdvanced')).toBe(40);
+    expect(zoneLootPlacementRadius(world.zone, 'phaseAdvanced')).toBe(
+      40 - BOT_LOOT_ZONE_INSET,
+    );
+    expect(trySpawnAmmoInZone(world, 'light', 'phaseAdvanced')).toBe(true);
+  });
+
+  it('spawned supply is inside the bot loot seek disk', () => {
+    const world = makeWorld({ loot: [] });
+    handleZoneSupplyEvent(world, 'phaseAdvanced');
+    const seekR = zoneLootBotSeekRadius(world.zone);
+    expect(seekR).toBeGreaterThan(0);
+    for (const item of world.loot) {
+      expect(dist(item.x, item.y, world.zone.x, world.zone.y)).toBeLessThan(seekR);
+    }
   });
 });
 
@@ -61,6 +122,13 @@ describe('zone ammo placement', () => {
     const box = world.loot[0]!;
     expect(box.kind).toBe('ammo');
     expect(isInsideZoneLootDisk(world, box.x, box.y)).toBe(true);
+  });
+
+  it('places boxes when the safe zone is smaller than the old edge margin', () => {
+    const world = makeWorld({ loot: [] });
+    world.zone.r = 40;
+    expect(zoneLootPlacementRadius(world.zone, 'phaseAdvanced')).toBe(20);
+    expect(trySpawnAmmoInZone(world, 'light', 'phaseAdvanced')).toBe(true);
   });
 
   it('fills each family up to the survivor-scaled floor', () => {
@@ -75,10 +143,34 @@ describe('zone ammo placement', () => {
   });
 });
 
-describe('handleZoneAmmoSupplyEvent', () => {
+describe('zone weapon placement', () => {
+  it('places weapons inside the safe disk with full mag and paired ammo', () => {
+    const world = makeWorld({ loot: [] });
+    expect(trySpawnWeaponInZone(world)).toBe(true);
+    expect(world.loot).toHaveLength(2);
+    const weapon = world.loot.find((l) => l.kind === 'weapon');
+    const ammo = world.loot.find((l) => l.kind === 'ammo');
+    expect(weapon).toBeDefined();
+    expect(ammo).toBeDefined();
+    if (weapon?.kind !== 'weapon' || ammo?.kind !== 'ammo') return;
+    expect(weapon.mag).toBe(WEAPONS[weapon.type].mag);
+    expect(ammo.type).toBe(WEAPONS[weapon.type].ammo);
+    expect(isInsideZoneLootDisk(world, weapon.x, weapon.y)).toBe(true);
+  });
+
+  it('fills weapons up to the survivor-scaled floor', () => {
+    const world = makeWorld({ loot: [] });
+    const spawned = fillZoneWeaponsToFloor(world);
+    expect(spawned).toBeGreaterThan(0);
+    const alive = world.entities.filter((e) => e.alive).length;
+    expect(countGroundWeapons(world.loot)).toBeGreaterThanOrEqual(weaponFloorForAlive(alive));
+  });
+});
+
+describe('handleZoneSupplyEvent', () => {
   it('telegraphs when boxes spawn', () => {
     const world = makeWorld({ loot: [] });
-    handleZoneAmmoSupplyEvent(world, 'phaseAdvanced');
+    handleZoneSupplyEvent(world, 'phaseAdvanced');
     expect(world.loot.length).toBeGreaterThan(0);
     expect(world.killfeed.some((e) => e.sys === ZONE_LOOT_SUPPLY_MESSAGE)).toBe(true);
     expect(world.message.text).toBe(ZONE_LOOT_SUPPLY_MESSAGE);
@@ -88,10 +180,11 @@ describe('handleZoneAmmoSupplyEvent', () => {
   it('does not telegraph when already at the floor', () => {
     const world = makeWorld({ loot: [] });
     fillZoneAmmoToFloors(world);
+    fillZoneWeaponsToFloor(world);
     world.killfeed = [];
     world.message = { text: '', t: 0 };
     const before = world.loot.length;
-    handleZoneAmmoSupplyEvent(world, 'phaseAdvanced');
+    handleZoneSupplyEvent(world, 'phaseAdvanced');
     expect(world.loot.length).toBe(before);
     expect(world.killfeed).toHaveLength(0);
     expect(world.message.t).toBe(0);
@@ -99,7 +192,7 @@ describe('handleZoneAmmoSupplyEvent', () => {
 
   it('ignores shrinkStarted', () => {
     const world = makeWorld({ loot: [] });
-    handleZoneAmmoSupplyEvent(world, 'shrinkStarted');
+    handleZoneSupplyEvent(world, 'shrinkStarted');
     expect(world.loot).toHaveLength(0);
   });
 
@@ -107,15 +200,36 @@ describe('handleZoneAmmoSupplyEvent', () => {
     const world = makeWorld({ loot: [] });
     world.zone.state = 'final';
     world.zone.r = 0;
-    expect(zoneLootUsableRadius(world.zone, 'phaseAdvanced')).toBe(0);
-    const closedR = zoneLootUsableRadius(world.zone, 'closed');
-    expect(closedR).toBeGreaterThan(0);
-    handleZoneAmmoSupplyEvent(world, 'closed');
+    expect(zoneLootOuterRadius(world.zone, 'phaseAdvanced')).toBe(0);
+    const closedOuter = zoneLootOuterRadius(world.zone, 'closed');
+    expect(closedOuter).toBeGreaterThan(0);
+    expect(zoneLootPlacementRadius(world.zone, 'closed')).toBe(
+      closedOuter - BOT_LOOT_ZONE_INSET,
+    );
+    handleZoneSupplyEvent(world, 'closed');
     expect(world.loot.length).toBeGreaterThan(0);
     for (const item of world.loot) {
       if (item.kind !== 'ammo') continue;
       expect(isInsideZoneLootDisk(world, item.x, item.y, 'closed')).toBe(true);
     }
+    expect(world.killfeed.some((e) => e.sys === ZONE_LOOT_SUPPLY_MESSAGE)).toBe(true);
+  });
+
+  it('telegraphs when only weapons need topping up', () => {
+    const world = makeWorld({ loot: [] });
+    fillZoneAmmoToFloors(world);
+    const alive = world.entities.filter((e) => e.alive).length;
+    for (const type of Object.keys(countGroundAmmo(world.loot)) as (keyof ReturnType<
+      typeof countGroundAmmo
+    >)[]) {
+      expect(countGroundAmmo(world.loot)[type]).toBeGreaterThanOrEqual(
+        ammoFloorForAlive(alive, type),
+      );
+    }
+    world.killfeed = [];
+    world.message = { text: '', t: 0 };
+    handleZoneSupplyEvent(world, 'phaseAdvanced');
+    expect(countGroundWeapons(world.loot)).toBeGreaterThanOrEqual(weaponFloorForAlive(alive));
     expect(world.killfeed.some((e) => e.sys === ZONE_LOOT_SUPPLY_MESSAGE)).toBe(true);
   });
 });
@@ -128,12 +242,13 @@ describe('zoneLootClosedPlacementRadius', () => {
     expect(zoneLootClosedPlacementRadius([0, 0])).toBe(0);
   });
 
-  it('matches endgame usable disk inset', () => {
+  it('matches endgame placement disk at full radius', () => {
     const zone = createZone(DEFAULT_MATCH_SETTINGS.mapSize);
     zone.state = 'final';
     zone.r = 0;
     const endR = zoneLootClosedPlacementRadius(zone.phases.map((p) => p.r));
-    expect(zoneLootUsableRadius(zone, 'closed')).toBe(endR - ZONE_LOOT_EDGE_MARGIN);
+    expect(zoneLootOuterRadius(zone, 'closed')).toBe(endR);
+    expect(zoneLootPlacementRadius(zone, 'closed')).toBe(endR - BOT_LOOT_ZONE_INSET);
   });
 });
 

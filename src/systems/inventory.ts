@@ -5,7 +5,7 @@
  */
 
 import { BOT_AMMO_CAP, WEAPONS } from '../config/weapons';
-import { MAX_ARMOR, MAX_HP, PICK_RANGE } from '../config/constants';
+import { MAX_ARMOR, MAX_HP, PICK_RANGE, WEAPON_SLOT_COUNT } from '../config/constants';
 import type { World } from '../core/world';
 import type { Entity, SlotIndex, WeaponInstance } from '../entities/entity';
 import { lootName, type LootItem, type WeaponLoot } from '../entities/loot';
@@ -23,23 +23,35 @@ export interface WeaponSlotChoice {
 }
 
 /**
- * Decides which slot a new weapon goes into: the first empty slot; when both
- * are full the player swaps out their *selected* weapon, while bots swap out
- * their *weaker* weapon (lower tier; slot 0 on a tie).
+ * Decides which slot a new weapon goes into: the first empty slot; when all
+ * slots are full the player swaps out their *selected* weapon, while bots swap out
+ * their *weaker* weapon (lowest tier; lowest slot index on a tie).
  *
  * @param e - Entity picking up the weapon.
  * @returns Target slot and the weapon it displaces.
  */
 export function chooseWeaponSlot(e: Entity): WeaponSlotChoice {
-  const [w0, w1] = e.weapons;
-  if (!w0) return { slot: 0, replaced: null };
-  if (!w1) return { slot: 1, replaced: null };
-  const slot: SlotIndex = e.isPlayer
-    ? e.slot
-    : WEAPONS[w0.type].tier <= WEAPONS[w1.type].tier
-      ? 0
-      : 1;
+  for (let i = 0; i < WEAPON_SLOT_COUNT; i++) {
+    if (!e.weapons[i as SlotIndex]) return { slot: i as SlotIndex, replaced: null };
+  }
+  const slot: SlotIndex = e.isPlayer ? e.slot : weakestWeaponSlot(e);
   return { slot, replaced: e.weapons[slot] };
+}
+
+/** Slot holding the lowest-tier weapon (lowest index on a tie). */
+function weakestWeaponSlot(e: Entity): SlotIndex {
+  let slot: SlotIndex = 0;
+  let tier = Infinity;
+  for (let i = 0; i < WEAPON_SLOT_COUNT; i++) {
+    const w = e.weapons[i as SlotIndex];
+    if (!w) continue;
+    const t = WEAPONS[w.type].tier;
+    if (t < tier || (t === tier && i < slot)) {
+      tier = t;
+      slot = i as SlotIndex;
+    }
+  }
+  return slot;
 }
 
 /**
@@ -195,13 +207,14 @@ export function playerPickup(world: World): boolean {
  * @returns `true` if the bot wants the item.
  */
 export function botWants(b: Entity, it: LootItem): boolean {
-  const [w0, w1] = b.weapons;
   switch (it.kind) {
     case 'weapon': {
       const owns = b.weapons.some((w) => w && w.type === it.type);
-      if (!w0 || !w1) return !owns;
+      const carried = b.weapons.filter((w): w is WeaponInstance => w !== null);
+      if (carried.length < WEAPON_SLOT_COUNT) return !owns;
       const tier = WEAPONS[it.type].tier;
-      return tier > Math.min(WEAPONS[w0.type].tier, WEAPONS[w1.type].tier) && !owns;
+      const weakest = Math.min(...carried.map((w) => WEAPONS[w.type].tier));
+      return tier > weakest && !owns;
     }
     case 'ammo':
       return (

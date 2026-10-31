@@ -26,28 +26,27 @@ Vocab:
 - Keep existing procedural rock circles and painterly trees when the flag is false.
 - Asset layout under `src/assets/sprites/obstacles/`.
 
-## World coordinates and anchors
+## World coordinates
+
+See **[09_TREE_COLLISION_CENTER.md](09_TREE_COLLISION_CENTER.md)** for why trees now share the
+same stored-point model as rocks.
 
 | Kind | `(x, y)` meaning | Collision |
 | ---- | ---------------- | --------- |
 | **Rock** | Centre of the collision circle | Circle radius `r` at `(x, y)` |
-| **Tree** | **Bottom-centre** on the ground (sprite foot) | Circle radius `r` at **derived** centre `(x, y - lift)` |
+| **Tree** | **Same:** trunk collision circle centre | Circle radius `r` at `(x, y)` |
 
-`lift` is how far the collision centre sits **above** the foot, in pixels or as a
-fraction of `r`. It lives in the per-variant catalog (and can default from `r` until
-tuned). All movement, bullets, line-of-sight, loot clearance, and AI must use the
-**collision centre**, not the foot.
+Trees still draw a larger canopy from `vr`; the pink debug ring is the stored centre. Sprite
+**foot** (bottom-centre of art) is derived below the centre via `collisionLiftR`, then optional
+visual `drawOffset` — see `treeModelFoot` / `treeSpriteFoot` in
+[`world/obstacleGeometry.ts`](../src/world/obstacleGeometry.ts).
 
-Pure helpers in [`world/obstacleGeometry.ts`](../src/world/obstacleGeometry.ts)
-(`treeSpriteFoot`, `treeCollisionCenter`, `circleObstacleCollision`) so render,
-mapgen, minimap, and tests share one definition.
+Pure helpers (`treeCollisionCenter`, `circleObstacleCollision`, …) so render, mapgen, minimap,
+and tests share one definition.
 
-**Rocks:** sprite is anchored so its visual mass is centred on `(x, y)` (tune per
-variant with offset/scale in config).
+**Rocks:** sprite centred on `(x, y)` with **visual-only** `drawOffset`.
 
-**Trees:** sprite is drawn with its **bottom-centre** at `(x, y)`; height/width come
-from `vr` and natural aspect ratio (same idea as today’s `SPRITE_HEIGHT_MUL` in
-[`treeRenderer.ts`](../src/render/treeRenderer.ts)).
+**Trees:** sprite bottom-centre at `treeSpriteFoot`; height from `vr × heightMul`.
 
 ## Asset layout
 
@@ -80,9 +79,9 @@ Data only — no `document` / `Image`. Suggested shape per variant:
 | `heightMul` | World height from rock visual base `r` or tree `vr` |
 | `anchor` | `'center'` (rock) or `'bottom-center'` (tree) |
 | `mapgenBaseR` | Fixed spawn radius per variant (same art ⇒ same size) |
-| `collisionLiftR` | Tree: collision centre at `footY − collisionLiftR × r` |
+| `collisionLiftR` | Tree: model foot at `y + collisionLiftR × r`; stored `(x, y)` is the circle **centre** |
 | `collisionRadiusScale` | Multiplier on `mapgenBaseR` for **stored** `r` only (not sprite scale) |
-| `drawOffsetX`, `drawOffsetY` | Nudge draw + foot/collision after anchor |
+| `drawOffsetX`, `drawOffsetY` | **Visual only** — rocks: from collision centre; trees: from model foot |
 | `shadowOffsetX`, `shadowOffsetY`, `shadowRadiusXMul`, `shadowRadiusYMul` | Ellipse shadow (see [Ground shadows](#ground-shadows)) |
 
 Shared layout type: **`ObstacleSpriteLayout`** (`RockSpriteDef` / `TreeSpriteDef`).
@@ -107,7 +106,7 @@ subtle global tint later.
 
 - `USE_OBSTACLE_IMAGES` from `VITE_USE_OBSTACLE_IMAGES` (default `false` in
   [`.env.example`](../.env.example)).
-- `VITE_DEBUG_OBSTACLE_COLLISION` — pink collision rings for tuning (see Phase 6).
+- `VITE_DEBUG_OBSTACLE_COLLISION` — pink collision rings at stored `(x, y)` (see Phase 6).
 - When false: no image loads required; `loadObstacleSprites()` resolves immediately.
 - When true: preload all rock + tree variants at boot (parallel `Promise.all`).
 
@@ -145,7 +144,7 @@ In `scatter()`:
 
 1. Pick `variant` with the same seeded RNG as today (`utils/random.ts`).
 2. Set `r` from `mapgenBaseR × collisionRadiusScale` (per variant).
-3. Trees: `vr = mapgenBaseR × TREE_CANOPY_VR_MUL` (visual size independent of collision scale); `(x, y)` is the **foot**.
+3. Trees: `vr = mapgenBaseR × TREE_CANOPY_VR_MUL`; `(x, y)` is the **collision centre** (same as rocks).
 
 ## Implementation phases
 
@@ -227,8 +226,8 @@ Edit [`config/obstacleSprites.ts`](../src/config/obstacleSprites.ts) per variant
 | Field | Effect |
 | ----- | ------ |
 | **`heightMul`** | Sprite height = `vr × heightMul` — **make the tree bigger** by raising this (e.g. 3.0 → 3.5). |
-| **`drawOffsetY`** | Moves the **image** up (negative) or down (positive) relative to map `(x,y)`. Collision foot uses the same offset. |
-| **`collisionLiftR`** | Moves the **collision circle up**: centre at `footY − collisionLiftR × r`. Raise if the pink debug ring sits too low (try +0.1 steps). |
+| **`drawOffsetY`** | **Visual only:** moves PNG/shadow (trees: from model foot; rocks: from centre) |
+| **`collisionLiftR`** | Tree: distance from model foot **up** to stored collision centre (`× r`) |
 | **`mapgenBaseR`** | Fixed spawn size for this variant (same image ⇒ same `r`, `vr`, and draw scale). |
 | **`collisionRadiusScale`** | **Collision only:** stored `r = mapgenBaseR × scale`. Does **not** change sprite size (`vr` / rock `heightMul` use `mapgenBaseR`). |
 | **`shadowOffsetX`** / **`shadowOffsetY`** | Shadow centre offset (pixels) from anchor after `drawOffset` (rock: centre; tree: foot). |
@@ -240,7 +239,7 @@ All four live on **`ObstacleSpriteLayout`** (shared by rocks and trees).
 | ------- | ----- |
 | `foothill_*` | Slightly smaller collision (`~0.9×`) vs grass fringe |
 | `*_cake` | Tighter collision, sprite nudged up (`drawOffsetY`) |
-| `xmas_2025` / `clashmas_*` | Tall art with transparent padding — higher `heightMul`, negative `drawOffsetY`, `collisionLiftR` ~1.0+ |
+| `xmas_2025` / `clashmas_*` | Tall art — higher `heightMul`, tune `collisionLiftR` ~1.0+ |
 
 Use `VITE_DEBUG_OBSTACLE_COLLISION=true`, restart `pnpm dev`, tweak catalog, refresh.
 Gameplay still uses circles only (no canopy hit-test).
@@ -256,7 +255,7 @@ Obstacle (and entity) footprints use **one** helper — no `ctx.filter` or `shad
 | Global darkness / feather | `GROUND_SHADOW_CENTER_ALPHA`, `GROUND_SHADOW_CORE_STOP` in the same file |
 | Position & size | Per variant on **`ObstacleSpriteLayout`**: `shadowOffsetX/Y`, `shadowRadiusXMul/YMul` |
 | Rocks | Centre anchor + `drawOffset`; radii `r × mul` |
-| Trees | Foot + `drawOffset`; radii `vr × mul` |
+| Trees | `treeSpriteFoot` + shadow offsets; radii `vr × mul` |
 | Entities | [`entityRenderer.ts`](../src/render/entityRenderer.ts) — fixed offset `(3, 5)`, radii `r` / `0.85r` |
 
 Walls keep a simple offset `fillRect` shadow in `worldRenderer` (not the gradient ellipse).

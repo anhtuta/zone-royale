@@ -26,9 +26,9 @@ export interface ObstacleSpriteLayout {
   readonly heightMul: number;
   /** How `(x, y)` maps to the bitmap. */
   readonly anchor: ObstacleSpriteAnchor;
-  /** Nudge draw position in world pixels (after anchor). */
+  /** Nudge draw position in world pixels (after anchor). Rocks: from collision centre. Trees: from model foot (visual only). */
   readonly drawOffsetX: number;
-  /** Nudge draw position in world pixels (after anchor). */
+  /** Nudge draw position in world pixels (after anchor). Trees: from model foot (visual only). */
   readonly drawOffsetY: number;
   /**
    * Multiplier on mapgen **base** radius for **collision only** (stored obstacle `r`).
@@ -83,8 +83,8 @@ export interface TreeSpriteDef extends ObstacleSpriteLayout {
   /** Trees use foot (bottom-centre) anchoring. */
   readonly anchor: 'bottom-center';
   /**
-   * Collision centre is `(footY − collisionLiftR × r)` where foot includes `drawOffsetY`.
-   * Increase to move the circle **up** toward the trunk (typical range ~0.9–1.3 for tall sprites).
+   * Stored obstacle `(x, y)` is the collision centre. Model foot is `y + collisionLiftR × r`.
+   * Increase to move the circle **up** toward the canopy (typical range ~0.9–2.2 for tall sprites).
    */
   readonly collisionLiftR: number;
 }
@@ -189,9 +189,8 @@ const treeLayout = (id: string, src: string, tuning: TreeTuning = {}): TreeSprit
 export const TREE_SPRITES: readonly TreeSpriteDef[] = [
   treeLayout('bb_grove', bbGroveUrl, {
     heightMul: 3.05,
-    drawOffsetY: -8,
-    collisionLiftR: 1.3,
-    collisionRadiusScale: 1.7,
+    collisionLiftR: 1.1,
+    collisionRadiusScale: 2,
     shadowOffsetX: 0,
     shadowOffsetY: -19,
     shadowRadiusXMul: 1.3,
@@ -199,7 +198,6 @@ export const TREE_SPRITES: readonly TreeSpriteDef[] = [
   }),
   treeLayout('clashmas_2015', clashmas2015Url, {
     heightMul: 2.2,
-    drawOffsetY: -10,
     collisionLiftR: 1.4,
     collisionRadiusScale: 1.2,
     shadowOffsetX: 0,
@@ -209,17 +207,15 @@ export const TREE_SPRITES: readonly TreeSpriteDef[] = [
   }),
   treeLayout('clashmas_2024', clashmas2024Url, {
     heightMul: 2.4,
-    drawOffsetY: -10,
     collisionLiftR: 1.6,
     collisionRadiusScale: 1.1,
-    shadowOffsetX: -1,
+    shadowOffsetX: 0,
     shadowOffsetY: -19,
     shadowRadiusXMul: 0.6,
     shadowRadiusYMul: 0.2,
   }),
   treeLayout('large_tree', largeTreeUrl, {
     heightMul: 2.85,
-    drawOffsetY: -6,
     collisionLiftR: 1.3,
     collisionRadiusScale: 1.7,
     shadowOffsetX: 0,
@@ -229,7 +225,6 @@ export const TREE_SPRITES: readonly TreeSpriteDef[] = [
   }),
   treeLayout('xmas_2025', xmas2025Url, {
     heightMul: 3.35,
-    drawOffsetY: -12,
     collisionLiftR: 2.15,
     collisionRadiusScale: 1.08,
     shadowOffsetX: 0,

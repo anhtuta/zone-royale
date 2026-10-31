@@ -32,6 +32,12 @@ export const AMMO_AUTO_PICK_RANGE = 34;
 /** Radius within which a bot collects loot it wants. */
 export const BOT_PICK_RANGE = 30;
 
+/**
+ * Bots only seek loot strictly inside `zone.r - BOT_LOOT_ZONE_INSET` from the zone centre
+ * (see `systems/ai.ts`). Zone supply placement uses the same inset so floor counts are reachable.
+ */
+export const BOT_LOOT_ZONE_INSET = 20;
+
 /** Collision radius of every combatant. */
 export const ENTITY_RADIUS = 18;
 
@@ -40,6 +46,9 @@ export const MAX_HP = 100;
 
 /** Maximum armor of a combatant. */
 export const MAX_ARMOR = 100;
+
+/** Number of weapons a combatant can carry at once. */
+export const WEAPON_SLOT_COUNT = 3;
 
 /** Fraction of incoming (non-zone) damage that armor absorbs while it lasts. */
 export const ARMOR_ABSORB = 0.6;

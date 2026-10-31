@@ -17,7 +17,7 @@ dependencies; sound effects are synthesised with the Web Audio API.
 | Left click               | Shoot (hold for automatic weapons)              |
 | `R`                      | Reload                                          |
 | `E`                      | Pick up loot (ammo is picked up automatically)  |
-| `1` / `2`, `Q`, wheel    | Switch weapon                                   |
+| `1`–`3`, `Q`, wheel    | Switch weapon                                   |
 | `Enter` / `Space`        | Start / play again from the start or end screen |
 
 ## Weapons
