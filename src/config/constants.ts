@@ -46,7 +46,7 @@ export const BASE_MAX_HP = 100;
 
 /** Multiplier for zone wait/shrink/dps from a match's {@link MatchSettings.maxHp}. */
 export function hpScale(maxHp: number): number {
-  return maxHp / BASE_MAX_HP;
+  return maxHp / BASE_MAX_HP / 2.5;
 }
 
 /** Maximum armor of a combatant. */

@@ -200,6 +200,7 @@ export function fillZoneAmmoToFloors(world: World, options: FillZoneAmmoOptions 
       deficit--;
     }
   }
+  console.log('alive', alive, 'ammo spawned', spawned);
   return spawned;
 }
 
@@ -224,6 +225,7 @@ export function fillZoneWeaponsToFloor(world: World, options: FillZoneWeaponsOpt
     onGround++;
     deficit--;
   }
+  console.log('alive', alive, 'weapons spawned', spawned);
   return spawned;
 }
 

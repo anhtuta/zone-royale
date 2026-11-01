@@ -48,6 +48,7 @@ function scaledPhaseRadius(frac: number, startRadius: number): number {
  */
 export function buildZonePhases(startRadius: number, maxHp: number = BASE_MAX_HP): readonly ZonePhase[] {
   const scale = hpScale(maxHp);
+  console.log('PHASE_TIMING scale', scale);
   return PHASE_TIMING.map((phase, i) => ({
     wait: phase.wait * scale,
     shrink: phase.shrink * scale,
