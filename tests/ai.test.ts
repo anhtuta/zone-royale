@@ -112,9 +112,7 @@ describe('zone awareness', () => {
       const p = chooseWanderPoint(b, w.zone, false);
       expect(p.x).toBeGreaterThanOrEqual(60);
       expect(p.x).toBeLessThanOrEqual(w.mapSize - 60);
-      expect(Math.hypot(p.x - w.zone.tx, p.y - w.zone.ty)).toBeLessThanOrEqual(
-        w.zone.tr * 0.75 + 1e-6,
-      );
+      expect(Math.hypot(p.x - w.zone.tx, p.y - w.zone.ty)).toBeLessThanOrEqual(w.zone.tr * 0.75 + 1e-6);
     }
   });
 });
@@ -124,12 +122,7 @@ describe('updateBot', () => {
     const w = makeWorld();
     const b = bot(1500, 1700);
     w.entities.push(b);
-    b.weapons = [
-      { type: 'pistol', mag: 0 },
-      { type: 'smg', mag: 30 },
-      null,
-      null,
-    ];
+    b.weapons = [{ type: 'pistol', mag: 0 }, { type: 'smg', mag: 30 }, null, null];
     b.ammo.light = 0;
     updateBot(w, b, 1 / 60);
     expect(b.slot).toBe(1);

@@ -65,7 +65,7 @@ zone-royale/
 | File                | Contents                                                              |
 | ------------------- | --------------------------------------------------------------------- |
 | `constants.ts`      | Speeds, sight/pickup ranges, HP/armor caps, timings, colors             |
-| `matchSettings.ts`  | Per-match map size and player-count presets (see [05_MATCH_SETTINGS.md](05_MATCH_SETTINGS.md)) |
+| `matchSettings.ts`  | Per-match map size, player count, and HP mode (see [05_MATCH_SETTINGS.md](05_MATCH_SETTINGS.md), [10_MAX_HP_MODE.md](10_MAX_HP_MODE.md)) |
 | `weapons.ts`        | `WEAPONS` stat table (5 weapons), ammo families, colors, box sizes    |
 | `zone.ts`           | Phase timing/DPS; end radii scale via `buildZonePhases()`               |
 | `bots.ts`           | Bot names and body colors                                             |

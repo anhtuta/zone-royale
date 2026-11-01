@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { MAX_HP } from '../src/config/constants';
 import { applyDamage, countAlive, eliminate, splitDamage } from '../src/systems/combat';
 import { pushSystemFeed } from '../src/systems/feedback';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
@@ -30,7 +29,7 @@ describe('applyDamage', () => {
     w.entities.push(b);
     b.armor = 50;
     applyDamage(w, b, 20, w.player, 'Pistol');
-    expect(b.hp).toBe(MAX_HP - 8);
+    expect(b.hp).toBe(w.maxHp - 8);
     expect(b.armor).toBe(38);
     expect(w.player.damage).toBe(8);
     expect(w.floaters[0]?.text).toBe('8');
@@ -65,7 +64,7 @@ describe('eliminations', () => {
     const b = bot(1700, 1500, 'B');
     w.entities.push(a, b);
     w.gameTime = 42;
-    applyDamage(w, a, MAX_HP, w.player, 'Sniper');
+    applyDamage(w, a, w.maxHp, w.player, 'Sniper');
     expect(a.alive).toBe(false);
     expect(a.hp).toBe(0);
     expect(a.place).toBe(3);
@@ -89,9 +88,10 @@ describe('eliminations', () => {
     a.weapons[1] = { type: 'rifle', mag: 7 };
     a.ammo.medium = 15;
     eliminate(w, a, w.player, 'Pistol');
-    expect(
-      w.loot.filter((l) => l.kind === 'weapon').map((l) => l.kind === 'weapon' && l.type),
-    ).toEqual(['pistol', 'rifle']);
+    expect(w.loot.filter((l) => l.kind === 'weapon').map((l) => l.kind === 'weapon' && l.type)).toEqual([
+      'pistol',
+      'rifle',
+    ]);
     expect(w.loot.find((l) => l.kind === 'weapon' && l.type === 'rifle')).toMatchObject({ mag: 7 });
     expect(w.loot.filter((l) => l.kind === 'ammo')).toHaveLength(2);
   });
@@ -117,7 +117,7 @@ describe('eliminations', () => {
     const w = makeWorld();
     const a = bot(1600, 1500, 'Zed');
     w.entities.push(a);
-    applyDamage(w, a, MAX_HP, null, null);
+    applyDamage(w, a, w.maxHp, null, null);
     expect(w.killfeed.at(-1)).toMatchObject({ killer: null, victim: 'Zed' });
   });
 

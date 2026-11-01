@@ -20,12 +20,7 @@ import { drawWorld } from './worldRenderer';
  * @param now - Timestamp in ms (drives the pan).
  * @param frameStats - Optional FPS (match clock omitted on menu).
  */
-export function renderAttract(
-  vp: Viewport,
-  world: World,
-  now: number,
-  frameStats?: FrameOverlayStats,
-): void {
+export function renderAttract(vp: Viewport, world: World, now: number, frameStats?: FrameOverlayStats): void {
   const ctx = vp.ctx;
   const cam = world.camera;
   const mapSize = world.mapSize;

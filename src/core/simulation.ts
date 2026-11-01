@@ -60,8 +60,7 @@ export function stepWorld(world: World, controls: PlayerControls, dt: number): M
     e.y += e.vy * dt;
   }
   separateBodies(world.entities);
-  for (const e of world.entities)
-    if (e.alive) resolveCollision(world.obstacles, e, world.mapSize);
+  for (const e of world.entities) if (e.alive) resolveCollision(world.obstacles, e, world.mapSize);
   const dps = zoneDps(world.zone);
   for (const e of world.entities) {
     if (e.alive && isOutsideZone(world.zone, e.x, e.y)) {

@@ -10,15 +10,13 @@ import {
 import { matchSettingsBlurb } from '../src/ui/settings';
 
 describe('match settings', () => {
-  it('defaults to medium map and 50 players', () => {
-    expect(DEFAULT_MATCH_SETTINGS).toEqual({ mapSize: 5000, numPlayers: 50 });
+  it('defaults to medium map, 50 players, and Normal HP', () => {
+    expect(DEFAULT_MATCH_SETTINGS).toEqual({ mapSize: 5000, numPlayers: 50, maxHp: 100 });
     expect(numBots(DEFAULT_MATCH_SETTINGS)).toBe(49);
   });
 
   it('normalizes invalid stored values', () => {
-    expect(normalizeMatchSettings({ mapSize: 999, numPlayers: 12 })).toEqual(
-      DEFAULT_MATCH_SETTINGS,
-    );
+    expect(normalizeMatchSettings({ mapSize: 999, numPlayers: 12 })).toEqual(DEFAULT_MATCH_SETTINGS);
   });
 
   it('caps player count on small maps', () => {
@@ -27,6 +25,7 @@ describe('match settings', () => {
     expect(normalizeMatchSettings({ mapSize: 1000, numPlayers: 1000 })).toEqual({
       mapSize: 1000,
       numPlayers: 100,
+      maxHp: 100,
     });
   });
 
@@ -38,5 +37,6 @@ describe('match settings', () => {
     const html = matchSettingsBlurb(DEFAULT_MATCH_SETTINGS);
     expect(html).toContain('class="blurb-players">50</span>');
     expect(html).toContain('class="blurb-map">medium</span>');
+    expect(html).toContain('class="blurb-hp">normal</span>');
   });
 });

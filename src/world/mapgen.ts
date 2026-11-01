@@ -81,12 +81,7 @@ const DECOR_COLORS = [
  * @param houseCount - How many houses to attempt.
  * @param houseGap - Minimum clearance between house footprints.
  */
-function placeHouses(
-  map: GameMap,
-  mapSize: number,
-  houseCount: number,
-  houseGap: number,
-): void {
+function placeHouses(map: GameMap, mapSize: number, houseCount: number, houseGap: number): void {
   for (let i = 0; i < houseCount; i++) {
     for (let tries = 0; tries < 80; tries++) {
       const w = randInt(220, 340);
@@ -125,23 +120,13 @@ function scatter(
   for (let i = 0; i < count; i++) {
     for (let tries = 0; tries < 40; tries++) {
       const variant = randInt(0, variantCount - 1);
-      const baseR =
-        kind === 'tree'
-          ? treeSpriteDef(variant).mapgenBaseR
-          : rockSpriteDef(variant).mapgenBaseR;
-      const r =
-        kind === 'tree'
-          ? treeCollisionRadius(baseR, variant)
-          : rockCollisionRadius(baseR, variant);
+      const baseR = kind === 'tree' ? treeSpriteDef(variant).mapgenBaseR : rockSpriteDef(variant).mapgenBaseR;
+      const r = kind === 'tree' ? treeCollisionRadius(baseR, variant) : rockCollisionRadius(baseR, variant);
       const x = rand(60, mapSize - 60);
       const y = rand(60, mapSize - 60);
       if (kind === 'tree') {
         const vr = baseR * TREE_CANOPY_VR_MUL;
-        if (
-          inHouse(map.houses, x, y, r + 50) ||
-          !circleFree(map.obstacles, x, y, r + 45, mapSize)
-        )
-          continue;
+        if (inHouse(map.houses, x, y, r + 50) || !circleFree(map.obstacles, x, y, r + 45, mapSize)) continue;
         map.obstacles.push({
           t: 'tree',
           x,
@@ -152,11 +137,7 @@ function scatter(
           shade: rand(-12, 12),
         });
       } else {
-        if (
-          inHouse(map.houses, x, y, r + 50) ||
-          !circleFree(map.obstacles, x, y, r + 45, mapSize)
-        )
-          continue;
+        if (inHouse(map.houses, x, y, r + 50) || !circleFree(map.obstacles, x, y, r + 45, mapSize)) continue;
         map.obstacles.push({
           t: 'rock',
           x,

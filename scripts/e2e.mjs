@@ -29,6 +29,8 @@ if (!existsSync(join(root, 'index.html'))) {
 
 // Serve dist/ under a sub-path to prove the build works with base './' (like GitHub Pages).
 const BASE = '/zone-royale/';
+/** Matches default numPlayers in src/config/matchSettings.ts (fresh browser, no localStorage). */
+const DEFAULT_NUM_PLAYERS = 50;
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url ?? '/', 'http://localhost');
@@ -43,9 +45,7 @@ const server = createServer(async (req, res) => {
     }
     if ((await stat(p).catch(() => null))?.isDirectory()) p = join(p, 'index.html');
     const body = await readFile(p);
-    res
-      .writeHead(200, { 'content-type': TYPES[extname(p)] ?? 'application/octet-stream' })
-      .end(body);
+    res.writeHead(200, { 'content-type': TYPES[extname(p)] ?? 'application/octet-stream' }).end(body);
   } catch {
     res.writeHead(404).end();
   }
@@ -55,8 +55,7 @@ const port = server.address().port;
 const pageUrl = `http://127.0.0.1:${port}${BASE}`;
 
 const executablePath =
-  process.env.CHROME_PATH ??
-  (existsSync('/usr/bin/google-chrome') ? '/usr/bin/google-chrome' : undefined);
+  process.env.CHROME_PATH ?? (existsSync('/usr/bin/google-chrome') ? '/usr/bin/google-chrome' : undefined);
 const browser = await chromium.launch({
   executablePath,
   args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
@@ -88,8 +87,8 @@ try {
   await page.waitForTimeout(300);
   check((await page.evaluate(() => window.__game.state)) === 'playing', 'PLAY starts a match');
   check(
-    (await page.evaluate(() => window.__game.entities.length)) === 20,
-    '20 combatants (1 player + 19 bots)',
+    (await page.evaluate(() => window.__game.entities.length)) === DEFAULT_NUM_PLAYERS,
+    `${DEFAULT_NUM_PLAYERS} combatants (default: 1 player + ${DEFAULT_NUM_PLAYERS - 1} bots)`,
   );
 
   const fps = await page.evaluate(
@@ -135,10 +134,7 @@ try {
   // --- reload with R ---
   await page.keyboard.press('r');
   await page.waitForTimeout(1300);
-  check(
-    (await page.evaluate(() => window.__game.player.weapons[0].mag)) === 12,
-    'R reloads the magazine',
-  );
+  check((await page.evaluate(() => window.__game.player.weapons[0].mag)) === 12, 'R reloads the magazine');
 
   // --- pick up a weapon with E ---
   await page.evaluate(() => {
@@ -151,10 +147,7 @@ try {
   await page.waitForTimeout(100);
   await page.keyboard.press('e');
   await page.waitForTimeout(100);
-  const picked = await page.evaluate(() => [
-    window.__wanted,
-    window.__game.player.weapons.map((w) => w && w.type),
-  ]);
+  const picked = await page.evaluate(() => [window.__wanted, window.__game.player.weapons.map((w) => w && w.type)]);
   check(picked[1].includes(picked[0]), `E picks up a weapon (${picked[0]})`);
   await page.keyboard.press('q');
   await page.waitForTimeout(50);
@@ -211,10 +204,7 @@ try {
   await page.waitForTimeout(300);
   check((await page.evaluate(() => window.__game.state)) === 'playing', 'PLAY AGAIN restarts');
 
-  check(
-    errors.length === 0,
-    'no console errors' + (errors.length ? ':\n' + errors.join('\n') : ''),
-  );
+  check(errors.length === 0, 'no console errors' + (errors.length ? ':\n' + errors.join('\n') : ''));
   console.log('E2E PASSED');
 } catch (e) {
   console.error(e.message);

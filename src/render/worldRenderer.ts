@@ -107,8 +107,7 @@ function drawLootLabels(ctx: CanvasRenderingContext2D, world: World): void {
     const w = ctx.measureText(t).width;
     const bx = it.x - w / 2;
     const by = it.y - 32;
-    if (boxes.some((q) => bx < q[0] + q[2] && bx + w > q[0] && by < q[1] + 14 && by + 14 > q[1]))
-      continue;
+    if (boxes.some((q) => bx < q[0] + q[2] && bx + w > q[0] && by < q[1] + 14 && by + 14 > q[1])) continue;
     boxes.push([bx, by, w]);
     ctx.fillStyle = 'rgba(0,0,0,.6)';
     ctx.fillText(t, it.x + 1, it.y - 21);
@@ -190,7 +189,7 @@ export function drawWorld(
   ctx.lineCap = 'butt';
   for (const e of world.entities) {
     if (!e.alive || (e.isPlayer && !showPlayer)) continue;
-    if (cam.inView(e.x, e.y, 60)) drawEntity(ctx, e, world.gameTime);
+    if (cam.inView(e.x, e.y, 60)) drawEntity(ctx, e, world.gameTime, world.maxHp);
   }
   for (const o of world.obstacles) {
     if (o.t !== 'wall' || !cam.inView(o.x + o.w / 2, o.y + o.h / 2, Math.max(o.w, o.h))) continue;

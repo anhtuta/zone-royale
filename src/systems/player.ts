@@ -69,10 +69,7 @@ export function updatePlayer(world: World, c: PlayerControls): void {
     if ((WS.auto && c.fireHeld) || c.firePressed) tryShoot(world, p);
   }
   for (const it of world.loot) {
-    if (
-      it.kind === 'ammo' &&
-      dist2(p.x, p.y, it.x, it.y) < AMMO_AUTO_PICK_RANGE * AMMO_AUTO_PICK_RANGE
-    ) {
+    if (it.kind === 'ammo' && dist2(p.x, p.y, it.x, it.y) < AMMO_AUTO_PICK_RANGE * AMMO_AUTO_PICK_RANGE) {
       applyLoot(world, p, it);
       break;
     }

@@ -33,6 +33,43 @@ Vocab (thuật ngữ trong game math - verify this!!!):
 
 ---
 
+## 0. delta time (dt)
+
+`dt` is **delta time**: how many **seconds** passed since the last animation frame. The loop computes it from `performance.now()` timestamps:
+
+```js
+// src/core/loop.ts
+export function frameDelta(now: number, last: number): number {
+  return Math.min(MAX_FRAME_DT, (now - last) / 1000);
+}
+// ...
+const dt = frameDelta(now, last);
+last = now;
+frame(dt, now);
+```
+
+That value is passed into `stepWorld` so the sim advances in **real time**, not “per frame”:
+
+- Position: `e.x += e.vx * dt` (pixels per second × seconds)
+- Timers: `hitFlash -= dt`, zone shrink, weapon cooldowns, AI timers
+- `world.gameTime += dt`
+
+Same logic at 30 FPS vs 120 FPS: movement speed stays consistent because each step uses the actual elapsed time.
+
+Why you always see `0.05`: `MAX_FRAME_DT` in `constants.ts` is **0.05** — a **cap** of 50 ms per step. So `dt` is either:
+
+| Situation | Typical `dt` |
+|-----------|----------------|
+| ~60 FPS | ~**0.016** (16 ms) |
+| ~20 FPS | **0.05** (50 ms) — exactly at the cap |
+| Tab hidden, hitch, or **debugger pause/step** | Real gap may be huge → **clamped to 0.05** |
+
+If it’s **always** 0.05 while you debug, the usual cause is **breaking or stepping**: time between two `tick` calls is often ≥ 50 ms, so `Math.min(0.05, …)` wins every time. That’s intentional: **one long pause shouldn’t teleport entities through the map** or dump a full second of zone damage in a single step (see `tests/core.test.ts`: a 4 s gap still yields `dt === MAX_FRAME_DT`, not 4).
+
+**0.05 means:** “this frame, advance the simulation by at most 50 ms of game time” — either because that’s how long the frame took (~20 FPS), or because a longer gap was **limited** for stability.
+
+During normal play **without** pausing on breakpoints, you should usually see `dt` wobble around **0.008–0.020** on a 60 Hz display, not a flat 0.05.
+
 ## 1. Time: move per second, scale by `dt`
 
 **Pattern:** Store speeds in **units per second**, then each simulation step:

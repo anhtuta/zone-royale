@@ -56,11 +56,7 @@ export interface Circle {
  * @param obstacles - Map obstacles (for line of sight).
  * @returns The chosen target, or `null`.
  */
-export function scanForTarget(
-  b: Entity,
-  entities: readonly Entity[],
-  obstacles: readonly Obstacle[],
-): Entity | null {
+export function scanForTarget(b: Entity, entities: readonly Entity[], obstacles: readonly Obstacle[]): Entity | null {
   let best: Entity | null = null;
   let bd = BOT_SIGHT * BOT_SIGHT;
   for (const o of entities) {
@@ -125,9 +121,7 @@ export function aimErrorScale(skill: number, distance: number): number {
  * @returns Centre and radius of the safe circle.
  */
 export function safeCircle(zone: Zone): Circle {
-  return zone.state === 'final'
-    ? { x: zone.x, y: zone.y, r: zone.r }
-    : { x: zone.tx, y: zone.ty, r: zone.tr };
+  return zone.state === 'final' ? { x: zone.x, y: zone.y, r: zone.r } : { x: zone.tx, y: zone.ty, r: zone.tr };
 }
 
 /**
@@ -194,14 +188,7 @@ export function chooseWanderPoint(b: Entity, zone: Zone, needSafe: boolean): Mov
  * @param y - Destination Y.
  * @param w - Weight.
  */
-export function steerTowards(
-  m: MoveIntent,
-  fromX: number,
-  fromY: number,
-  x: number,
-  y: number,
-  w: number,
-): void {
+export function steerTowards(m: MoveIntent, fromX: number, fromY: number, x: number, y: number, w: number): void {
   const d = dist(fromX, fromY, x, y) || 1;
   m.x += ((x - fromX) / d) * w;
   m.y += ((y - fromY) / d) * w;
@@ -260,7 +247,7 @@ function fight(
     x: fx * radial - fy * ai.strafe * 0.8,
     y: fy * radial + fx * ai.strafe * 0.8,
   };
-  if (b.hp < 30 && ai.loot && ai.loot.kind === 'health')
+  if (b.hp < world.maxHp * 0.3 && ai.loot && ai.loot.kind === 'health')
     steerTowards(m, b.x, b.y, ai.loot.x, ai.loot.y, 1.2);
   if (outside) steerTowards(m, b.x, b.y, world.zone.x, world.zone.y, 2);
   return m;
@@ -374,9 +361,7 @@ export function updateBot(world: World, b: Entity, dt: number): void {
       b.x,
       b.y,
       750,
-      (it) =>
-        botWants(b, it) &&
-        dist(it.x, it.y, zone.x, zone.y) < zoneLootBotSeekRadius(zone),
+      (it) => botWants(b, it, world.maxHp) && dist(it.x, it.y, zone.x, zone.y) < zoneLootBotSeekRadius(zone),
     );
   }
 
@@ -400,11 +385,10 @@ export function updateBot(world: World, b: Entity, dt: number): void {
     b.vx = 0;
     b.vy = 0;
   }
-  if (!fighting && mag > 0.01)
-    b.angle += angleDelta(b.angle, Math.atan2(m.y, m.x)) * Math.min(1, dt * 8);
+  if (!fighting && mag > 0.01) b.angle += angleDelta(b.angle, Math.atan2(m.y, m.x)) * Math.min(1, dt * 8);
   checkStuck(b, ai, m, mag, dt);
   for (const it of world.loot) {
-    if (dist2(b.x, b.y, it.x, it.y) < BOT_PICK_RANGE * BOT_PICK_RANGE && botWants(b, it)) {
+    if (dist2(b.x, b.y, it.x, it.y) < BOT_PICK_RANGE * BOT_PICK_RANGE && botWants(b, it, world.maxHp)) {
       applyLoot(world, b, it);
       ai.lootT = 0;
       break;

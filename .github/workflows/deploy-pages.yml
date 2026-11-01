@@ -1,12 +1,13 @@
 # Build the Vite production bundle and publish it to GitHub Pages.
 #
+# Pull requests: see ci.yml (lint, format, test, build, e2e).
 # Repo settings (one-time): Settings → Pages → Build and deployment → Source: GitHub Actions.
 name: Deploy to GitHub Pages
 
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
+    branches: ['main']
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -15,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: "pages"
+  group: 'pages'
   cancel-in-progress: false
 
 jobs:

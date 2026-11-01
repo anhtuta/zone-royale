@@ -301,7 +301,6 @@ function matchStartFailureMessage(recoveredWithDefaults: boolean): string {
     );
   }
   return (
-    'Could not start a match. Press Play to try again, or open Settings ' +
-    'for a smaller player count or larger map.'
+    'Could not start a match. Press Play to try again, or open Settings ' + 'for a smaller player count or larger map.'
   );
 }

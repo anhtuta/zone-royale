@@ -58,7 +58,8 @@ h1 {
   color: #81d4fa;
   font-weight: 700;
 }
-#startSub .blurb-map {
+#startSub .blurb-map,
+#startSub .blurb-hp {
   color: #ffd54f;
   font-weight: 700;
 }

@@ -36,11 +36,7 @@ describe('input and loop', () => {
     const cam = new Camera(800, 600);
     cam.x = 100;
     cam.y = 50;
-    const c = readControls(
-      { w: true, d: true, arrowleft: true },
-      { x: 10, y: 20, down: true, clicked: false },
-      cam,
-    );
+    const c = readControls({ w: true, d: true, arrowleft: true }, { x: 10, y: 20, down: true, clicked: false }, cam);
     expect(c).toEqual({
       moveX: 0,
       moveY: -1,
@@ -129,9 +125,7 @@ describe('HUD text', () => {
   });
 
   it('formats kill feed lines', () => {
-    expect(
-      formatKillFeed({ killer: 'You', victim: 'Rex', weapon: 'SMG', kp: true, vp: false, t: 6 }),
-    ).toEqual({
+    expect(formatKillFeed({ killer: 'You', victim: 'Rex', weapon: 'SMG', kp: true, vp: false, t: 6 })).toEqual({
       text: 'You  [SMG]  Rex',
       color: '#fff',
       background: 'rgba(30,90,160,.75)',
@@ -139,8 +133,6 @@ describe('HUD text', () => {
     expect(formatKillFeed({ killer: null, victim: 'You', weapon: null, vp: true, t: 6 }).text).toBe(
       'You was consumed by the zone',
     );
-    expect(formatKillFeed({ sys: 'The zone is closing in!', t: 5 }).text).toBe(
-      '⚠ The zone is closing in!',
-    );
+    expect(formatKillFeed({ sys: 'The zone is closing in!', t: 5 }).text).toBe('⚠ The zone is closing in!');
   });
 });

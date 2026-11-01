@@ -13,7 +13,12 @@ import {
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
 
 const MAP_SIZE = DEFAULT_MATCH_SETTINGS.mapSize;
+const MAX_HP = DEFAULT_MATCH_SETTINGS.maxHp;
 const ZONE_START_RADIUS = zoneStartRadius(MAP_SIZE);
+
+function testZone(): ReturnType<typeof createZone> {
+  return createZone(MAP_SIZE, MAX_HP);
+}
 
 beforeEach(() => setRandomSource(createSeededRandom(31)));
 afterEach(() => setRandomSource(Math.random));
@@ -26,12 +31,12 @@ describe('zone phases', () => {
       expect(PHASES[i]!.dps).toBeGreaterThan(PHASES[i - 1]!.dps);
     }
     expect(PHASES.at(-1)!.r).toBe(0);
-    const z = createZone(MAP_SIZE);
+    const z = testZone();
     expect(totalZoneDuration(z)).toBe(252);
   });
 
   it('starts covering the map and waiting for phase 1', () => {
-    const z = createZone(MAP_SIZE);
+    const z = testZone();
     expect(z).toMatchObject({
       x: MAP_SIZE / 2,
       y: MAP_SIZE / 2,
@@ -44,31 +49,27 @@ describe('zone phases', () => {
   });
 
   it('starting radius covers the farthest spawn corners', () => {
-    const z = createZone(MAP_SIZE);
+    const z = testZone();
     const edge = MAP_SIZE - 120;
     expect(isOutsideZone(z, edge, edge)).toBe(false);
   });
 
   it('next circle stays inside the map and inside the drift limit', () => {
     for (let i = 0; i < 50; i++) {
-      const z = createZone(MAP_SIZE);
+      const z = testZone();
       const m = Math.min(z.tr + 60, MAP_SIZE / 2);
       expect(z.tx).toBeGreaterThanOrEqual(m);
       expect(z.tx).toBeLessThanOrEqual(MAP_SIZE - m);
-      expect(Math.hypot(z.tx - z.x, z.ty - z.y)).toBeLessThanOrEqual(
-        (ZONE_START_RADIUS - z.tr) * 0.35 + 1e-9,
-      );
+      expect(Math.hypot(z.tx - z.x, z.ty - z.y)).toBeLessThanOrEqual((ZONE_START_RADIUS - z.tr) * 0.35 + 1e-9);
     }
   });
 
   it('later phases drift further (up to 80% of the radius difference)', () => {
-    const z = createZone(MAP_SIZE);
+    const z = testZone();
     z.phase = 1;
     z.r = PHASES[0]!.r;
     setupPhase(z);
-    expect(Math.hypot(z.tx - z.x, z.ty - z.y)).toBeLessThanOrEqual(
-      (PHASES[0]!.r - PHASES[1]!.r) * 0.8 + 1e-9,
-    );
+    expect(Math.hypot(z.tx - z.x, z.ty - z.y)).toBeLessThanOrEqual((PHASES[0]!.r - PHASES[1]!.r) * 0.8 + 1e-9);
   });
 
   it('phase end radii scale with the opening safe zone', () => {
@@ -79,7 +80,7 @@ describe('zone phases', () => {
 
 describe('updateZone', () => {
   it('waits, then shrinks, interpolating centre and radius', () => {
-    const z = createZone(MAP_SIZE);
+    const z = testZone();
     expect(updateZone(z, 44)).toBeNull();
     expect(updateZone(z, 1)).toBe('shrinkStarted');
     expect(z.state).toBe('shrink');
@@ -90,7 +91,7 @@ describe('updateZone', () => {
   });
 
   it('advances to the next phase when the shrink ends', () => {
-    const z = createZone(MAP_SIZE);
+    const z = testZone();
     updateZone(z, 45);
     const tx = z.tx;
     expect(updateZone(z, 30)).toBe('phaseAdvanced');
@@ -101,7 +102,7 @@ describe('updateZone', () => {
   });
 
   it('closes completely after all phases and then stays put', () => {
-    const z = createZone(MAP_SIZE);
+    const z = testZone();
     const events: string[] = [];
     for (let t = 0; t < totalZoneDuration(z) + 5; t += 0.1) {
       const e = updateZone(z, 0.1);
@@ -117,7 +118,7 @@ describe('updateZone', () => {
 
 describe('zone damage', () => {
   it('dps follows the phase and is boosted once closed', () => {
-    const z = createZone(MAP_SIZE);
+    const z = testZone();
     expect(zoneDps(z)).toBe(1);
     z.phase = 5;
     expect(zoneDps(z)).toBe(14);
@@ -126,7 +127,7 @@ describe('zone damage', () => {
   });
 
   it('isOutsideZone compares distance with the radius', () => {
-    const z = createZone(MAP_SIZE);
+    const z = testZone();
     z.r = 100;
     expect(isOutsideZone(z, z.x + 99, z.y)).toBe(false);
     expect(isOutsideZone(z, z.x + 101, z.y)).toBe(true);

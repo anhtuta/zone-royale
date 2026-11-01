@@ -82,8 +82,7 @@ export function findSpawnPoint(
   for (let tries = 0; tries < SPAWN_FIND_TRIES; tries++) {
     const x = rand(margin, mapSize - margin);
     const y = rand(margin, mapSize - margin);
-    if (inHouse(houses, x, y, SPAWN_CLEARANCE) || !circleFree(obstacles, x, y, SPAWN_CLEARANCE, mapSize))
-      continue;
+    if (inHouse(houses, x, y, SPAWN_CLEARANCE) || !circleFree(obstacles, x, y, SPAWN_CLEARANCE, mapSize)) continue;
     if (entities.some((e) => dist2(e.x, e.y, x, y) < sep * sep)) continue;
     return { x, y };
   }
@@ -109,9 +108,7 @@ function spawnCombatant(
       if (p) return p;
     }
     if (sep <= floor) {
-      throw new Error(
-        'spawnCombatant: no spawn with separation ' + floor + ' on map ' + mapSize,
-      );
+      throw new Error('spawnCombatant: no spawn with separation ' + floor + ' on map ' + mapSize);
     }
     sep = Math.max(floor, sep * SPAWN_SEP_BACKOFF);
   }
@@ -129,7 +126,7 @@ function spawnCombatant(
 export function createMatch(
   camera: Camera,
   sound: SoundSink | null = null,
-  settings: MatchSettings = DEFAULT_MATCH_SETTINGS,
+  settings: Partial<MatchSettings> = DEFAULT_MATCH_SETTINGS,
 ): World {
   const resolved = normalizeMatchSettings(settings);
   const mapSize = resolved.mapSize;
@@ -139,7 +136,7 @@ export function createMatch(
   const loot = spawnInitialLoot(map.houses, map.obstacles, mapSize);
   const entities: Entity[] = [];
   let p = spawnCombatant(map.obstacles, map.houses, entities, 0, mapSize);
-  const player = createEntity(true, 'You', PLAYER_COLOR, p.x, p.y);
+  const player = createEntity(true, 'You', PLAYER_COLOR, p.x, p.y, resolved.maxHp);
   entities.push(player);
   const names = shuffled(BOT_NAMES);
   for (let i = 0; i < botCount; i++) {
@@ -151,14 +148,16 @@ export function createMatch(
         BOT_COLORS[i % BOT_COLORS.length] as string,
         p.x,
         p.y,
+        resolved.maxHp,
       ),
     );
   }
-  const zone = createZone(mapSize);
+  const zone = createZone(mapSize, resolved.maxHp);
   camera.centerOn(player);
   return {
     phase: 'playing',
     mapSize,
+    maxHp: resolved.maxHp,
     obstacles: map.obstacles,
     houses: map.houses,
     decor: map.decor,
@@ -190,10 +189,7 @@ export function createMatch(
  * @param entities - All combatants.
  * @returns A living bot to follow, or `null` if none remain.
  */
-export function resolveSpectateTarget(
-  camTarget: Entity | null,
-  entities: readonly Entity[],
-): Entity | null {
+export function resolveSpectateTarget(camTarget: Entity | null, entities: readonly Entity[]): Entity | null {
   if (camTarget?.alive && !camTarget.isPlayer) return camTarget;
   let best: Entity | null = null;
   for (const e of entities) {
@@ -254,11 +250,7 @@ export function buildEndSummary(world: World, outcome: MatchOutcome): EndSummary
     title: win ? 'WINNER! #1' : 'ELIMINATED',
     subtitle: win
       ? 'Last one standing. The zone bows to you.'
-      : 'You placed #' +
-        p.place +
-        ' of ' +
-        world.entities.length +
-        '. Drop back in and claim the crown.',
+      : 'You placed #' + p.place + ' of ' + world.entities.length + '. Drop back in and claim the crown.',
     place: '#' + p.place,
     kills: String(p.kills),
     damage: String(Math.round(p.damage)),

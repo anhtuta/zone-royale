@@ -5,7 +5,7 @@
  */
 
 import { BOT_AMMO_CAP, WEAPONS } from '../config/weapons';
-import { MAX_ARMOR, MAX_HP, PICK_RANGE, WEAPON_SLOT_COUNT } from '../config/constants';
+import { MAX_ARMOR, PICK_RANGE, WEAPON_SLOT_COUNT } from '../config/constants';
 import type { World } from '../core/world';
 import type { Entity, SlotIndex, WeaponInstance } from '../entities/entity';
 import { lootName, type LootItem, type WeaponLoot } from '../entities/loot';
@@ -96,7 +96,7 @@ function equipWeapon(world: World, e: Entity, it: WeaponLoot): void {
 
 /**
  * Applies a loot item to an entity and removes it from the ground.
- * Health and armor are capped at 100.
+ * Health and armor are capped at the match max.
  *
  * @param world - The game world.
  * @param e - Entity picking up.
@@ -111,7 +111,7 @@ export function applyLoot(world: World, e: Entity, it: LootItem): void {
       e.ammo[it.type] += it.amount;
       break;
     case 'health':
-      e.hp = Math.min(MAX_HP, e.hp + it.amount);
+      e.hp = Math.min(world.maxHp, e.hp + it.amount);
       break;
     case 'armor':
       e.armor = Math.min(MAX_ARMOR, e.armor + it.amount);
@@ -158,10 +158,11 @@ export function nearestLoot(
  *
  * @param e - The player.
  * @param it - Item being picked up.
+ * @param maxHp - Match health cap.
  * @returns A message to show, or `null` when the pickup may proceed.
  */
-export function pickupRefusal(e: Entity, it: LootItem): string | null {
-  if (it.kind === 'health' && e.hp >= MAX_HP) return 'Health is already full';
+export function pickupRefusal(e: Entity, it: LootItem, maxHp: number): string | null {
+  if (it.kind === 'health' && e.hp >= maxHp) return 'Health is already full';
   if (it.kind === 'armor' && e.armor >= MAX_ARMOR) return 'Armor is already full';
   return null;
 }
@@ -177,20 +178,14 @@ export function pickupRefusal(e: Entity, it: LootItem): string | null {
  */
 export function playerPickup(world: World): boolean {
   const p = world.player;
-  const pickable = nearestLoot(
-    world.loot,
-    p.x,
-    p.y,
-    PICK_RANGE,
-    (it) => pickupRefusal(p, it) === null,
-  );
+  const pickable = nearestLoot(world.loot, p.x, p.y, PICK_RANGE, (it) => pickupRefusal(p, it, world.maxHp) === null);
   if (pickable) {
     applyLoot(world, p, pickable);
     return true;
   }
   const nearest = nearestLoot(world.loot, p.x, p.y, PICK_RANGE);
   if (!nearest) return false;
-  const refusal = pickupRefusal(p, nearest);
+  const refusal = pickupRefusal(p, nearest, world.maxHp);
   if (refusal) showMessage(world, refusal);
   return false;
 }
@@ -200,13 +195,14 @@ export function playerPickup(world: World): boolean {
  * - weapons: any new weapon type while a slot is free, otherwise only a type
  *   it does not own whose tier beats its weaker weapon;
  * - ammo: only for a weapon it carries, and only while below 120 rounds;
- * - med kits below 85 HP; armor below 70.
+ * - med kits below 85% max HP; armor below 70.
  *
  * @param b - The bot.
  * @param it - Candidate item.
+ * @param maxHp - Match health cap.
  * @returns `true` if the bot wants the item.
  */
-export function botWants(b: Entity, it: LootItem): boolean {
+export function botWants(b: Entity, it: LootItem, maxHp: number): boolean {
   switch (it.kind) {
     case 'weapon': {
       const owns = b.weapons.some((w) => w && w.type === it.type);
@@ -217,12 +213,9 @@ export function botWants(b: Entity, it: LootItem): boolean {
       return tier > weakest && !owns;
     }
     case 'ammo':
-      return (
-        b.weapons.some((w) => w && WEAPONS[w.type].ammo === it.type) &&
-        b.ammo[it.type] < BOT_AMMO_CAP
-      );
+      return b.weapons.some((w) => w && WEAPONS[w.type].ammo === it.type) && b.ammo[it.type] < BOT_AMMO_CAP;
     case 'health':
-      return b.hp < 85;
+      return b.hp < maxHp * 0.85;
     case 'armor':
       return b.armor < 70;
   }

@@ -4,11 +4,7 @@
  * @packageDocumentation
  */
 
-import {
-  DEFAULT_MATCH_SETTINGS,
-  normalizeMatchSettings,
-  type MatchSettings,
-} from '../config/matchSettings';
+import { DEFAULT_MATCH_SETTINGS, normalizeMatchSettings, type MatchSettings } from '../config/matchSettings';
 
 const STORAGE_KEY = 'zoneRoyale.matchSettings';
 

@@ -1,5 +1,5 @@
 /**
- * Per-match tuning: map size and player count (human + bots).
+ * Per-match tuning: map size, player count, and max HP mode.
  *
  * @packageDocumentation
  */
@@ -11,6 +11,14 @@ export interface MapSizeOption {
   /** UI label, e.g. `"Medium"`. */
   readonly label: string;
   /** World side length in pixels. */
+  readonly value: number;
+}
+
+/** One selectable max-HP preset (also drives zone pacing scale). */
+export interface MaxHpOption {
+  /** UI label shown in settings. */
+  readonly label: string;
+  /** Combatant max health for the match. */
   readonly value: number;
 }
 
@@ -26,22 +34,38 @@ export const MAP_SIZE_OPTIONS: readonly MapSizeOption[] = [
 /** Selectable total player counts (you + bots). */
 export const PLAYER_COUNT_OPTIONS: readonly number[] = [20, 50, 100, 500, 1000];
 
+/** Selectable max HP modes (Normal = baseline zone timing). */
+export const MAX_HP_OPTIONS: readonly MaxHpOption[] = [
+  { label: 'Normal', value: 100 },
+  { label: 'Extended', value: 300 },
+  { label: 'Marathon', value: 500 },
+];
+
 /** Saved match options used when starting a game. */
 export interface MatchSettings {
   /** World width and height in pixels. */
   mapSize: number;
   /** Human plus bots (bots = numPlayers − 1). */
   numPlayers: number;
+  /** Max health for every combatant; scales safe-zone wait/shrink/dps. */
+  maxHp: number;
 }
 
 /** First-time defaults and fallback when storage is invalid. */
 export const DEFAULT_MATCH_SETTINGS: MatchSettings = {
   mapSize: 5000,
   numPlayers: 50,
+  maxHp: 100,
 };
 
 const MAP_VALUES = new Set(MAP_SIZE_OPTIONS.map((o) => o.value));
 const PLAYER_VALUES = new Set(PLAYER_COUNT_OPTIONS);
+const MAX_HP_VALUES = new Set(MAX_HP_OPTIONS.map((o) => o.value));
+
+/** Settings label for a max-HP preset value. */
+export function maxHpModeLabel(maxHp: number): string {
+  return MAX_HP_OPTIONS.find((o) => o.value === maxHp)?.label ?? String(maxHp);
+}
 
 /** Inset from map edges where combatants may spawn (`findSpawnPoint`). */
 export const SPAWN_EDGE_MARGIN = 120;
@@ -101,15 +125,14 @@ export function maxSelectablePlayers(mapSize: number): number {
  * @returns A normalized settings object.
  */
 export function normalizeMatchSettings(raw: Partial<MatchSettings>): MatchSettings {
-  const mapSize = MAP_VALUES.has(raw.mapSize as number)
-    ? (raw.mapSize as number)
-    : DEFAULT_MATCH_SETTINGS.mapSize;
+  const mapSize = MAP_VALUES.has(raw.mapSize as number) ? (raw.mapSize as number) : DEFAULT_MATCH_SETTINGS.mapSize;
   let numPlayers = PLAYER_VALUES.has(raw.numPlayers as number)
     ? (raw.numPlayers as number)
     : DEFAULT_MATCH_SETTINGS.numPlayers;
+  const maxHp = MAX_HP_VALUES.has(raw.maxHp as number) ? (raw.maxHp as number) : DEFAULT_MATCH_SETTINGS.maxHp;
   const playerCap = maxSelectablePlayers(mapSize);
   if (numPlayers > playerCap) numPlayers = playerCap;
-  return { mapSize, numPlayers };
+  return { mapSize, numPlayers, maxHp };
 }
 
 /**

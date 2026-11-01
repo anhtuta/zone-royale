@@ -4,11 +4,7 @@
  * @packageDocumentation
  */
 
-import {
-  normalizeVariantIndex,
-  ROCK_SPRITES,
-  TREE_SPRITES,
-} from '../config/obstacleSprites';
+import { normalizeVariantIndex, ROCK_SPRITES, TREE_SPRITES } from '../config/obstacleSprites';
 import { USE_OBSTACLE_IMAGES } from '../config/env';
 
 const rockImages: (HTMLImageElement | null)[] = ROCK_SPRITES.map(() => null);

@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 
+import { BASE_MAX_HP, hpScale } from './constants';
 import { DEFAULT_MATCH_SETTINGS, zoneStartRadius } from './matchSettings';
 
 /** Tuning for one zone phase. */
@@ -39,20 +40,25 @@ function scaledPhaseRadius(frac: number, startRadius: number): number {
 }
 
 /**
- * Builds the six zone phases for a match from its opening safe radius.
+ * Builds the six zone phases for a match from its opening safe radius and max HP.
  *
  * @param startRadius - Radius at match start ({@link zoneStartRadius}).
- * @returns Phase table with scaled end radii.
+ * @param maxHp - Match max health; scales wait, shrink, and dps from the Normal baseline.
+ * @returns Phase table with scaled end radii and HP-scaled timing/damage.
  */
-export function buildZonePhases(startRadius: number): readonly ZonePhase[] {
+export function buildZonePhases(startRadius: number, maxHp: number = BASE_MAX_HP): readonly ZonePhase[] {
+  const scale = hpScale(maxHp);
+  console.log('PHASE_TIMING scale', scale);
   return PHASE_TIMING.map((phase, i) => ({
-    ...phase,
+    wait: phase.wait * scale,
+    shrink: phase.shrink * scale,
+    dps: phase.dps * scale,
     r: scaledPhaseRadius(PHASE_END_RADIUS_FRAC[i]!, startRadius),
   }));
 }
 
-/** Default phase table (medium map). Used in tests and docs. */
-export const PHASES = buildZonePhases(zoneStartRadius(DEFAULT_MATCH_SETTINGS.mapSize));
+/** Default phase table (medium map, Normal HP). Used in tests and docs. */
+export const PHASES = buildZonePhases(zoneStartRadius(DEFAULT_MATCH_SETTINGS.mapSize), DEFAULT_MATCH_SETTINGS.maxHp);
 
 /** Multiplier applied to the last phase's damage once the zone is fully closed. */
 export const FINAL_ZONE_DPS_MULTIPLIER = 1.5;

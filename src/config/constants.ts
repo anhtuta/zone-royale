@@ -41,8 +41,21 @@ export const BOT_LOOT_ZONE_INSET = 20;
 /** Collision radius of every combatant. */
 export const ENTITY_RADIUS = 18;
 
-/** Maximum health of a combatant. */
-export const MAX_HP = 100;
+/** Reference max HP for zone scaling ({@link MatchSettings.maxHp} baseline). */
+export const BASE_MAX_HP = 100;
+
+/** When raw `maxHp / BASE_MAX_HP` is at or above this, zone timing is dampened (see {@link hpScale}). */
+export const HP_ZONE_SCALE_DAMPEN_THRESHOLD = 3;
+
+/** Divisor applied to zone scale when at or above {@link HP_ZONE_SCALE_DAMPEN_THRESHOLD}. */
+export const HP_ZONE_SCALE_DAMPEN = 2.5;
+
+/** Multiplier for zone wait/shrink/dps from a match's {@link MatchSettings.maxHp}. */
+export function hpScale(maxHp: number): number {
+  let scale = maxHp / BASE_MAX_HP;
+  if (scale >= HP_ZONE_SCALE_DAMPEN_THRESHOLD) scale /= HP_ZONE_SCALE_DAMPEN;
+  return scale;
+}
 
 /** Maximum armor of a combatant. */
 export const MAX_ARMOR = 100;

@@ -35,13 +35,7 @@ function addWall(out: WallObstacle[], x: number, y: number, w: number, h: number
  * @param y - Top edge of the wall.
  * @param door - Whether to leave a doorway in the middle.
  */
-function horizontalWall(
-  out: WallObstacle[],
-  x1: number,
-  x2: number,
-  y: number,
-  door: boolean,
-): void {
+function horizontalWall(out: WallObstacle[], x1: number, x2: number, y: number, door: boolean): void {
   const T = WALL_THICKNESS;
   if (door) {
     const m = (x1 + x2) / 2;
@@ -98,7 +92,5 @@ export function buildHouseWalls(house: House): WallObstacle[] {
  * @returns `true` if they overlap once expanded by `gap`.
  */
 export function housesTooClose(a: House, b: House, gap: number): boolean {
-  return (
-    a.x < b.x + b.w + gap && a.x + a.w + gap > b.x && a.y < b.y + b.h + gap && a.y + a.h + gap > b.y
-  );
+  return a.x < b.x + b.w + gap && a.x + a.w + gap > b.x && a.y < b.y + b.h + gap && a.y + a.h + gap > b.y;
 }

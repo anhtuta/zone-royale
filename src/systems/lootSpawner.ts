@@ -25,15 +25,7 @@ const AMMO_WEIGHTS: readonly AmmoType[] = ['light', 'light', 'shells', 'medium',
  * @returns The weapon type.
  */
 export function weaponForRoll(roll: number): WeaponType {
-  return roll < 0.28
-    ? 'pistol'
-    : roll < 0.52
-      ? 'smg'
-      : roll < 0.74
-        ? 'shotgun'
-        : roll < 0.93
-          ? 'rifle'
-          : 'sniper';
+  return roll < 0.28 ? 'pistol' : roll < 0.52 ? 'smg' : roll < 0.74 ? 'shotgun' : roll < 0.93 ? 'rifle' : 'sniper';
 }
 
 /** Category of a loot spot. */
@@ -59,12 +51,7 @@ export function categoryForRoll(roll: number): LootCategory {
  * @param obstacles - Map obstacles (paired ammo must not spawn inside geometry).
  * @returns One or two new items.
  */
-export function rollLoot(
-  x: number,
-  y: number,
-  obstacles: readonly Obstacle[],
-  mapSize: number,
-): LootItem[] {
+export function rollLoot(x: number, y: number, obstacles: readonly Obstacle[], mapSize: number): LootItem[] {
   const category = categoryForRoll(random());
   if (category === 'weapon') {
     const type = weaponForRoll(random());

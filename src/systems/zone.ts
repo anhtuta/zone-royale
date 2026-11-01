@@ -74,11 +74,12 @@ export type ZoneEvent = 'shrinkStarted' | 'phaseAdvanced' | 'closed';
  * Creates the initial zone covering the whole map and prepares phase 1.
  *
  * @param mapSize - World width and height in pixels.
+ * @param maxHp - Match max health; scales phase wait, shrink, and dps.
  * @returns A zone in the `wait` state of phase 0.
  */
-export function createZone(mapSize: number): Zone {
+export function createZone(mapSize: number, maxHp: number): Zone {
   const startR = zoneStartRadius(mapSize);
-  const phases = buildZonePhases(startR);
+  const phases = buildZonePhases(startR, maxHp);
   const zone: Zone = {
     mapSize,
     phases,
@@ -111,8 +112,7 @@ export function setupPhase(zone: Zone): void {
   if (!P) return;
   zone.state = 'wait';
   zone.timer = P.wait;
-  const maxOff =
-    Math.max(0, zone.r - P.r) * (zone.phase === 0 ? FIRST_PHASE_DRIFT : LATER_PHASE_DRIFT);
+  const maxOff = Math.max(0, zone.r - P.r) * (zone.phase === 0 ? FIRST_PHASE_DRIFT : LATER_PHASE_DRIFT);
   const a = rand(0, TAU);
   const d = Math.sqrt(random()) * maxOff;
   const m = Math.min(P.r + 60, zone.mapSize / 2);
