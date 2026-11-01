@@ -58,10 +58,7 @@ export function buildZonePhases(startRadius: number, maxHp: number = BASE_MAX_HP
 }
 
 /** Default phase table (medium map, Normal HP). Used in tests and docs. */
-export const PHASES = buildZonePhases(
-  zoneStartRadius(DEFAULT_MATCH_SETTINGS.mapSize),
-  DEFAULT_MATCH_SETTINGS.maxHp,
-);
+export const PHASES = buildZonePhases(zoneStartRadius(DEFAULT_MATCH_SETTINGS.mapSize), DEFAULT_MATCH_SETTINGS.maxHp);
 
 /** Multiplier applied to the last phase's damage once the zone is fully closed. */
 export const FINAL_ZONE_DPS_MULTIPLIER = 1.5;

@@ -131,15 +131,11 @@ describe('player pickup rules', () => {
 
   it('refuses med kits at full health and armor at full armor', () => {
     const { player: p } = makeWorld();
-    expect(pickupRefusal(p, { kind: 'health', amount: 40, x: 0, y: 0 }, BASE_MAX_HP)).toBe(
-      'Health is already full',
-    );
+    expect(pickupRefusal(p, { kind: 'health', amount: 40, x: 0, y: 0 }, BASE_MAX_HP)).toBe('Health is already full');
     p.hp = 50;
     expect(pickupRefusal(p, { kind: 'health', amount: 40, x: 0, y: 0 }, BASE_MAX_HP)).toBeNull();
     p.armor = 100;
-    expect(pickupRefusal(p, { kind: 'armor', amount: 50, x: 0, y: 0 }, BASE_MAX_HP)).toBe(
-      'Armor is already full',
-    );
+    expect(pickupRefusal(p, { kind: 'armor', amount: 50, x: 0, y: 0 }, BASE_MAX_HP)).toBe('Armor is already full');
   });
 
   it('playerPickup picks the nearest item within 60px', () => {

@@ -247,7 +247,8 @@ function fight(
     x: fx * radial - fy * ai.strafe * 0.8,
     y: fy * radial + fx * ai.strafe * 0.8,
   };
-  if (b.hp < world.maxHp * 0.3 && ai.loot && ai.loot.kind === 'health') steerTowards(m, b.x, b.y, ai.loot.x, ai.loot.y, 1.2);
+  if (b.hp < world.maxHp * 0.3 && ai.loot && ai.loot.kind === 'health')
+    steerTowards(m, b.x, b.y, ai.loot.x, ai.loot.y, 1.2);
   if (outside) steerTowards(m, b.x, b.y, world.zone.x, world.zone.y, 2);
   return m;
 }

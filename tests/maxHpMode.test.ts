@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  DEFAULT_MATCH_SETTINGS,
-  normalizeMatchSettings,
-  zoneStartRadius,
-} from '../src/config/matchSettings';
+import { DEFAULT_MATCH_SETTINGS, normalizeMatchSettings, zoneStartRadius } from '../src/config/matchSettings';
 import { buildZonePhases } from '../src/config/zone';
 import { Camera } from '../src/core/camera';
 import { createMatch } from '../src/systems/match';
