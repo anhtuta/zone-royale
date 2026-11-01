@@ -38,11 +38,11 @@ settings modal and `MatchSettings` pipeline).
 
 ## Presets
 
-| UI label   | `maxHp` | Scale vs Normal |
-| ---------- | ------- | --------------- |
-| Normal     | 100     | ×1 (default)    |
-| Extended   | 300     | ×3              |
-| Marathon   | 500     | ×5              |
+| UI label   | `maxHp` | HP pool vs Normal | Zone `hpScale` (phase timing / DPS) |
+| ---------- | ------- | ----------------- | ----------------------------------- |
+| Normal     | 100     | ×1 (default)      | 1                                   |
+| Extended   | 300     | ×3                | 1.2 (3 ÷ 2.5)                       |
+| Marathon   | 500     | ×5                | 2 (5 ÷ 2.5)                         |
 
 Invalid or missing storage values fall back to **Normal (100)**.
 
@@ -51,11 +51,16 @@ to 100.
 
 ## Scaling rules
 
-Define a single reference in config (e.g. `BASE_MAX_HP = 100`) and:
+Define `BASE_MAX_HP = 100` and:
 
 ```text
-hpScale = maxHp / BASE_MAX_HP
+rawScale = maxHp / BASE_MAX_HP
+hpScale  = rawScale                         when rawScale < 3
+hpScale  = rawScale / 2.5                   when rawScale ≥ 3
 ```
+
+Normal keeps **rawScale 1** unchanged. Extended (×3) and Marathon (×5) get a **2.5× dampener** on
+zone timing and DPS so total match clock does not grow as fast as HP pools.
 
 ### Combatants
 
@@ -85,8 +90,8 @@ phase DPS, same as today.
 | Mode       | wait (s) | shrink (s) | DPS |
 | ---------- | -------- | ---------- | --- |
 | Normal     | 45       | 30         | 1   |
-| Extended   | 135      | 90         | 3   |
-| Marathon   | 225      | 150        | 5   |
+| Extended   | 54       | 36         | 1.2 |
+| Marathon   | 90       | 60         | 2   |
 
 Gun damage from bullets is **not** multiplied by `hpScale`.
 
