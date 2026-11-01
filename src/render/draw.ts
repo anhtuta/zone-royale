@@ -30,6 +30,7 @@ export function drawSoftGroundShadow(
   rx: number,
   ry: number,
 ): void {
+  // return;
   if (rx <= 0 || ry <= 0) return;
   const peak = GROUND_SHADOW_CENTER_ALPHA;
   const core = GROUND_SHADOW_CORE_STOP;
@@ -57,14 +58,7 @@ export function drawSoftGroundShadow(
  * @param h - Height.
  * @param r - Corner radius.
  */
-export function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number,
-): void {
+export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
@@ -83,13 +77,7 @@ export function roundRect(
  * @param w - Width.
  * @param h - Height.
  */
-export function panel(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-): void {
+export function panel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
   ctx.fillStyle = 'rgba(10,16,26,.68)';
   roundRect(ctx, x, y, w, h, 8);
   ctx.fill();

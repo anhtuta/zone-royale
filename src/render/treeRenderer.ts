@@ -69,8 +69,7 @@ export function treeSpriteDrawRect(
 export function treeSpriteBounds(tree: TreeObstacle): TreeSpriteBounds {
   const img = getTreeImage(tree.variant);
   if (USE_OBSTACLE_IMAGES && img) {
-    const aspect =
-      img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : SPRITE_FALLBACK_ASPECT;
+    const aspect = img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : SPRITE_FALLBACK_ASPECT;
     const { left, top, w, h } = treeSpriteDrawRect(tree, aspect);
     return { left, top, right: left + w, bottom: top + h };
   }
@@ -88,12 +87,7 @@ export function treeSpriteInView(cam: Camera, tree: TreeObstacle): boolean {
   const b = treeSpriteBounds(tree);
   const foot = treeSpriteFoot(tree);
   const shadowPad = tree.vr * 0.5;
-  return cam.inViewAabb(
-    b.left,
-    b.top,
-    b.right,
-    Math.max(b.bottom, foot.y + shadowPad),
-  );
+  return cam.inViewAabb(b.left, b.top, b.right, Math.max(b.bottom, foot.y + shadowPad));
 }
 
 /**
@@ -105,8 +99,7 @@ function treeImageDrawRect(
   tree: TreeObstacle,
   img: HTMLImageElement,
 ): { left: number; top: number; w: number; h: number } {
-  const aspect =
-    img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : SPRITE_FALLBACK_ASPECT;
+  const aspect = img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : SPRITE_FALLBACK_ASPECT;
   return treeSpriteDrawRect(tree, aspect);
 }
 
@@ -131,11 +124,7 @@ function treeCanvasSpriteBounds(tree: TreeObstacle): TreeSpriteBounds {
  * @param tree - Tree obstacle (`tree.x`, `tree.y` = collision centre).
  * @param layer - `'shadow'` under gameplay; `'sprite'` on top for cover.
  */
-export function drawTree(
-  ctx: CanvasRenderingContext2D,
-  tree: TreeObstacle,
-  layer: 'shadow' | 'sprite',
-): void {
+export function drawTree(ctx: CanvasRenderingContext2D, tree: TreeObstacle, layer: 'shadow' | 'sprite'): void {
   const { vr } = tree;
   const def = treeSpriteDef(tree.variant);
   const { x: footX, y: footY } = treeSpriteFoot(tree);
@@ -269,8 +258,7 @@ function fuzzyClump(
   const steps = 18;
   for (let i = 0; i <= steps; i++) {
     const a = (i / steps) * TAU;
-    const wobble =
-      1 + Math.sin(a * 6 + bumpSeed) * 0.09 + Math.cos(a * 4 + bumpSeed * 1.3) * 0.06;
+    const wobble = 1 + Math.sin(a * 6 + bumpSeed) * 0.09 + Math.cos(a * 4 + bumpSeed * 1.3) * 0.06;
     const px = cx + Math.cos(a) * rad * wobble;
     const py = cy + Math.sin(a) * rad * wobble * 0.9;
     if (i === 0) ctx.moveTo(px, py);

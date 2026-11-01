@@ -96,11 +96,7 @@ export function countGroundWeapons(loot: readonly LootItem[]): number {
  * @param type - Ammo family for the new box.
  * @returns `true` if a box was placed.
  */
-export function trySpawnAmmoInZone(
-  world: World,
-  type: AmmoType,
-  event?: ZoneEvent,
-): boolean {
+export function trySpawnAmmoInZone(world: World, type: AmmoType, event?: ZoneEvent): boolean {
   const zone = world.zone;
   const usableR = zoneLootPlacementRadius(zone, event);
   if (usableR <= 0) return false;
@@ -214,10 +210,7 @@ export function fillZoneAmmoToFloors(world: World, options: FillZoneAmmoOptions 
  * @param options - Optional spawn cap.
  * @returns Number of weapons successfully placed (paired ammo is extra loot entries).
  */
-export function fillZoneWeaponsToFloor(
-  world: World,
-  options: FillZoneWeaponsOptions = {},
-): number {
+export function fillZoneWeaponsToFloor(world: World, options: FillZoneWeaponsOptions = {}): number {
   const maxWeapons = options.maxWeapons ?? Infinity;
   const zoneEvent = options.zoneEvent;
   const alive = countAlive(world.entities);
@@ -261,15 +254,9 @@ export const handleZoneAmmoSupplyEvent = handleZoneSupplyEvent;
  * @param event - Pulse context; defaults to `closed` disk when the zone is final at `r === 0`.
  * @returns `true` if inside the supply sampling disk for that pulse.
  */
-export function isInsideZoneLootDisk(
-  world: World,
-  x: number,
-  y: number,
-  event?: ZoneEvent,
-): boolean {
+export function isInsideZoneLootDisk(world: World, x: number, y: number, event?: ZoneEvent): boolean {
   const zone = world.zone;
-  const pulse =
-    event ?? (zone.state === 'final' && zone.r <= 0 ? ('closed' as const) : undefined);
+  const pulse = event ?? (zone.state === 'final' && zone.r <= 0 ? ('closed' as const) : undefined);
   const usableR = zoneLootPlacementRadius(zone, pulse);
   if (usableR <= 0) return false;
   return dist2(x, y, zone.x, zone.y) <= usableR * usableR;

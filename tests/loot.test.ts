@@ -1,12 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { AMMO_AMOUNT, WEAPONS } from '../src/config/weapons';
 import { circleFree } from '../src/systems/collision';
-import {
-  categoryForRoll,
-  rollLoot,
-  spawnInitialLoot,
-  weaponForRoll,
-} from '../src/systems/lootSpawner';
+import { categoryForRoll, rollLoot, spawnInitialLoot, weaponForRoll } from '../src/systems/lootSpawner';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
 import { DEFAULT_MATCH_SETTINGS } from '../src/config/matchSettings';
 import { generateMap } from '../src/world/mapgen';
@@ -73,8 +68,7 @@ describe('map generation and loot spawning', () => {
     const map = generateMap(MAP_SIZE);
     const loot = spawnInitialLoot(map.houses, map.obstacles, MAP_SIZE);
     expect(loot.length).toBeGreaterThan(130);
-    for (const l of loot)
-      expect(circleFree(map.obstacles, l.x, l.y, 20, MAP_SIZE)).toBe(true);
+    for (const l of loot) expect(circleFree(map.obstacles, l.x, l.y, 20, MAP_SIZE)).toBe(true);
     const inHouses = loot.filter((l) =>
       map.houses.some((h) => l.x > h.x && l.x < h.x + h.w && l.y > h.y && l.y < h.y + h.h),
     );

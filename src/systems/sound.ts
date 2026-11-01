@@ -16,8 +16,7 @@ import { dist } from '../utils/math';
  * @returns Listener X/Y — the player while alive, otherwise the spectate target.
  */
 export function soundListenerPosition(world: World): { x: number; y: number } {
-  const ear =
-    !world.player.alive && world.spectating && world.camTarget ? world.camTarget : world.player;
+  const ear = !world.player.alive && world.spectating && world.camTarget ? world.camTarget : world.player;
   return { x: ear.x, y: ear.y };
 }
 
@@ -59,13 +58,7 @@ export function emitWeaponShot(world: World, weapon: WeaponType, x: number, y: n
  * @param y - Source Y.
  * @param extra - Effect-specific parameter (see {@link SoundSink.play}).
  */
-export function emitSound(
-  world: World,
-  kind: SoundKind,
-  x: number,
-  y: number,
-  extra?: number,
-): void {
+export function emitSound(world: World, kind: SoundKind, x: number, y: number, extra?: number): void {
   if (!world.sound || world.sfxBudget <= 0) return;
   const ear = soundListenerPosition(world);
   const d = dist(x, y, ear.x, ear.y);

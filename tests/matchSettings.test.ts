@@ -16,9 +16,7 @@ describe('match settings', () => {
   });
 
   it('normalizes invalid stored values', () => {
-    expect(normalizeMatchSettings({ mapSize: 999, numPlayers: 12 })).toEqual(
-      DEFAULT_MATCH_SETTINGS,
-    );
+    expect(normalizeMatchSettings({ mapSize: 999, numPlayers: 12 })).toEqual(DEFAULT_MATCH_SETTINGS);
   });
 
   it('caps player count on small maps', () => {

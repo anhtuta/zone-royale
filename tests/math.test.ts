@@ -1,13 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { angleDelta, clamp, dist, dist2, formatTime, lerp } from '../src/utils/math';
-import {
-  createSeededRandom,
-  pick,
-  rand,
-  randInt,
-  setRandomSource,
-  shuffled,
-} from '../src/utils/random';
+import { createSeededRandom, pick, rand, randInt, setRandomSource, shuffled } from '../src/utils/random';
 import { shade } from '../src/utils/color';
 
 afterEach(() => setRandomSource(Math.random));

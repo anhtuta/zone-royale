@@ -78,12 +78,7 @@ export class Camera {
    * @returns `true` if any part of the object may be on screen.
    */
   inView(x: number, y: number, r: number): boolean {
-    return (
-      x + r > this.x &&
-      x - r < this.x + this.width &&
-      y + r > this.y &&
-      y - r < this.y + this.height
-    );
+    return x + r > this.x && x - r < this.x + this.width && y + r > this.y && y - r < this.y + this.height;
   }
 
   /**
@@ -101,12 +96,7 @@ export class Camera {
    * @returns `true` if any part of the rect may be on screen.
    */
   inViewAabb(left: number, top: number, right: number, bottom: number): boolean {
-    return (
-      right > this.x &&
-      left < this.x + this.width &&
-      bottom > this.y &&
-      top < this.y + this.height
-    );
+    return right > this.x && left < this.x + this.width && bottom > this.y && top < this.y + this.height;
   }
 
   /**

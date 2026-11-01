@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { USE_OBSTACLE_IMAGES } from '../src/config/env';
-import {
-  getRockImage,
-  getTreeImage,
-  loadObstacleSprites,
-  obstacleSpritesReady,
-} from '../src/render/obstacleSprites';
+import { getRockImage, getTreeImage, loadObstacleSprites, obstacleSpritesReady } from '../src/render/obstacleSprites';
 
 describe('loadObstacleSprites', () => {
   it('resolves immediately when VITE_USE_OBSTACLE_IMAGES is false', async () => {

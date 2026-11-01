@@ -55,9 +55,7 @@ describe('zone phases', () => {
       const m = Math.min(z.tr + 60, MAP_SIZE / 2);
       expect(z.tx).toBeGreaterThanOrEqual(m);
       expect(z.tx).toBeLessThanOrEqual(MAP_SIZE - m);
-      expect(Math.hypot(z.tx - z.x, z.ty - z.y)).toBeLessThanOrEqual(
-        (ZONE_START_RADIUS - z.tr) * 0.35 + 1e-9,
-      );
+      expect(Math.hypot(z.tx - z.x, z.ty - z.y)).toBeLessThanOrEqual((ZONE_START_RADIUS - z.tr) * 0.35 + 1e-9);
     }
   });
 
@@ -66,9 +64,7 @@ describe('zone phases', () => {
     z.phase = 1;
     z.r = PHASES[0]!.r;
     setupPhase(z);
-    expect(Math.hypot(z.tx - z.x, z.ty - z.y)).toBeLessThanOrEqual(
-      (PHASES[0]!.r - PHASES[1]!.r) * 0.8 + 1e-9,
-    );
+    expect(Math.hypot(z.tx - z.x, z.ty - z.y)).toBeLessThanOrEqual((PHASES[0]!.r - PHASES[1]!.r) * 0.8 + 1e-9);
   });
 
   it('phase end radii scale with the opening safe zone', () => {

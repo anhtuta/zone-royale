@@ -111,8 +111,7 @@ export function setupPhase(zone: Zone): void {
   if (!P) return;
   zone.state = 'wait';
   zone.timer = P.wait;
-  const maxOff =
-    Math.max(0, zone.r - P.r) * (zone.phase === 0 ? FIRST_PHASE_DRIFT : LATER_PHASE_DRIFT);
+  const maxOff = Math.max(0, zone.r - P.r) * (zone.phase === 0 ? FIRST_PHASE_DRIFT : LATER_PHASE_DRIFT);
   const a = rand(0, TAU);
   const d = Math.sqrt(random()) * maxOff;
   const m = Math.min(P.r + 60, zone.mapSize / 2);

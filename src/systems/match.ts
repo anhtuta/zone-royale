@@ -82,8 +82,7 @@ export function findSpawnPoint(
   for (let tries = 0; tries < SPAWN_FIND_TRIES; tries++) {
     const x = rand(margin, mapSize - margin);
     const y = rand(margin, mapSize - margin);
-    if (inHouse(houses, x, y, SPAWN_CLEARANCE) || !circleFree(obstacles, x, y, SPAWN_CLEARANCE, mapSize))
-      continue;
+    if (inHouse(houses, x, y, SPAWN_CLEARANCE) || !circleFree(obstacles, x, y, SPAWN_CLEARANCE, mapSize)) continue;
     if (entities.some((e) => dist2(e.x, e.y, x, y) < sep * sep)) continue;
     return { x, y };
   }
@@ -109,9 +108,7 @@ function spawnCombatant(
       if (p) return p;
     }
     if (sep <= floor) {
-      throw new Error(
-        'spawnCombatant: no spawn with separation ' + floor + ' on map ' + mapSize,
-      );
+      throw new Error('spawnCombatant: no spawn with separation ' + floor + ' on map ' + mapSize);
     }
     sep = Math.max(floor, sep * SPAWN_SEP_BACKOFF);
   }
@@ -145,13 +142,7 @@ export function createMatch(
   for (let i = 0; i < botCount; i++) {
     p = spawnCombatant(map.obstacles, map.houses, entities, botSpacing, mapSize);
     entities.push(
-      createEntity(
-        false,
-        names[i % names.length] as string,
-        BOT_COLORS[i % BOT_COLORS.length] as string,
-        p.x,
-        p.y,
-      ),
+      createEntity(false, names[i % names.length] as string, BOT_COLORS[i % BOT_COLORS.length] as string, p.x, p.y),
     );
   }
   const zone = createZone(mapSize);
@@ -190,10 +181,7 @@ export function createMatch(
  * @param entities - All combatants.
  * @returns A living bot to follow, or `null` if none remain.
  */
-export function resolveSpectateTarget(
-  camTarget: Entity | null,
-  entities: readonly Entity[],
-): Entity | null {
+export function resolveSpectateTarget(camTarget: Entity | null, entities: readonly Entity[]): Entity | null {
   if (camTarget?.alive && !camTarget.isPlayer) return camTarget;
   let best: Entity | null = null;
   for (const e of entities) {
@@ -254,11 +242,7 @@ export function buildEndSummary(world: World, outcome: MatchOutcome): EndSummary
     title: win ? 'WINNER! #1' : 'ELIMINATED',
     subtitle: win
       ? 'Last one standing. The zone bows to you.'
-      : 'You placed #' +
-        p.place +
-        ' of ' +
-        world.entities.length +
-        '. Drop back in and claim the crown.',
+      : 'You placed #' + p.place + ' of ' + world.entities.length + '. Drop back in and claim the crown.',
     place: '#' + p.place,
     kills: String(p.kills),
     damage: String(Math.round(p.damage)),

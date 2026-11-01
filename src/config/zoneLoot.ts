@@ -36,9 +36,7 @@ export const ZONE_LOOT_BASE_FLOOR: Readonly<Record<AmmoType, number>> = {
  * @param phaseEndRadii - `Zone.phases[].r` for the match.
  * @returns That radius in pixels, or `0` if none is positive.
  */
-export function zoneLootClosedPlacementRadius(
-  phaseEndRadii: readonly number[],
-): number {
+export function zoneLootClosedPlacementRadius(phaseEndRadii: readonly number[]): number {
   for (let i = phaseEndRadii.length - 1; i >= 0; i--) {
     const r = phaseEndRadii[i]!;
     if (r > 0) return r;
@@ -61,8 +59,7 @@ export const ZONE_LOOT_SUPPLY_MESSAGE = 'Combat supply dropped in the safe zone'
  */
 export function ammoFloorForAlive(aliveCount: number, type: AmmoType): number {
   const alive = Math.max(1, aliveCount);
-  const scaled =
-    (ZONE_LOOT_BASE_FLOOR[type] * alive) / ZONE_LOOT_FLOOR_ALIVE_DIVISOR;
+  const scaled = (ZONE_LOOT_BASE_FLOOR[type] * alive) / ZONE_LOOT_FLOOR_ALIVE_DIVISOR;
   return Math.min(alive, Math.max(1, Math.round(scaled)));
 }
 
@@ -74,7 +71,6 @@ export function ammoFloorForAlive(aliveCount: number, type: AmmoType): number {
  */
 export function weaponFloorForAlive(aliveCount: number): number {
   const alive = Math.max(1, aliveCount);
-  const scaled =
-    (ZONE_LOOT_WEAPON_BASE_FLOOR * alive) / ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR;
+  const scaled = (ZONE_LOOT_WEAPON_BASE_FLOOR * alive) / ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR;
   return Math.min(alive, Math.max(1, Math.round(scaled)));
 }

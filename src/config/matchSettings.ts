@@ -101,9 +101,7 @@ export function maxSelectablePlayers(mapSize: number): number {
  * @returns A normalized settings object.
  */
 export function normalizeMatchSettings(raw: Partial<MatchSettings>): MatchSettings {
-  const mapSize = MAP_VALUES.has(raw.mapSize as number)
-    ? (raw.mapSize as number)
-    : DEFAULT_MATCH_SETTINGS.mapSize;
+  const mapSize = MAP_VALUES.has(raw.mapSize as number) ? (raw.mapSize as number) : DEFAULT_MATCH_SETTINGS.mapSize;
   let numPlayers = PLAYER_VALUES.has(raw.numPlayers as number)
     ? (raw.numPlayers as number)
     : DEFAULT_MATCH_SETTINGS.numPlayers;

@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  drawSoftGroundShadow,
-  GROUND_SHADOW_CENTER_ALPHA,
-  GROUND_SHADOW_CORE_STOP,
-} from '../src/render/draw';
+import { drawSoftGroundShadow, GROUND_SHADOW_CENTER_ALPHA, GROUND_SHADOW_CORE_STOP } from '../src/render/draw';
 
 describe('drawSoftGroundShadow', () => {
   it('builds a radial gradient and restores context', () => {

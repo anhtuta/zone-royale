@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { BOT_NAMES } from '../src/config/bots';
-import {
-  DEFAULT_MATCH_SETTINGS,
-  minBodySpawnSeparation,
-  numBots,
-} from '../src/config/matchSettings';
+import { DEFAULT_MATCH_SETTINGS, minBodySpawnSeparation, numBots } from '../src/config/matchSettings';
 import { Camera } from '../src/core/camera';
 import { stepWorld } from '../src/core/simulation';
 import {
@@ -143,9 +139,7 @@ describe('match setup', () => {
     const botCount = numBots(DEFAULT_MATCH_SETTINGS);
     expect(w.entities).toHaveLength(1 + botCount);
     expect(w.entities.filter((e) => e.isPlayer)).toEqual([w.player]);
-    expect(new Set(w.entities.map((e) => e.name)).size).toBe(
-      1 + Math.min(botCount, BOT_NAMES.length),
-    );
+    expect(new Set(w.entities.map((e) => e.name)).size).toBe(1 + Math.min(botCount, BOT_NAMES.length));
     const bodySep = minBodySpawnSeparation();
     for (const e of w.entities) {
       expect(circleFree(w.obstacles, e.x, e.y, 30, w.mapSize)).toBe(true);
@@ -163,8 +157,7 @@ describe('match setup', () => {
       let close = 0;
       for (let i = 0; i < bots.length; i++)
         for (let j = i + 1; j < bots.length; j++)
-          if (Math.hypot(bots[i]!.x - bots[j]!.x, bots[i]!.y - bots[j]!.y) < BOT_SPAWN_SPACING)
-            close++;
+          if (Math.hypot(bots[i]!.x - bots[j]!.x, bots[i]!.y - bots[j]!.y) < BOT_SPAWN_SPACING) close++;
       expect(close).toBe(0);
     }
     expect(w.phase).toBe('playing');

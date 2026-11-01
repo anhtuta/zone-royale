@@ -69,13 +69,7 @@ export function segmentObstacle(
  * @param by - Second point Y.
  * @returns `true` if no obstacle blocks the straight line.
  */
-export function lineOfSight(
-  obstacles: readonly Obstacle[],
-  ax: number,
-  ay: number,
-  bx: number,
-  by: number,
-): boolean {
+export function lineOfSight(obstacles: readonly Obstacle[], ax: number, ay: number, bx: number, by: number): boolean {
   return segmentObstacle(obstacles, ax, ay, bx, by) < 0;
 }
 
@@ -88,13 +82,7 @@ export function lineOfSight(
  * @param r - Circle radius.
  * @returns `true` if the space is free.
  */
-export function circleFree(
-  obstacles: readonly Obstacle[],
-  x: number,
-  y: number,
-  r: number,
-  mapSize: number,
-): boolean {
+export function circleFree(obstacles: readonly Obstacle[], x: number, y: number, r: number, mapSize: number): boolean {
   if (x < r || y < r || x > mapSize - r || y > mapSize - r) return false;
   for (const o of obstacles) {
     if (o.t === 'wall') {
@@ -132,15 +120,10 @@ export function inHouse(houses: readonly House[], x: number, y: number, pad: num
  * @param obstacles - Map obstacles.
  * @param e - Body to resolve.
  */
-export function resolveCollision(
-  obstacles: readonly Obstacle[],
-  e: CircleBody,
-  mapSize: number,
-): void {
+export function resolveCollision(obstacles: readonly Obstacle[], e: CircleBody, mapSize: number): void {
   for (const o of obstacles) {
     if (o.t === 'wall') {
-      if (e.x + e.r < o.x || e.x - e.r > o.x + o.w || e.y + e.r < o.y || e.y - e.r > o.y + o.h)
-        continue;
+      if (e.x + e.r < o.x || e.x - e.r > o.x + o.w || e.y + e.r < o.y || e.y - e.r > o.y + o.h) continue;
       const cx = clamp(e.x, o.x, o.x + o.w);
       const cy = clamp(e.y, o.y, o.y + o.h);
       const dx = e.x - cx;

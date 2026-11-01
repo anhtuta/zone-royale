@@ -19,9 +19,7 @@ afterEach(() => setRandomSource(Math.random));
 describe('loot labels', () => {
   it('names every kind of loot', () => {
     expect(lootName({ kind: 'weapon', type: 'rifle', mag: 30, x: 0, y: 0 })).toBe('Assault Rifle');
-    expect(lootName({ kind: 'ammo', type: 'light', amount: 30, x: 0, y: 0 })).toBe(
-      'Light Ammo x30',
-    );
+    expect(lootName({ kind: 'ammo', type: 'light', amount: 30, x: 0, y: 0 })).toBe('Light Ammo x30');
     expect(lootName({ kind: 'health', amount: 40, x: 0, y: 0 })).toBe('Med Kit (+40 HP)');
     expect(lootName({ kind: 'armor', amount: 50, x: 0, y: 0 })).toBe('Armor (+50)');
     expect(lootColor({ kind: 'health', amount: 40, x: 0, y: 0 })).toBe('#ef5350');
@@ -133,15 +131,11 @@ describe('player pickup rules', () => {
 
   it('refuses med kits at full health and armor at full armor', () => {
     const { player: p } = makeWorld();
-    expect(pickupRefusal(p, { kind: 'health', amount: 40, x: 0, y: 0 })).toBe(
-      'Health is already full',
-    );
+    expect(pickupRefusal(p, { kind: 'health', amount: 40, x: 0, y: 0 })).toBe('Health is already full');
     p.hp = 50;
     expect(pickupRefusal(p, { kind: 'health', amount: 40, x: 0, y: 0 })).toBeNull();
     p.armor = 100;
-    expect(pickupRefusal(p, { kind: 'armor', amount: 50, x: 0, y: 0 })).toBe(
-      'Armor is already full',
-    );
+    expect(pickupRefusal(p, { kind: 'armor', amount: 50, x: 0, y: 0 })).toBe('Armor is already full');
   });
 
   it('playerPickup picks the nearest item within 60px', () => {

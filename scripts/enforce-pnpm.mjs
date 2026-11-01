@@ -3,8 +3,6 @@
 const userAgent = process.env.npm_config_user_agent ?? '';
 
 if (!userAgent.startsWith('pnpm/')) {
-  console.error(
-    '\nThis repo uses pnpm only. Use:\n\n  pnpm install\n\nhttps://pnpm.io/installation\n',
-  );
+  console.error('\nThis repo uses pnpm only. Use:\n\n  pnpm install\n\nhttps://pnpm.io/installation\n');
   process.exit(1);
 }

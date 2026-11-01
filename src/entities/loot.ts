@@ -4,13 +4,7 @@
  * @packageDocumentation
  */
 
-import {
-  AMMO_COLORS,
-  AMMO_NAMES,
-  WEAPONS,
-  type AmmoType,
-  type WeaponType,
-} from '../config/weapons';
+import { AMMO_COLORS, AMMO_NAMES, WEAPONS, type AmmoType, type WeaponType } from '../config/weapons';
 
 /** Fields shared by every loot item. */
 interface LootBase {

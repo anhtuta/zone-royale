@@ -89,9 +89,10 @@ describe('eliminations', () => {
     a.weapons[1] = { type: 'rifle', mag: 7 };
     a.ammo.medium = 15;
     eliminate(w, a, w.player, 'Pistol');
-    expect(
-      w.loot.filter((l) => l.kind === 'weapon').map((l) => l.kind === 'weapon' && l.type),
-    ).toEqual(['pistol', 'rifle']);
+    expect(w.loot.filter((l) => l.kind === 'weapon').map((l) => l.kind === 'weapon' && l.type)).toEqual([
+      'pistol',
+      'rifle',
+    ]);
     expect(w.loot.find((l) => l.kind === 'weapon' && l.type === 'rifle')).toMatchObject({ mag: 7 });
     expect(w.loot.filter((l) => l.kind === 'ammo')).toHaveLength(2);
   });

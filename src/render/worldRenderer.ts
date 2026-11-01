@@ -107,8 +107,7 @@ function drawLootLabels(ctx: CanvasRenderingContext2D, world: World): void {
     const w = ctx.measureText(t).width;
     const bx = it.x - w / 2;
     const by = it.y - 32;
-    if (boxes.some((q) => bx < q[0] + q[2] && bx + w > q[0] && by < q[1] + 14 && by + 14 > q[1]))
-      continue;
+    if (boxes.some((q) => bx < q[0] + q[2] && bx + w > q[0] && by < q[1] + 14 && by + 14 > q[1])) continue;
     boxes.push([bx, by, w]);
     ctx.fillStyle = 'rgba(0,0,0,.6)';
     ctx.fillText(t, it.x + 1, it.y - 21);

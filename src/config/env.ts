@@ -30,7 +30,4 @@ export const USE_OBSTACLE_IMAGES = envBool(import.meta.env.VITE_USE_OBSTACLE_IMA
  *
  * Set `VITE_DEBUG_OBSTACLE_COLLISION` in `.env` (see `.env.example`).
  */
-export const DEBUG_OBSTACLE_COLLISION = envBool(
-  import.meta.env.VITE_DEBUG_OBSTACLE_COLLISION,
-  false,
-);
+export const DEBUG_OBSTACLE_COLLISION = envBool(import.meta.env.VITE_DEBUG_OBSTACLE_COLLISION, false);

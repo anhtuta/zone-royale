@@ -50,10 +50,7 @@ describe('weaponFloorForAlive', () => {
     const alive = 20;
     const expected = Math.min(
       alive,
-      Math.max(
-        1,
-        Math.round((ZONE_LOOT_WEAPON_BASE_FLOOR * alive) / ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR),
-      ),
+      Math.max(1, Math.round((ZONE_LOOT_WEAPON_BASE_FLOOR * alive) / ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR)),
     );
     expect(weaponFloorForAlive(alive)).toBe(expected);
   });
@@ -71,10 +68,7 @@ describe('ammoFloorForAlive', () => {
     for (const type of Object.keys(ZONE_LOOT_BASE_FLOOR) as (keyof typeof ZONE_LOOT_BASE_FLOOR)[]) {
       const expected = Math.min(
         alive,
-        Math.max(
-          1,
-          Math.round((ZONE_LOOT_BASE_FLOOR[type] * alive) / ZONE_LOOT_FLOOR_ALIVE_DIVISOR),
-        ),
+        Math.max(1, Math.round((ZONE_LOOT_BASE_FLOOR[type] * alive) / ZONE_LOOT_FLOOR_ALIVE_DIVISOR)),
       );
       expect(ammoFloorForAlive(alive, type)).toBe(expected);
     }
@@ -97,9 +91,7 @@ describe('zone loot placement radius', () => {
     const world = makeWorld({ loot: [] });
     world.zone.r = 40;
     expect(zoneLootOuterRadius(world.zone, 'phaseAdvanced')).toBe(40);
-    expect(zoneLootPlacementRadius(world.zone, 'phaseAdvanced')).toBe(
-      40 - BOT_LOOT_ZONE_INSET,
-    );
+    expect(zoneLootPlacementRadius(world.zone, 'phaseAdvanced')).toBe(40 - BOT_LOOT_ZONE_INSET);
     expect(trySpawnAmmoInZone(world, 'light', 'phaseAdvanced')).toBe(true);
   });
 
@@ -203,9 +195,7 @@ describe('handleZoneSupplyEvent', () => {
     expect(zoneLootOuterRadius(world.zone, 'phaseAdvanced')).toBe(0);
     const closedOuter = zoneLootOuterRadius(world.zone, 'closed');
     expect(closedOuter).toBeGreaterThan(0);
-    expect(zoneLootPlacementRadius(world.zone, 'closed')).toBe(
-      closedOuter - BOT_LOOT_ZONE_INSET,
-    );
+    expect(zoneLootPlacementRadius(world.zone, 'closed')).toBe(closedOuter - BOT_LOOT_ZONE_INSET);
     handleZoneSupplyEvent(world, 'closed');
     expect(world.loot.length).toBeGreaterThan(0);
     for (const item of world.loot) {
@@ -219,12 +209,8 @@ describe('handleZoneSupplyEvent', () => {
     const world = makeWorld({ loot: [] });
     fillZoneAmmoToFloors(world);
     const alive = world.entities.filter((e) => e.alive).length;
-    for (const type of Object.keys(countGroundAmmo(world.loot)) as (keyof ReturnType<
-      typeof countGroundAmmo
-    >)[]) {
-      expect(countGroundAmmo(world.loot)[type]).toBeGreaterThanOrEqual(
-        ammoFloorForAlive(alive, type),
-      );
+    for (const type of Object.keys(countGroundAmmo(world.loot)) as (keyof ReturnType<typeof countGroundAmmo>)[]) {
+      expect(countGroundAmmo(world.loot)[type]).toBeGreaterThanOrEqual(ammoFloorForAlive(alive, type));
     }
     world.killfeed = [];
     world.message = { text: '', t: 0 };
@@ -259,9 +245,7 @@ describe('simulation hook', () => {
     updateZone(world.zone, PHASES[0]!.shrink - 0.001);
     stepWorld(world, IDLE, 0.01);
     const alive = world.entities.filter((e) => e.alive).length;
-    expect(countGroundAmmo(world.loot).light).toBeGreaterThanOrEqual(
-      ammoFloorForAlive(alive, 'light'),
-    );
+    expect(countGroundAmmo(world.loot).light).toBeGreaterThanOrEqual(ammoFloorForAlive(alive, 'light'));
     expect(world.killfeed.some((e) => e.sys === ZONE_LOOT_SUPPLY_MESSAGE)).toBe(true);
   });
 

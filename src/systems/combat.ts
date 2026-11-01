@@ -117,12 +117,7 @@ export function applyDamage(
  * @param src - Killer, or `null` for the zone.
  * @param weaponName - Weapon display name for the kill feed.
  */
-export function eliminate(
-  world: World,
-  e: Entity,
-  src: Entity | null,
-  weaponName: string | null,
-): void {
+export function eliminate(world: World, e: Entity, src: Entity | null, weaponName: string | null): void {
   e.alive = false;
   e.hp = 0;
   e.diedAt = world.gameTime;
@@ -183,8 +178,7 @@ export function eliminate(
   } else {
     pushFeed(world, { killer: null, victim: e.name, weapon: null, vp: e.isPlayer, t: 6 });
   }
-  if (src && src.isPlayer && e !== src)
-    showMessage(world, 'Eliminated ' + e.name + '!  (' + alive + ' left)');
+  if (src && src.isPlayer && e !== src) showMessage(world, 'Eliminated ' + e.name + '!  (' + alive + ' left)');
   if (e.isPlayer) {
     world.camTarget = src && src.alive ? src : null;
     world.spectating = true;

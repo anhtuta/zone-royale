@@ -203,13 +203,7 @@ function drawHand(
  * @param lo - Shadow.
  * @param isPlayer - Draw helmet stripe when true.
  */
-function drawTorso(
-  ctx: CanvasRenderingContext2D,
-  jacket: string,
-  hi: string,
-  lo: string,
-  isPlayer: boolean,
-): void {
+function drawTorso(ctx: CanvasRenderingContext2D, jacket: string, hi: string, lo: string, isPlayer: boolean): void {
   ctx.fillStyle = lo;
   ctx.strokeStyle = OUTLINE;
   ctx.lineWidth = 1.4;

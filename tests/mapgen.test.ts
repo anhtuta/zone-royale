@@ -1,10 +1,5 @@
 import { describe, expect, it, afterEach } from 'vitest';
-import {
-  ROCK_SPRITES,
-  TREE_CANOPY_VR_MUL,
-  TREE_SPRITES,
-  treeSpriteDef,
-} from '../src/config/obstacleSprites';
+import { ROCK_SPRITES, TREE_CANOPY_VR_MUL, TREE_SPRITES, treeSpriteDef } from '../src/config/obstacleSprites';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
 import {
   DECOR_COUNT,

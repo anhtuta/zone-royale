@@ -35,12 +35,7 @@ export interface FrameOverlayStats {
  * @param vh - Viewport height.
  * @param stats - Values for this frame.
  */
-export function drawFrameStats(
-  ctx: CanvasRenderingContext2D,
-  vw: number,
-  vh: number,
-  stats: FrameOverlayStats,
-): void {
+export function drawFrameStats(ctx: CanvasRenderingContext2D, vw: number, vh: number, stats: FrameOverlayStats): void {
   const fps = Math.round(stats.fps);
   ctx.textAlign = 'right';
   ctx.textBaseline = 'bottom';
@@ -73,15 +68,7 @@ export function zoneStatusText(zone: Zone): string {
  * @returns E.g. `"PHASE 2/6  •  2 dmg/s outside"`.
  */
 export function zonePhaseText(zone: Zone): string {
-  return (
-    'PHASE ' +
-      (zone.phase + 1) +
-      '/' +
-      zone.phases.length +
-      '  •  ' +
-      zoneDps(zone) +
-      ' dmg/s outside'
-  );
+  return 'PHASE ' + (zone.phase + 1) + '/' + zone.phases.length + '  •  ' + zoneDps(zone) + ' dmg/s outside';
 }
 
 /**
@@ -155,12 +142,7 @@ function drawVitals(ctx: CanvasRenderingContext2D, world: World, vh: number): vo
  * @param vw - Viewport width.
  * @param vh - Viewport height.
  */
-function drawWeaponSlots(
-  ctx: CanvasRenderingContext2D,
-  world: World,
-  vw: number,
-  vh: number,
-): void {
+function drawWeaponSlots(ctx: CanvasRenderingContext2D, world: World, vw: number, vh: number): void {
   const p = world.player;
   const sw = 120;
   const sh = 58;
@@ -221,11 +203,7 @@ function drawWeaponSlots(
   } else if (cw && cw.mag === 0) {
     ctx.font = '800 15px system-ui,sans-serif';
     ctx.fillStyle = '#ef5350';
-    ctx.fillText(
-      p.ammo[WEAPONS[cw.type].ammo] > 0 ? 'Press R to reload' : 'Out of ammo',
-      vw / 2,
-      sy - 16,
-    );
+    ctx.fillText(p.ammo[WEAPONS[cw.type].ammo] > 0 ? 'Press R to reload' : 'Out of ammo', vw / 2, sy - 16);
   }
 }
 
@@ -247,14 +225,7 @@ function vignette(
   edgeColor: string,
   clearColor: string,
 ): void {
-  const g = ctx.createRadialGradient(
-    vw / 2,
-    vh / 2,
-    Math.min(vw, vh) * inner,
-    vw / 2,
-    vh / 2,
-    Math.max(vw, vh) * 0.7,
-  );
+  const g = ctx.createRadialGradient(vw / 2, vh / 2, Math.min(vw, vh) * inner, vw / 2, vh / 2, Math.max(vw, vh) * 0.7);
   g.addColorStop(0, clearColor);
   g.addColorStop(1, edgeColor);
   ctx.fillStyle = g;

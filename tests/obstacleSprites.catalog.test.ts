@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  rockCollisionRadius,
-  rockSpriteDef,
-  treeCollisionRadius,
-  treeSpriteDef,
-} from '../src/config/obstacleSprites';
+import { rockCollisionRadius, rockSpriteDef, treeCollisionRadius, treeSpriteDef } from '../src/config/obstacleSprites';
 
 describe('obstacleSprites catalog tuning', () => {
   it('rocks use conservative collision scale on wide cakes', () => {

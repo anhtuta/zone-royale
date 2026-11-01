@@ -34,9 +34,7 @@ export function frameDelta(now: number, last: number): number {
  * @param frame - Called every frame with simulation `dt`, uncapped `frameInterval`, and `now`.
  * @returns A function that stops the loop.
  */
-export function startLoop(
-  frame: (dt: number, frameInterval: number, now: number) => void,
-): () => void {
+export function startLoop(frame: (dt: number, frameInterval: number, now: number) => void): () => void {
   let last = performance.now();
   let handle = 0;
   /**

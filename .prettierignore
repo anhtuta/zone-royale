@@ -3,3 +3,10 @@ dist
 coverage
 package-lock.json
 docs/screenshot.png
+
+# Not in `pnpm format` / `format:check` (see package.json scripts)
+docs/
+README.md
+pnpm-lock.yaml
+.github/
+.cursor/

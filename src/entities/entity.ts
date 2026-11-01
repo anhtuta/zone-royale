@@ -165,13 +165,7 @@ export function createBrain(x: number, y: number): BotBrain {
  * @param y - Spawn Y.
  * @returns The new entity.
  */
-export function createEntity(
-  isPlayer: boolean,
-  name: string,
-  color: string,
-  x: number,
-  y: number,
-): Entity {
+export function createEntity(isPlayer: boolean, name: string, color: string, x: number, y: number): Entity {
   const angle = rand(0, TAU);
   return {
     isPlayer,

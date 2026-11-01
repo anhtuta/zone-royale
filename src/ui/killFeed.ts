@@ -24,16 +24,9 @@ export interface KillFeedLine {
  * @returns Text and colors for drawing it.
  */
 export function formatKillFeed(f: KillFeedEntry): KillFeedLine {
-  if (f.sys !== undefined)
-    return { text: '⚠ ' + f.sys, color: '#ce93d8', background: 'rgba(10,16,26,.6)' };
-  const text = f.killer
-    ? f.killer + '  [' + f.weapon + ']  ' + f.victim
-    : f.victim + ' was consumed by the zone';
-  const background = f.vp
-    ? 'rgba(160,20,20,.7)'
-    : f.kp
-      ? 'rgba(30,90,160,.75)'
-      : 'rgba(10,16,26,.6)';
+  if (f.sys !== undefined) return { text: '⚠ ' + f.sys, color: '#ce93d8', background: 'rgba(10,16,26,.6)' };
+  const text = f.killer ? f.killer + '  [' + f.weapon + ']  ' + f.victim : f.victim + ' was consumed by the zone';
+  const background = f.vp ? 'rgba(160,20,20,.7)' : f.kp ? 'rgba(30,90,160,.75)' : 'rgba(10,16,26,.6)';
   return { text, color: '#fff', background };
 }
 

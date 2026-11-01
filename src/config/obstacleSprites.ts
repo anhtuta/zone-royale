@@ -97,10 +97,7 @@ export const DEFAULT_TREE_MAPGEN_BASE_R = 24;
 
 /** Optional per-rock layout overrides for {@link rockLayout}. */
 type RockTuning = Partial<
-  Pick<
-    RockSpriteDef,
-    'heightMul' | 'drawOffsetX' | 'drawOffsetY' | 'collisionRadiusScale' | 'mapgenBaseR'
-  >
+  Pick<RockSpriteDef, 'heightMul' | 'drawOffsetX' | 'drawOffsetY' | 'collisionRadiusScale' | 'mapgenBaseR'>
 > &
   Partial<ObstacleShadowTuning>;
 
@@ -108,12 +105,7 @@ type RockTuning = Partial<
 type TreeTuning = Partial<
   Pick<
     TreeSpriteDef,
-    | 'heightMul'
-    | 'drawOffsetX'
-    | 'drawOffsetY'
-    | 'collisionRadiusScale'
-    | 'collisionLiftR'
-    | 'mapgenBaseR'
+    'heightMul' | 'drawOffsetX' | 'drawOffsetY' | 'collisionRadiusScale' | 'collisionLiftR' | 'mapgenBaseR'
   >
 > &
   Partial<ObstacleShadowTuning>;
@@ -136,14 +128,16 @@ const rockLayout = (id: string, src: string, tuning: RockTuning = {}): RockSprit
 /** Ordered rock variants; index is stored on `RockObstacle.variant` in `world/types.ts`. */
 export const ROCK_SPRITES: readonly RockSpriteDef[] = [
   rockLayout('foothill_6', foothill6Url, {
-    heightMul: 2.35, collisionRadiusScale: 0.92,
+    heightMul: 2.35,
+    collisionRadiusScale: 0.92,
     shadowOffsetX: 0,
     shadowOffsetY: 8,
     shadowRadiusXMul: 1.1,
     shadowRadiusYMul: 0.8,
   }),
   rockLayout('foothill_7', foothill7Url, {
-    heightMul: 2.3, collisionRadiusScale: 0.9,
+    heightMul: 2.3,
+    collisionRadiusScale: 0.9,
     shadowOffsetX: 0,
     shadowOffsetY: 8,
     shadowRadiusXMul: 1.2,
@@ -296,10 +290,7 @@ export const TREE_CANOPY_VR_MUL = 1.55;
  * @param collisionR - Stored gameplay radius after scaling.
  * @param collisionRadiusScale - Variant `collisionRadiusScale`.
  */
-export function obstacleMapgenBaseRadius(
-  collisionR: number,
-  collisionRadiusScale: number,
-): number {
+export function obstacleMapgenBaseRadius(collisionR: number, collisionRadiusScale: number): number {
   return collisionR / collisionRadiusScale;
 }
 

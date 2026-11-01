@@ -4,12 +4,7 @@
  * @packageDocumentation
  */
 
-import {
-  MAP_SIZE_OPTIONS,
-  maxPlayersForMap,
-  PLAYER_COUNT_OPTIONS,
-  type MatchSettings,
-} from '../config/matchSettings';
+import { MAP_SIZE_OPTIONS, maxPlayersForMap, PLAYER_COUNT_OPTIONS, type MatchSettings } from '../config/matchSettings';
 import { loadMatchSettings, saveMatchSettings } from './matchSettingsStorage';
 
 /** Looks up a required element by id. */
@@ -116,11 +111,7 @@ export class SettingsModal {
 
 /** Escapes text inserted into the start-screen blurb HTML. */
 function escapeBlurbHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /**
@@ -131,8 +122,7 @@ function escapeBlurbHtml(text: string): string {
  * @returns Safe HTML for `#startSub`.
  */
 export function matchSettingsBlurb(settings: MatchSettings): string {
-  const mapLabel =
-    MAP_SIZE_OPTIONS.find((o) => o.value === settings.mapSize)?.label ?? String(settings.mapSize);
+  const mapLabel = MAP_SIZE_OPTIONS.find((o) => o.value === settings.mapSize)?.label ?? String(settings.mapSize);
   const players = escapeBlurbHtml(String(settings.numPlayers));
   const map = escapeBlurbHtml(mapLabel.toLowerCase());
   return (

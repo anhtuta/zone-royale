@@ -23,10 +23,7 @@ export const MINIMAP_MARGIN = 14;
  * @param map - The generated map.
  * @returns A {@link MINIMAP_SIZE}² canvas.
  */
-export function buildMinimapBase(
-  map: Pick<GameMap, 'houses' | 'obstacles'>,
-  mapSize: number,
-): HTMLCanvasElement {
+export function buildMinimapBase(map: Pick<GameMap, 'houses' | 'obstacles'>, mapSize: number): HTMLCanvasElement {
   const S = MINIMAP_SIZE;
   const canvas = document.createElement('canvas');
   canvas.width = S;
@@ -48,13 +45,7 @@ export function buildMinimapBase(
       const { x: cx, y: cy, r } = circleObstacleCollision(o);
       m.fillStyle = o.t === 'tree' ? '#2e5d27' : '#8d8d8d';
       m.beginPath();
-      m.arc(
-        cx * k,
-        cy * k,
-        Math.max(1.2, r * k * (o.t === 'tree' ? 1.4 : 1)),
-        0,
-        TAU,
-      );
+      m.arc(cx * k, cy * k, Math.max(1.2, r * k * (o.t === 'tree' ? 1.4 : 1)), 0, TAU);
       m.fill();
     }
   }

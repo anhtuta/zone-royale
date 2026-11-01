@@ -67,8 +67,7 @@ function rockImageDrawRect(
 ): { left: number; top: number; w: number; h: number } {
   const def = rockSpriteDef(rock.variant);
   const h = rockVisualBaseRadius(rock) * def.heightMul;
-  const aspect =
-    img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : SPRITE_FALLBACK_ASPECT;
+  const aspect = img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : SPRITE_FALLBACK_ASPECT;
   const w = h * aspect;
   const cx = rock.x + def.drawOffsetX;
   const cy = rock.y + def.drawOffsetY;

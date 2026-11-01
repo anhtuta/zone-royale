@@ -55,12 +55,7 @@ export function treeModelFoot(tree: TreeObstacle): WorldPoint {
  * @param variant - Sprite variant index.
  * @returns Circle centre (`collisionLiftR × r` above the foot).
  */
-export function treeFootCollisionCenter(
-  footX: number,
-  footY: number,
-  r: number,
-  variant: number,
-): WorldPoint {
+export function treeFootCollisionCenter(footX: number, footY: number, r: number, variant: number): WorldPoint {
   const lift = treeSpriteDef(variant).collisionLiftR * r;
   return { x: footX, y: footY - lift };
 }

@@ -177,13 +177,7 @@ export function pickupRefusal(e: Entity, it: LootItem): string | null {
  */
 export function playerPickup(world: World): boolean {
   const p = world.player;
-  const pickable = nearestLoot(
-    world.loot,
-    p.x,
-    p.y,
-    PICK_RANGE,
-    (it) => pickupRefusal(p, it) === null,
-  );
+  const pickable = nearestLoot(world.loot, p.x, p.y, PICK_RANGE, (it) => pickupRefusal(p, it) === null);
   if (pickable) {
     applyLoot(world, p, pickable);
     return true;
@@ -217,10 +211,7 @@ export function botWants(b: Entity, it: LootItem): boolean {
       return tier > weakest && !owns;
     }
     case 'ammo':
-      return (
-        b.weapons.some((w) => w && WEAPONS[w.type].ammo === it.type) &&
-        b.ammo[it.type] < BOT_AMMO_CAP
-      );
+      return b.weapons.some((w) => w && WEAPONS[w.type].ammo === it.type) && b.ammo[it.type] < BOT_AMMO_CAP;
     case 'health':
       return b.hp < 85;
     case 'armor':
