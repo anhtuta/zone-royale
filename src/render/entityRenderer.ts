@@ -19,7 +19,7 @@ import { combatantSpritesReady, drawCombatantSprite } from './spriteAssets';
  * @param e - The entity.
  * @param gameTime - Match time in seconds (walk animation).
  */
-export function drawEntity(ctx: CanvasRenderingContext2D, e: Entity, gameTime: number): void {
+export function drawEntity(ctx: CanvasRenderingContext2D, e: Entity, gameTime: number, maxHp: number): void {
   const held = e.weapons[e.slot];
   const WS = held ? WEAPONS[held.type] : null;
   const useSprite = combatantSpritesReady();
@@ -86,7 +86,7 @@ export function drawEntity(ctx: CanvasRenderingContext2D, e: Entity, gameTime: n
     ctx.fillText(e.name, e.x, e.y - e.r - 14);
     ctx.fillStyle = 'rgba(0,0,0,.55)';
     ctx.fillRect(e.x - 20, e.y - e.r - 10, 40, 5);
-    ctx.fillStyle = healthColor(e.hp);
-    ctx.fillRect(e.x - 20, e.y - e.r - 10, (40 * e.hp) / 100, 5);
+    ctx.fillStyle = healthColor(e.hp, maxHp);
+    ctx.fillRect(e.x - 20, e.y - e.r - 10, (40 * e.hp) / maxHp, 5);
   }
 }

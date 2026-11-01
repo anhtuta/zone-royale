@@ -1,3 +1,4 @@
+import { BASE_MAX_HP } from '../src/config/constants';
 import { DEFAULT_MATCH_SETTINGS } from '../src/config/matchSettings';
 import { Camera } from '../src/core/camera';
 import type { SoundKind, SoundSink, World } from '../src/core/world';
@@ -13,8 +14,8 @@ export class RecordingSound implements SoundSink {
 }
 
 /** Creates a bot at a position. */
-export function bot(x: number, y: number, name = 'Bot'): Entity {
-  return createEntity(false, name, '#e57373', x, y);
+export function bot(x: number, y: number, name = 'Bot', maxHp: number = DEFAULT_MATCH_SETTINGS.maxHp): Entity {
+  return createEntity(false, name, '#e57373', x, y, maxHp);
 }
 
 /**
@@ -23,10 +24,12 @@ export function bot(x: number, y: number, name = 'Bot'): Entity {
  */
 export function makeWorld(overrides: Partial<World> = {}): World {
   const mapSize = overrides.mapSize ?? DEFAULT_MATCH_SETTINGS.mapSize;
-  const player = createEntity(true, 'You', '#42a5f5', mapSize / 2, mapSize / 2);
-  const world: World = {
+  const maxHp = overrides.maxHp ?? DEFAULT_MATCH_SETTINGS.maxHp;
+  const player = createEntity(true, 'You', '#42a5f5', mapSize / 2, mapSize / 2, maxHp);
+  return {
     phase: 'playing',
     mapSize,
+    maxHp,
     obstacles: [],
     houses: [],
     decor: [],
@@ -37,7 +40,7 @@ export function makeWorld(overrides: Partial<World> = {}): World {
     particles: [],
     floaters: [],
     killfeed: [],
-    zone: createZone(mapSize),
+    zone: createZone(mapSize, maxHp),
     camera: new Camera(1280, 720),
     camTarget: player,
     spectating: false,
@@ -49,5 +52,6 @@ export function makeWorld(overrides: Partial<World> = {}): World {
     sound: null,
     ...overrides,
   };
-  return world;
 }
+
+export { BASE_MAX_HP };

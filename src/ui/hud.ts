@@ -123,8 +123,8 @@ function drawVitals(ctx: CanvasRenderingContext2D, world: World, vh: number): vo
   ctx.fillStyle = 'rgba(255,255,255,.1)';
   ctx.fillRect(84, vh - 76, 176, 16);
   ctx.fillRect(84, vh - 42, 176, 12);
-  ctx.fillStyle = healthColor(p.hp);
-  ctx.fillRect(84, vh - 76, (176 * p.hp) / 100, 16);
+  ctx.fillStyle = healthColor(p.hp, world.maxHp);
+  ctx.fillRect(84, vh - 76, (176 * p.hp) / world.maxHp, 16);
   ctx.fillStyle = '#42a5f5';
   ctx.fillRect(84, vh - 42, (176 * p.armor) / 100, 12);
   ctx.fillStyle = '#fff';
@@ -328,7 +328,7 @@ export function drawHUD(
     ctx.fillStyle = '#e1bee7';
     ctx.fillText('⚠ OUTSIDE THE ZONE — get to safety!', vw / 2, 128);
   }
-  if (p.hp < 30) vignette(ctx, vw, vh, 0.35, 'rgba(200,0,0,.35)', 'rgba(200,0,0,0)');
+  if (p.hp < world.maxHp * 0.3) vignette(ctx, vw, vh, 0.35, 'rgba(200,0,0,.35)', 'rgba(200,0,0,0)');
   drawCrosshair(ctx, world, mouse);
   if (frameStats) drawFrameStats(ctx, vw, vh, frameStats);
   ctx.textBaseline = 'alphabetic';

@@ -44,6 +44,8 @@ export interface World {
   phase: GamePhase;
   /** Square play area side length in world pixels. */
   mapSize: number;
+  /** Max health for combatants; med-kit cap and zone phase scale. */
+  maxHp: number;
   /** Solid obstacles. */
   obstacles: Obstacle[];
   /** House footprints. */

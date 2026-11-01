@@ -41,8 +41,13 @@ export const BOT_LOOT_ZONE_INSET = 20;
 /** Collision radius of every combatant. */
 export const ENTITY_RADIUS = 18;
 
-/** Maximum health of a combatant. */
-export const MAX_HP = 100;
+/** Reference max HP for zone scaling ({@link MatchSettings.maxHp} baseline). */
+export const BASE_MAX_HP = 100;
+
+/** Multiplier for zone wait/shrink/dps from a match's {@link MatchSettings.maxHp}. */
+export function hpScale(maxHp: number): number {
+  return maxHp / BASE_MAX_HP;
+}
 
 /** Maximum armor of a combatant. */
 export const MAX_ARMOR = 100;

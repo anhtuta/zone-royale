@@ -89,9 +89,10 @@ export function panel(ctx: CanvasRenderingContext2D, x: number, y: number, w: nu
 /**
  * Color for a health bar.
  *
- * @param hp - Health 0..100.
- * @returns Green above 50, amber above 25, otherwise red.
+ * @param hp - Current health.
+ * @param maxHp - Match health cap.
+ * @returns Green above 50%, amber above 25%, otherwise red.
  */
-export function healthColor(hp: number): string {
-  return hp > 50 ? '#66bb6a' : hp > 25 ? '#ffca28' : '#ef5350';
+export function healthColor(hp: number, maxHp: number): string {
+  return hp > maxHp * 0.5 ? '#66bb6a' : hp > maxHp * 0.25 ? '#ffca28' : '#ef5350';
 }

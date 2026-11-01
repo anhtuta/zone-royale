@@ -192,7 +192,7 @@ describe('headless simulation', { timeout: 60_000 }, () => {
   it('a full match (bots only, player kept alive in the zone centre) ends with a single survivor', () => {
     setRandomSource(createSeededRandom(2026));
     const w = createMatch(new Camera(1280, 720), null, { mapSize: 5000, numPlayers: 20 });
-    const botCount = numBots({ mapSize: 5000, numPlayers: 20 });
+    const botCount = numBots({ mapSize: 5000, numPlayers: 20, maxHp: 100 });
     let outcome = null;
     let steps = 0;
     while (!outcome && steps < 60 * 400) {

@@ -1,6 +1,6 @@
 # Configurable max HP (Normal / Extended / Marathon)
 
-**Status:** Plan — not implemented yet.
+**Status:** Implemented.
 
 Large lobbies on small maps die off too quickly: with baseline survivability, most combatants
 are eliminated before or right after the first zone phase, leaving a sparse mid-game. This

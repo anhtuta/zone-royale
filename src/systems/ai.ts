@@ -247,7 +247,7 @@ function fight(
     x: fx * radial - fy * ai.strafe * 0.8,
     y: fy * radial + fx * ai.strafe * 0.8,
   };
-  if (b.hp < 30 && ai.loot && ai.loot.kind === 'health') steerTowards(m, b.x, b.y, ai.loot.x, ai.loot.y, 1.2);
+  if (b.hp < world.maxHp * 0.3 && ai.loot && ai.loot.kind === 'health') steerTowards(m, b.x, b.y, ai.loot.x, ai.loot.y, 1.2);
   if (outside) steerTowards(m, b.x, b.y, world.zone.x, world.zone.y, 2);
   return m;
 }
@@ -360,7 +360,7 @@ export function updateBot(world: World, b: Entity, dt: number): void {
       b.x,
       b.y,
       750,
-      (it) => botWants(b, it) && dist(it.x, it.y, zone.x, zone.y) < zoneLootBotSeekRadius(zone),
+      (it) => botWants(b, it, world.maxHp) && dist(it.x, it.y, zone.x, zone.y) < zoneLootBotSeekRadius(zone),
     );
   }
 
@@ -387,7 +387,7 @@ export function updateBot(world: World, b: Entity, dt: number): void {
   if (!fighting && mag > 0.01) b.angle += angleDelta(b.angle, Math.atan2(m.y, m.x)) * Math.min(1, dt * 8);
   checkStuck(b, ai, m, mag, dt);
   for (const it of world.loot) {
-    if (dist2(b.x, b.y, it.x, it.y) < BOT_PICK_RANGE * BOT_PICK_RANGE && botWants(b, it)) {
+    if (dist2(b.x, b.y, it.x, it.y) < BOT_PICK_RANGE * BOT_PICK_RANGE && botWants(b, it, world.maxHp)) {
       applyLoot(world, b, it);
       ai.lootT = 0;
       break;

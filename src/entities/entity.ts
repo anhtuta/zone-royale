@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import { ENTITY_RADIUS, MAX_HP, TAU, WEAPON_SLOT_COUNT } from '../config/constants';
+import { ENTITY_RADIUS, TAU, WEAPON_SLOT_COUNT } from '../config/constants';
 import { STARTING_AMMO, WEAPONS, type AmmoType, type WeaponType } from '../config/weapons';
 import { rand } from '../utils/random';
 import type { LootItem } from './loot';
@@ -163,9 +163,17 @@ export function createBrain(x: number, y: number): BotBrain {
  * @param color - Body color.
  * @param x - Spawn X.
  * @param y - Spawn Y.
+ * @param maxHp - Full health pool for this match.
  * @returns The new entity.
  */
-export function createEntity(isPlayer: boolean, name: string, color: string, x: number, y: number): Entity {
+export function createEntity(
+  isPlayer: boolean,
+  name: string,
+  color: string,
+  x: number,
+  y: number,
+  maxHp: number,
+): Entity {
   const angle = rand(0, TAU);
   return {
     isPlayer,
@@ -177,7 +185,7 @@ export function createEntity(isPlayer: boolean, name: string, color: string, x: 
     vy: 0,
     r: ENTITY_RADIUS,
     angle,
-    hp: MAX_HP,
+    hp: maxHp,
     armor: 0,
     weapons: (() => {
       const slots = emptyWeaponSlots();

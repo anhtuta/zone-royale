@@ -1,10 +1,17 @@
 /**
- * Match settings popup (map size and player count).
+ * Match settings popup (map size, player count, and HP mode).
  *
  * @packageDocumentation
  */
 
-import { MAP_SIZE_OPTIONS, maxPlayersForMap, PLAYER_COUNT_OPTIONS, type MatchSettings } from '../config/matchSettings';
+import {
+  MAP_SIZE_OPTIONS,
+  MAX_HP_OPTIONS,
+  maxHpModeLabel,
+  maxPlayersForMap,
+  PLAYER_COUNT_OPTIONS,
+  type MatchSettings,
+} from '../config/matchSettings';
 import { loadMatchSettings, saveMatchSettings } from './matchSettingsStorage';
 
 /** Looks up a required element by id. */
@@ -19,6 +26,7 @@ export class SettingsModal {
   private readonly root = byId<HTMLDivElement>('settingsScreen');
   private readonly mapSelect = byId<HTMLSelectElement>('settingMapSize');
   private readonly playersSelect = byId<HTMLSelectElement>('settingNumPlayers');
+  private readonly maxHpSelect = byId<HTMLSelectElement>('settingMaxHp');
   private onSaved: ((settings: MatchSettings) => void) | null = null;
 
   /** Wires buttons and fills the select options once. */
@@ -34,6 +42,12 @@ export class SettingsModal {
       o.value = String(n);
       o.textContent = String(n) + ' players';
       this.playersSelect.appendChild(o);
+    }
+    for (const opt of MAX_HP_OPTIONS) {
+      const o = document.createElement('option');
+      o.value = String(opt.value);
+      o.textContent = opt.label + ' (' + opt.value + ' HP)';
+      this.maxHpSelect.appendChild(o);
     }
     this.mapSelect.addEventListener('change', () => this.syncPlayerOptionsForMap());
     byId<HTMLButtonElement>('settingsOpenBtn').addEventListener('click', () => this.open());
@@ -62,6 +76,7 @@ export class SettingsModal {
     if (!this.playersSelect.value) {
       this.playersSelect.value = this.playersSelect.options[0]?.value ?? '';
     }
+    this.maxHpSelect.value = String(s.maxHp);
     this.root.classList.remove('hidden');
   }
 
@@ -102,6 +117,7 @@ export class SettingsModal {
     const settings: MatchSettings = {
       mapSize: Number(this.mapSelect.value),
       numPlayers: Number(this.playersSelect.value),
+      maxHp: Number(this.maxHpSelect.value),
     };
     saveMatchSettings(settings);
     this.close();
@@ -115,8 +131,8 @@ function escapeBlurbHtml(text: string): string {
 }
 
 /**
- * Start-screen subtitle HTML: player count and map size are wrapped in
- * `blurb-players` / `blurb-map` spans (changeable in settings).
+ * Start-screen subtitle HTML: player count, map size, and HP mode are wrapped in
+ * highlight spans (changeable in settings).
  *
  * @param settings - Current match settings.
  * @returns Safe HTML for `#startSub`.
@@ -125,11 +141,14 @@ export function matchSettingsBlurb(settings: MatchSettings): string {
   const mapLabel = MAP_SIZE_OPTIONS.find((o) => o.value === settings.mapSize)?.label ?? String(settings.mapSize);
   const players = escapeBlurbHtml(String(settings.numPlayers));
   const map = escapeBlurbHtml(mapLabel.toLowerCase());
+  const hpMode = escapeBlurbHtml(maxHpModeLabel(settings.maxHp).toLowerCase());
   return (
     '<span class="blurb-players">' +
     players +
     '</span> players drop in on a <span class="blurb-map">' +
     map +
-    '</span> map. The zone closes in. Only one walks out.'
+    '</span> map (<span class="blurb-hp">' +
+    hpMode +
+    '</span> HP). The zone closes in. Only one walks out.'
   );
 }

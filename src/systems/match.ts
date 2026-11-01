@@ -126,7 +126,7 @@ function spawnCombatant(
 export function createMatch(
   camera: Camera,
   sound: SoundSink | null = null,
-  settings: MatchSettings = DEFAULT_MATCH_SETTINGS,
+  settings: Partial<MatchSettings> = DEFAULT_MATCH_SETTINGS,
 ): World {
   const resolved = normalizeMatchSettings(settings);
   const mapSize = resolved.mapSize;
@@ -136,20 +136,28 @@ export function createMatch(
   const loot = spawnInitialLoot(map.houses, map.obstacles, mapSize);
   const entities: Entity[] = [];
   let p = spawnCombatant(map.obstacles, map.houses, entities, 0, mapSize);
-  const player = createEntity(true, 'You', PLAYER_COLOR, p.x, p.y);
+  const player = createEntity(true, 'You', PLAYER_COLOR, p.x, p.y, resolved.maxHp);
   entities.push(player);
   const names = shuffled(BOT_NAMES);
   for (let i = 0; i < botCount; i++) {
     p = spawnCombatant(map.obstacles, map.houses, entities, botSpacing, mapSize);
     entities.push(
-      createEntity(false, names[i % names.length] as string, BOT_COLORS[i % BOT_COLORS.length] as string, p.x, p.y),
+      createEntity(
+        false,
+        names[i % names.length] as string,
+        BOT_COLORS[i % BOT_COLORS.length] as string,
+        p.x,
+        p.y,
+        resolved.maxHp,
+      ),
     );
   }
-  const zone = createZone(mapSize);
+  const zone = createZone(mapSize, resolved.maxHp);
   camera.centerOn(player);
   return {
     phase: 'playing',
     mapSize,
+    maxHp: resolved.maxHp,
     obstacles: map.obstacles,
     houses: map.houses,
     decor: map.decor,

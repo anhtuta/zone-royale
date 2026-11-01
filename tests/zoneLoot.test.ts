@@ -229,7 +229,7 @@ describe('zoneLootClosedPlacementRadius', () => {
   });
 
   it('matches endgame placement disk at full radius', () => {
-    const zone = createZone(DEFAULT_MATCH_SETTINGS.mapSize);
+    const zone = createZone(DEFAULT_MATCH_SETTINGS.mapSize, DEFAULT_MATCH_SETTINGS.maxHp);
     zone.state = 'final';
     zone.r = 0;
     const endR = zoneLootClosedPlacementRadius(zone.phases.map((p) => p.r));

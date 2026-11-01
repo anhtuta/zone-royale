@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { MAX_ARMOR, MAX_HP } from '../src/config/constants';
+import { MAX_ARMOR } from '../src/config/constants';
 import type { LootItem } from '../src/entities/loot';
 import { lootColor, lootName } from '../src/entities/loot';
 import {
@@ -11,7 +11,7 @@ import {
   playerPickup,
 } from '../src/systems/inventory';
 import { createSeededRandom, setRandomSource } from '../src/utils/random';
-import { bot, makeWorld } from './helpers';
+import { BASE_MAX_HP, bot, makeWorld } from './helpers';
 
 beforeEach(() => setRandomSource(createSeededRandom(9)));
 afterEach(() => setRandomSource(Math.random));
@@ -99,9 +99,9 @@ describe('applyLoot', () => {
 
   it('health and armor are capped at max', () => {
     const w = makeWorld();
-    w.player.hp = MAX_HP - 20;
+    w.player.hp = w.maxHp - 20;
     applyLoot(w, w.player, { kind: 'health', amount: 40, x: 0, y: 0 });
-    expect(w.player.hp).toBe(MAX_HP);
+    expect(w.player.hp).toBe(w.maxHp);
     w.player.armor = MAX_ARMOR - 30;
     applyLoot(w, w.player, { kind: 'armor', amount: 50, x: 0, y: 0 });
     expect(w.player.armor).toBe(MAX_ARMOR);
@@ -131,11 +131,15 @@ describe('player pickup rules', () => {
 
   it('refuses med kits at full health and armor at full armor', () => {
     const { player: p } = makeWorld();
-    expect(pickupRefusal(p, { kind: 'health', amount: 40, x: 0, y: 0 })).toBe('Health is already full');
+    expect(pickupRefusal(p, { kind: 'health', amount: 40, x: 0, y: 0 }, BASE_MAX_HP)).toBe(
+      'Health is already full',
+    );
     p.hp = 50;
-    expect(pickupRefusal(p, { kind: 'health', amount: 40, x: 0, y: 0 })).toBeNull();
+    expect(pickupRefusal(p, { kind: 'health', amount: 40, x: 0, y: 0 }, BASE_MAX_HP)).toBeNull();
     p.armor = 100;
-    expect(pickupRefusal(p, { kind: 'armor', amount: 50, x: 0, y: 0 })).toBe('Armor is already full');
+    expect(pickupRefusal(p, { kind: 'armor', amount: 50, x: 0, y: 0 }, BASE_MAX_HP)).toBe(
+      'Armor is already full',
+    );
   });
 
   it('playerPickup picks the nearest item within 60px', () => {
@@ -169,8 +173,8 @@ describe('player pickup rules', () => {
 describe('botWants', () => {
   it('wants a new weapon type while it has a free slot', () => {
     const b = bot(0, 0);
-    expect(botWants(b, { kind: 'weapon', type: 'smg', mag: 30, x: 0, y: 0 })).toBe(true);
-    expect(botWants(b, { kind: 'weapon', type: 'pistol', mag: 12, x: 0, y: 0 })).toBe(false);
+    expect(botWants(b, { kind: 'weapon', type: 'smg', mag: 30, x: 0, y: 0 }, BASE_MAX_HP)).toBe(true);
+    expect(botWants(b, { kind: 'weapon', type: 'pistol', mag: 12, x: 0, y: 0 }, BASE_MAX_HP)).toBe(false);
   });
 
   it('with full slots only wants an upgrade over its weaker weapon', () => {
@@ -180,32 +184,32 @@ describe('botWants', () => {
       { type: 'rifle', mag: 30 },
       { type: 'smg', mag: 30 },
     ];
-    expect(botWants(b, { kind: 'weapon', type: 'sniper', mag: 5, x: 0, y: 0 })).toBe(true);
-    expect(botWants(b, { kind: 'weapon', type: 'rifle', mag: 30, x: 0, y: 0 })).toBe(false);
+    expect(botWants(b, { kind: 'weapon', type: 'sniper', mag: 5, x: 0, y: 0 }, BASE_MAX_HP)).toBe(true);
+    expect(botWants(b, { kind: 'weapon', type: 'rifle', mag: 30, x: 0, y: 0 }, BASE_MAX_HP)).toBe(false);
     b.weapons = [
       { type: 'shotgun', mag: 5 },
       { type: 'rifle', mag: 30 },
       { type: 'smg', mag: 30 },
     ];
-    expect(botWants(b, { kind: 'weapon', type: 'smg', mag: 30, x: 0, y: 0 })).toBe(false);
-    expect(botWants(b, { kind: 'weapon', type: 'sniper', mag: 5, x: 0, y: 0 })).toBe(true);
+    expect(botWants(b, { kind: 'weapon', type: 'smg', mag: 30, x: 0, y: 0 }, BASE_MAX_HP)).toBe(false);
+    expect(botWants(b, { kind: 'weapon', type: 'sniper', mag: 5, x: 0, y: 0 }, BASE_MAX_HP)).toBe(true);
   });
 
   it('wants ammo only for carried weapons and below 120 rounds', () => {
     const b = bot(0, 0);
-    expect(botWants(b, { kind: 'ammo', type: 'light', amount: 30, x: 0, y: 0 })).toBe(true);
-    expect(botWants(b, { kind: 'ammo', type: 'heavy', amount: 6, x: 0, y: 0 })).toBe(false);
+    expect(botWants(b, { kind: 'ammo', type: 'light', amount: 30, x: 0, y: 0 }, BASE_MAX_HP)).toBe(true);
+    expect(botWants(b, { kind: 'ammo', type: 'heavy', amount: 6, x: 0, y: 0 }, BASE_MAX_HP)).toBe(false);
     b.ammo.light = 120;
-    expect(botWants(b, { kind: 'ammo', type: 'light', amount: 30, x: 0, y: 0 })).toBe(false);
+    expect(botWants(b, { kind: 'ammo', type: 'light', amount: 30, x: 0, y: 0 }, BASE_MAX_HP)).toBe(false);
   });
 
   it('wants med kits below 85 hp and armor below 70', () => {
     const b = bot(0, 0);
-    expect(botWants(b, { kind: 'health', amount: 40, x: 0, y: 0 })).toBe(false);
+    expect(botWants(b, { kind: 'health', amount: 40, x: 0, y: 0 }, BASE_MAX_HP)).toBe(false);
     b.hp = 84;
-    expect(botWants(b, { kind: 'health', amount: 40, x: 0, y: 0 })).toBe(true);
-    expect(botWants(b, { kind: 'armor', amount: 50, x: 0, y: 0 })).toBe(true);
+    expect(botWants(b, { kind: 'health', amount: 40, x: 0, y: 0 }, BASE_MAX_HP)).toBe(true);
+    expect(botWants(b, { kind: 'armor', amount: 50, x: 0, y: 0 }, BASE_MAX_HP)).toBe(true);
     b.armor = 70;
-    expect(botWants(b, { kind: 'armor', amount: 50, x: 0, y: 0 })).toBe(false);
+    expect(botWants(b, { kind: 'armor', amount: 50, x: 0, y: 0 }, BASE_MAX_HP)).toBe(false);
   });
 });
