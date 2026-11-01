@@ -29,6 +29,8 @@ if (!existsSync(join(root, 'index.html'))) {
 
 // Serve dist/ under a sub-path to prove the build works with base './' (like GitHub Pages).
 const BASE = '/zone-royale/';
+/** Matches default numPlayers in src/config/matchSettings.ts (fresh browser, no localStorage). */
+const DEFAULT_NUM_PLAYERS = 50;
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url ?? '/', 'http://localhost');
@@ -84,7 +86,10 @@ try {
   await page.click('#startBtn');
   await page.waitForTimeout(300);
   check((await page.evaluate(() => window.__game.state)) === 'playing', 'PLAY starts a match');
-  check((await page.evaluate(() => window.__game.entities.length)) === 20, '20 combatants (1 player + 19 bots)');
+  check(
+    (await page.evaluate(() => window.__game.entities.length)) === DEFAULT_NUM_PLAYERS,
+    `${DEFAULT_NUM_PLAYERS} combatants (default: 1 player + ${DEFAULT_NUM_PLAYERS - 1} bots)`,
+  );
 
   const fps = await page.evaluate(
     () =>
