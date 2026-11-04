@@ -4,11 +4,11 @@ Late matches can run out of ground ammunition and weapons: initial loot is finit
 reserves and better guns, and eliminations do not create ammo boxes when the victim had **zero
 reserve**. Survivors may be unable to fight until the zone kills them.
 
-This feature **replenishes ammo and weapons** inside the current safe circle when a **zone phase
+This feature **replenishes ammo, weapons, and med kits** inside the current safe circle when a **zone phase
 pulse** fires (`phaseAdvanced` or `closed`). Every pulse that actually spawns loot is
 **telegraphed** (system kill-feed line + centre HUD toast). Silent spawns are not allowed.
 
-**Shipped:** ammo and weapon floors on zone pulses (Phases 1–3).
+**Shipped:** ammo, weapon, and med kit floors on zone pulses (Phases 1–4).
 
 Elimination drops are unchanged except by explicit policy below: **no ammo boxes from kills when
 reserve is 0**; weapons still drop with whatever rounds remain in the magazine.
@@ -24,7 +24,7 @@ Vocab:
 
 | When | What happens |
 | ---- | ------------ |
-| End of a zone shrink (`phaseAdvanced`) | Top up ground **ammo** (and **weapons**, Phase 3) to survivor-scaled floors inside the safe zone. Telegraph if anything spawned. |
+| End of a zone shrink (`phaseAdvanced`) | Top up ground **ammo**, **weapons**, and **med kits** to survivor-scaled floors inside the safe zone. Telegraph if anything spawned. |
 | Zone fully closed (`closed`) | Same floor checks once for endgame (last safe circle). Telegraph if anything spawned. |
 | Start of shrink (`shrinkStarted`) | **No** supply drop (only the existing “zone is closing in” feed). |
 
@@ -35,12 +35,12 @@ type.
 ### Telegraph copy
 
 Use the same sentence for kill-feed and HUD toast when a pulse spawns at least one supply item
-(ammo box and/or weapon):
+(ammo box, weapon, and/or med kit):
 
 | Version | When | Text |
 | ------- | ---- | ---- |
 | v1 (ammo only) | Phases 1–2 | `Ammunition supply dropped in the safe zone` |
-| v2 (ammo + weapons) | Phase 3 | `Combat supply dropped in the safe zone` |
+| v2 (ammo + weapons + med kits) | Phase 3+ | `Combat supply dropped in the safe zone` |
 
 - **Kill-feed:** `pushSystemFeed` (purple system line, 5s) — see `systems/feedback.ts`
 - **HUD:** `showMessage` (centre toast, default duration)
@@ -52,8 +52,9 @@ do **not** show either message.
 
 | In scope | Out of scope |
 | -------- | ------------ |
-| Ammo boxes (`kind: 'ammo'`) for all four families in `AMMO_TYPES` | Med kits, armor |
-| Ground weapons (`kind: 'weapon'`) on zone pulses (Phase 3) | Weapon supply on shrink **start** |
+| Ammo boxes (`kind: 'ammo'`) for all four families in `AMMO_TYPES` | Armor |
+| Ground weapons (`kind: 'weapon'`) on zone pulses | Weapon supply on shrink **start** |
+| Med kits (`kind: 'health'`) on zone pulses (Phase 4) | |
 | Placement inside current safe circle | Drops outside the zone |
 | Scaling minimum counts by **alive players** (capped at survivor count) | Scaling by map size |
 | Supply on `phaseAdvanced` and `closed` | Drops when shrink **starts**; timer-based top-up between shrinks |
@@ -126,8 +127,30 @@ Each spawned weapon:
   gun (same geometry as `rollLoot`’s weapon branch); skip offset placement if `circleFree` fails
   and place the box on the weapon tile instead.
 
-Run **ammo fill first, then weapon fill** in one handler so paired ammo from weapons counts toward
+Run **ammo fill first, then weapon fill, then med kit fill** in one handler so paired ammo from weapons counts toward
 the next ammo pulse’s ground counts (no double telegraph).
+
+## Minimum loot — med kits (Phase 4)
+
+Count items on the ground: `world.loot` where `kind === 'health'`.
+
+```js
+medkitFloor(alive) = min(alive, max(1, round(ZONE_LOOT_MEDKIT_BASE_FLOOR * alive / ZONE_LOOT_MEDKIT_FLOOR_ALIVE_DIVISOR)))
+```
+
+- **`ZONE_LOOT_MEDKIT_BASE_FLOOR`:** `4` in `config/zoneLoot.ts`.
+- **`ZONE_LOOT_MEDKIT_FLOOR_ALIVE_DIVISOR`:** `10` — scales med kit floors with survivors.
+
+**Example @ 100 alive** (base **4**, divisor **10**): floor **40** med kits on the ground.
+
+### Zone phase pulse (med kits)
+
+On the same events as ammo and weapons:
+
+- `deficit = max(0, medkitFloor(alive) - countMedkitsOnGround())`.
+- Spawn up to `deficit` med kits (one per successful placement).
+
+Each spawned med kit uses **`MEDKIT_AMOUNT`** from `config/constants.ts` (fixed +40 HP; not scaled by max-HP mode).
 
 ## Placement
 
@@ -152,8 +175,7 @@ if event === 'shrinkStarted' → pushSystemFeed (existing)
 else if event === 'phaseAdvanced' | 'closed' → handleZoneSupplyEvent(world, event)
 ```
 
-**`handleZoneSupplyEvent`** (rename from `handleZoneAmmoSupplyEvent` in Phase 3): ammo fill, then
-weapon fill; if **any** ammo box or weapon spawned, **`pushSystemFeed`** + **`showMessage`** once
+**`handleZoneSupplyEvent`**: ammo fill, then weapon fill, then med kit fill; if **any** ammo box, weapon, or med kit spawned, **`pushSystemFeed`** + **`showMessage`** once
 (v1 until Phase 3 ships weapons, then v2 copy above).
 
 Do not spawn from **`eliminate()`** for this feature.
@@ -212,11 +234,25 @@ tests; knobs documented in this file match shipped constants.
 survivor-scaled weapon floor when placement succeeds; paired ammo follows the same rules as map
 weapon loot; players see feed + toast when any supply item appears.
 
+### Phase 4 — Zone pulse med kit supply
+
+- [x] Add `ZONE_LOOT_MEDKIT_BASE_FLOOR`, `ZONE_LOOT_MEDKIT_FLOOR_ALIVE_DIVISOR`, and
+  `medkitFloorForAlive()` in `config/zoneLoot.ts`.
+- [x] Add `countGroundMedkits()`, `trySpawnMedkitInZone()`, and `fillZoneMedkitsToFloor()` in
+  `systems/zoneLoot.ts` (same placement disk and `MEDKIT_AMOUNT` as map loot).
+- [x] Extend pulse handler: run ammo, weapons, then med kits; telegraph once when any category
+  spawned.
+- [x] Tests: `medkitFloorForAlive`, med kit placement, pulse top-up, telegraph when only med kits
+  need filling.
+
+**Exit criteria:** After a shrink ends (or zone closes), ground med kit count reaches the
+survivor-scaled floor when placement succeeds; heal amount stays +40 HP.
+
 ## Tuning notes
 
-- If large lobbies feel flooded, lower `ZONE_LOOT_BASE_FLOOR` and/or
-  `ZONE_LOOT_WEAPON_BASE_FLOOR`, or raise `ZONE_LOOT_FLOOR_ALIVE_DIVISOR` /
-  `ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR`.
+- If large lobbies feel flooded, lower `ZONE_LOOT_BASE_FLOOR`, `ZONE_LOOT_WEAPON_BASE_FLOOR`,
+  and/or `ZONE_LOOT_MEDKIT_BASE_FLOOR`, or raise `ZONE_LOOT_FLOOR_ALIVE_DIVISOR`,
+  `ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR`, and/or `ZONE_LOOT_MEDKIT_FLOOR_ALIVE_DIVISOR`.
 - With few survivors, `min(alive, …)` keeps floors from exceeding living players; `max(1, …)` still
   guarantees at least one box per family when below floor and `alive ≥ 1`.
 - Bot cap (`BOT_AMMO_CAP`) can still pull ammo off the ground; floors measure **ground** only, which
