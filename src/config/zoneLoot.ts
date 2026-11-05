@@ -30,6 +30,15 @@ export const ZONE_LOOT_MEDKIT_FLOOR_ALIVE_DIVISOR = 10;
 /** Med kit floor numerator before survivor scaling (see {@link medkitFloorForAlive}). */
 export const ZONE_LOOT_MEDKIT_BASE_FLOOR = 4;
 
+/**
+ * Scales {@link ZONE_LOOT_ARMOR_BASE_FLOOR} with survivor count (armor vests only).
+ * Lower divisor → more ground armor per pulse.
+ */
+export const ZONE_LOOT_ARMOR_FLOOR_ALIVE_DIVISOR = 10;
+
+/** Armor vest floor numerator before survivor scaling (see {@link armorFloorForAlive}). */
+export const ZONE_LOOT_ARMOR_BASE_FLOOR = 3;
+
 /** Per-family floor numerator before survivor scaling (see {@link ammoFloorForAlive}). */
 export const ZONE_LOOT_BASE_FLOOR: Readonly<Record<AmmoType, number>> = {
   light: 8,
@@ -93,5 +102,17 @@ export function weaponFloorForAlive(aliveCount: number): number {
 export function medkitFloorForAlive(aliveCount: number): number {
   const alive = Math.max(1, aliveCount);
   const scaled = (ZONE_LOOT_MEDKIT_BASE_FLOOR * alive) / ZONE_LOOT_MEDKIT_FLOOR_ALIVE_DIVISOR;
+  return Math.min(alive, Math.max(1, Math.round(scaled)));
+}
+
+/**
+ * Minimum ground armor vests, scaled by survivors and capped by alive count.
+ *
+ * @param aliveCount - Living combatants (at least 1 for math when the match is active).
+ * @returns Between 1 and `aliveCount`.
+ */
+export function armorFloorForAlive(aliveCount: number): number {
+  const alive = Math.max(1, aliveCount);
+  const scaled = (ZONE_LOOT_ARMOR_BASE_FLOOR * alive) / ZONE_LOOT_ARMOR_FLOOR_ALIVE_DIVISOR;
   return Math.min(alive, Math.max(1, Math.round(scaled)));
 }

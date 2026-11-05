@@ -1,11 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { BOT_LOOT_ZONE_INSET } from '../src/config/constants';
+import { BOT_LOOT_ZONE_INSET, ARMOR_AMOUNT, MEDKIT_AMOUNT } from '../src/config/constants';
 import {
   ammoFloorForAlive,
+  armorFloorForAlive,
   medkitFloorForAlive,
   weaponFloorForAlive,
   ZONE_LOOT_BASE_FLOOR,
   ZONE_LOOT_FLOOR_ALIVE_DIVISOR,
+  ZONE_LOOT_ARMOR_BASE_FLOOR,
+  ZONE_LOOT_ARMOR_FLOOR_ALIVE_DIVISOR,
   ZONE_LOOT_MEDKIT_BASE_FLOOR,
   ZONE_LOOT_MEDKIT_FLOOR_ALIVE_DIVISOR,
   ZONE_LOOT_SUPPLY_MESSAGE,
@@ -13,7 +16,6 @@ import {
   ZONE_LOOT_WEAPON_FLOOR_ALIVE_DIVISOR,
   zoneLootClosedPlacementRadius,
 } from '../src/config/zoneLoot';
-import { MEDKIT_AMOUNT } from '../src/config/constants';
 import { WEAPONS } from '../src/config/weapons';
 import { PHASES } from '../src/config/zone';
 import { DEFAULT_MATCH_SETTINGS, zoneStartRadius } from '../src/config/matchSettings';
@@ -21,14 +23,17 @@ import { stepWorld } from '../src/core/simulation';
 import type { PlayerControls } from '../src/systems/player';
 import {
   countGroundAmmo,
+  countGroundArmor,
   countGroundMedkits,
   countGroundWeapons,
   fillZoneAmmoToFloors,
+  fillZoneArmorToFloor,
   fillZoneMedkitsToFloor,
   fillZoneWeaponsToFloor,
   handleZoneSupplyEvent,
   isInsideZoneLootDisk,
   trySpawnAmmoInZone,
+  trySpawnArmorInZone,
   trySpawnMedkitInZone,
   trySpawnWeaponInZone,
   zoneLootBotSeekRadius,
@@ -83,6 +88,23 @@ describe('medkitFloorForAlive', () => {
     expect(medkitFloorForAlive(3)).toBe(1);
     expect(medkitFloorForAlive(100)).toBe(40);
     expect(medkitFloorForAlive(100)).toBeLessThanOrEqual(100);
+  });
+});
+
+describe('armorFloorForAlive', () => {
+  it('scales with alive count using the armor floor divisor', () => {
+    const alive = 20;
+    const expected = Math.min(
+      alive,
+      Math.max(1, Math.round((ZONE_LOOT_ARMOR_BASE_FLOOR * alive) / ZONE_LOOT_ARMOR_FLOOR_ALIVE_DIVISOR)),
+    );
+    expect(armorFloorForAlive(alive)).toBe(expected);
+  });
+
+  it('never exceeds alive count and never drops below 1', () => {
+    expect(armorFloorForAlive(3)).toBe(1);
+    expect(armorFloorForAlive(100)).toBe(30);
+    expect(armorFloorForAlive(100)).toBeLessThanOrEqual(100);
   });
 });
 
@@ -204,6 +226,27 @@ describe('zone med kit placement', () => {
   });
 });
 
+describe('zone armor placement', () => {
+  it('places armor inside the safe disk with ARMOR_AMOUNT', () => {
+    const world = makeWorld({ loot: [] });
+    expect(trySpawnArmorInZone(world)).toBe(true);
+    expect(world.loot).toHaveLength(1);
+    const vest = world.loot[0]!;
+    expect(vest.kind).toBe('armor');
+    if (vest.kind !== 'armor') return;
+    expect(vest.amount).toBe(ARMOR_AMOUNT);
+    expect(isInsideZoneLootDisk(world, vest.x, vest.y)).toBe(true);
+  });
+
+  it('fills armor up to the survivor-scaled floor', () => {
+    const world = makeWorld({ loot: [] });
+    const spawned = fillZoneArmorToFloor(world);
+    expect(spawned).toBeGreaterThan(0);
+    const alive = world.entities.filter((e) => e.alive).length;
+    expect(countGroundArmor(world.loot)).toBeGreaterThanOrEqual(armorFloorForAlive(alive));
+  });
+});
+
 describe('handleZoneSupplyEvent', () => {
   it('telegraphs when boxes spawn', () => {
     const world = makeWorld({ loot: [] });
@@ -219,6 +262,7 @@ describe('handleZoneSupplyEvent', () => {
     fillZoneAmmoToFloors(world);
     fillZoneWeaponsToFloor(world);
     fillZoneMedkitsToFloor(world);
+    fillZoneArmorToFloor(world);
     world.killfeed = [];
     world.message = { text: '', t: 0 };
     const before = world.loot.length;
@@ -255,6 +299,7 @@ describe('handleZoneSupplyEvent', () => {
     const world = makeWorld({ loot: [] });
     fillZoneAmmoToFloors(world);
     fillZoneMedkitsToFloor(world);
+    fillZoneArmorToFloor(world);
     const alive = world.entities.filter((e) => e.alive).length;
     for (const type of Object.keys(countGroundAmmo(world.loot)) as (keyof ReturnType<typeof countGroundAmmo>)[]) {
       expect(countGroundAmmo(world.loot)[type]).toBeGreaterThanOrEqual(ammoFloorForAlive(alive, type));
@@ -270,12 +315,27 @@ describe('handleZoneSupplyEvent', () => {
     const world = makeWorld({ loot: [] });
     fillZoneAmmoToFloors(world);
     fillZoneWeaponsToFloor(world);
+    fillZoneArmorToFloor(world);
     const alive = world.entities.filter((e) => e.alive).length;
     expect(countGroundMedkits(world.loot)).toBe(0);
     world.killfeed = [];
     world.message = { text: '', t: 0 };
     handleZoneSupplyEvent(world, 'phaseAdvanced');
     expect(countGroundMedkits(world.loot)).toBeGreaterThanOrEqual(medkitFloorForAlive(alive));
+    expect(world.killfeed.some((e) => e.sys === ZONE_LOOT_SUPPLY_MESSAGE)).toBe(true);
+  });
+
+  it('telegraphs when only armor need topping up', () => {
+    const world = makeWorld({ loot: [] });
+    fillZoneAmmoToFloors(world);
+    fillZoneWeaponsToFloor(world);
+    fillZoneMedkitsToFloor(world);
+    const alive = world.entities.filter((e) => e.alive).length;
+    expect(countGroundArmor(world.loot)).toBe(0);
+    world.killfeed = [];
+    world.message = { text: '', t: 0 };
+    handleZoneSupplyEvent(world, 'phaseAdvanced');
+    expect(countGroundArmor(world.loot)).toBeGreaterThanOrEqual(armorFloorForAlive(alive));
     expect(world.killfeed.some((e) => e.sys === ZONE_LOOT_SUPPLY_MESSAGE)).toBe(true);
   });
 });

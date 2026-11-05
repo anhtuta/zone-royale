@@ -1,13 +1,14 @@
 /**
- * Replenishes ground ammo, weapons, and med kits inside the safe zone on zone pulses.
+ * Replenishes ground ammo, weapons, med kits, and armor inside the safe zone on zone pulses.
  *
  * @packageDocumentation
  */
 
-import { BOT_LOOT_ZONE_INSET, LOOT_CLEARANCE, MEDKIT_AMOUNT, TAU } from '../config/constants';
+import { ARMOR_AMOUNT, BOT_LOOT_ZONE_INSET, LOOT_CLEARANCE, MEDKIT_AMOUNT, TAU } from '../config/constants';
 import { AMMO_AMOUNT, AMMO_TYPES, WEAPONS, type AmmoType } from '../config/weapons';
 import {
   ammoFloorForAlive,
+  armorFloorForAlive,
   medkitFloorForAlive,
   weaponFloorForAlive,
   ZONE_LOOT_PLACEMENT_TRIES,
@@ -99,6 +100,19 @@ export function countGroundMedkits(loot: readonly LootItem[]): number {
   let n = 0;
   for (const it of loot) {
     if (it.kind === 'health') n++;
+  }
+  return n;
+}
+
+/**
+ * Counts armor vests lying on the ground.
+ *
+ * @param loot - Current ground loot.
+ */
+export function countGroundArmor(loot: readonly LootItem[]): number {
+  let n = 0;
+  for (const it of loot) {
+    if (it.kind === 'armor') n++;
   }
   return n;
 }
@@ -200,6 +214,33 @@ export function trySpawnMedkitInZone(world: World, event?: ZoneEvent): boolean {
   return false;
 }
 
+/**
+ * Spawns one armor vest at a random point inside the safe zone.
+ *
+ * @param world - Match state (mutates `loot` on success).
+ * @returns `true` if armor was placed.
+ */
+export function trySpawnArmorInZone(world: World, event?: ZoneEvent): boolean {
+  const zone = world.zone;
+  const usableR = zoneLootPlacementRadius(zone, event);
+  if (usableR <= 0) return false;
+  for (let i = 0; i < ZONE_LOOT_PLACEMENT_TRIES; i++) {
+    const a = rand(0, TAU);
+    const d = Math.sqrt(random()) * usableR;
+    const x = zone.x + Math.cos(a) * d;
+    const y = zone.y + Math.sin(a) * d;
+    if (!circleFree(world.obstacles, x, y, LOOT_CLEARANCE, world.mapSize)) continue;
+    world.loot.push({
+      kind: 'armor',
+      amount: ARMOR_AMOUNT,
+      x,
+      y,
+    });
+    return true;
+  }
+  return false;
+}
+
 /** Options for {@link fillZoneAmmoToFloors}. */
 export interface FillZoneAmmoOptions {
   /** Cap boxes spawned per family this pulse (`Infinity` = fill to floor). */
@@ -220,6 +261,14 @@ export interface FillZoneWeaponsOptions {
 export interface FillZoneMedkitsOptions {
   /** Cap med kits spawned this pulse (`Infinity` = fill to floor). */
   maxMedkits?: number;
+  /** Zone pulse driving this fill (`closed` uses endgame placement). */
+  zoneEvent?: ZoneEvent;
+}
+
+/** Options for {@link fillZoneArmorToFloor}. */
+export interface FillZoneArmorOptions {
+  /** Cap armor vests spawned this pulse (`Infinity` = fill to floor). */
+  maxArmor?: number;
   /** Zone pulse driving this fill (`closed` uses endgame placement). */
   zoneEvent?: ZoneEvent;
 }
@@ -301,7 +350,31 @@ export function fillZoneMedkitsToFloor(world: World, options: FillZoneMedkitsOpt
 }
 
 /**
- * Runs zone-pulse combat supply (ammo, weapons, med kits) and telegraphs when anything spawned.
+ * Spawns armor vests until the survivor-scaled floor is met (or placement fails).
+ *
+ * @param world - Match state.
+ * @param options - Optional spawn cap.
+ * @returns Number of armor vests successfully placed.
+ */
+export function fillZoneArmorToFloor(world: World, options: FillZoneArmorOptions = {}): number {
+  const maxArmor = options.maxArmor ?? Infinity;
+  const zoneEvent = options.zoneEvent;
+  const alive = countAlive(world.entities);
+  const floor = armorFloorForAlive(alive);
+  let onGround = countGroundArmor(world.loot);
+  let deficit = Math.max(0, floor - onGround);
+  let spawned = 0;
+  while (deficit > 0 && spawned < maxArmor) {
+    if (!trySpawnArmorInZone(world, zoneEvent)) break;
+    spawned++;
+    onGround++;
+    deficit--;
+  }
+  return spawned;
+}
+
+/**
+ * Runs zone-pulse combat supply (ammo, weapons, med kits, armor) and telegraphs when anything spawned.
  *
  * @param world - Match state.
  * @param event - Zone transition from {@link updateZone}.
@@ -311,7 +384,8 @@ export function handleZoneSupplyEvent(world: World, event: ZoneEvent): void {
   const spawnedAmmo = fillZoneAmmoToFloors(world, { zoneEvent: event });
   const spawnedWeapons = fillZoneWeaponsToFloor(world, { zoneEvent: event });
   const spawnedMedkits = fillZoneMedkitsToFloor(world, { zoneEvent: event });
-  if (spawnedAmmo + spawnedWeapons + spawnedMedkits <= 0) return;
+  const spawnedArmor = fillZoneArmorToFloor(world, { zoneEvent: event });
+  if (spawnedAmmo + spawnedWeapons + spawnedMedkits + spawnedArmor <= 0) return;
   pushSystemFeed(world, ZONE_LOOT_SUPPLY_MESSAGE);
   showMessage(world, ZONE_LOOT_SUPPLY_MESSAGE);
 }
